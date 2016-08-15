@@ -1,3 +1,3 @@
 # Easyflow
 
-Web based workflow GUI
+Web based workflow desiner (GUI)
