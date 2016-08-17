@@ -15,50 +15,71 @@
     }
 }(_));
 
-/**
- * Inheritance
- */
-(function(_){
+(function(_, $){
+
+    this.EF = this.EF || function(selector, context) {
+        var vectors = [];
+
+        $(selector, context).each(function(i, node){
+            vectors.push(new EF.Vector(node));
+        });
+
+        return new EF.Collection(vectors);
+    };
+
+}(_, $));
+
+// var EF = EF || {};
+// var EF = EF || function(){};
+
+EF.Class = (function(_){
+    var initializing = false;
+    var decomp = /xyz/.test(function(){ xyz; }) ? /\$super/ : /.*/;
+    var Class = function(){};
     
-    this.EF = this.EF || {};
-
-    EF.Class = function(){};
-    EF.Class.initalizing = false;
-    EF.Class.decomposible = /xyz/.test(function(){ xyz; }) ? /\binherited\b/ : /.*/;
-
-    EF.Class.extend = function(config){
-        var inherited, prototype, name;
+    Class.extend = function extend(config) {
+        var $super, prototype, name;
         
-        inherited = this.prototype;
-        EF.Class.initalizing = true;
+        $super = this.prototype;
+        
+        initializing = true;
         prototype = new this();
-        EF.Class.initalizing = false;
+        initializing = false;
 
         for (name in config) {
-            prototype[name] = _.isFunction(config[name]) && _.isFunction(inherited[name]) && tester.test(config[name])
+            prototype[name] = _.isFunction(config[name]) && _.isFunction($super[name]) && decomp.test(config[name])
                 ? (function(name, fn){
                     return function() {
                         var tmp, ret;
-                        tmp = this.inherited;
-                        this.inherited = inherited[name];
+                        tmp = this.$super;
+                        this.$super = $super[name];
                         ret = fn.apply(this, _.toArray(arguments));
-                        this.inherited = tmp;
+                        this.$super = tmp;
                         return ret;
                     };
                 }(name, config[name])) : config[name];
         }
 
-        function Class() {
-            if ( ! EF.Class.initializing && this.init) {
-                this.init.apply(this, _.toArray(arguments));
+        var clazz, autorun;
+
+        if (prototype.constructor !== undefined) {
+            autorun = prototype.constructor;
+            delete prototype.constructor;
+        }
+
+        clazz = function() {
+            if ( ! initializing && autorun) {
+                console.log(arguments);
+                autorun.apply(this, _.toArray(arguments));
             }
         }
 
-        Class.prototype = prototype;
-        Class.prototype.constructor = Class;
-        Class.extend = arguments.callee;
+        clazz.prototype = prototype;
+        clazz.prototype.constructor = clazz;
+        clazz.extend = extend;
 
-        return Class;
+        return clazz;
     };
 
+    return Class;
 }(_));
