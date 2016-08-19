@@ -1,6 +1,4 @@
 
-EF.ns('EF.vector');
-
 EF.vector.Collection = (function(_){
 
     var Collection = EF.Class.extend({

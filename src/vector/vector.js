@@ -1,6 +1,4 @@
 
-EF.ns('EF.vector');
-
 EF.vector.Vector = (function(_, $){
 
     var Collection = EF.vector.Collection;

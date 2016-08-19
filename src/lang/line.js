@@ -1,6 +1,4 @@
 
-EF.ns('EF.lang');
-
 EF.lang.Line = (function(){
 
     var Line = EF.Class.extend({

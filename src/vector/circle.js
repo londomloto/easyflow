@@ -1,6 +1,4 @@
 
-EF.ns('EF.vector');
-
 EF.vector.Circle = (function(){
 
     var Circle = EF.vector.Vector.extend({

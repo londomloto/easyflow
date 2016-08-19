@@ -1,6 +1,4 @@
 
-EF.ns('EF.vector');
-
 EF.vector.Rect = (function(){
 
     var Rect = EF.vector.Vector.extend({

@@ -1,6 +1,4 @@
 
-EF.ns('EF.lang');
-
 EF.lang.Point = (function(){
 
     var Point = EF.Class.extend({
