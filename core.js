@@ -16,8 +16,9 @@
 }(_));
 
 (function(_, $){
+    var global = this;
 
-    this.EF = this.EF || function(selector, context) {
+    global.EF = global.EF || function(selector, context) {
         var vectors = [];
 
         $(selector, context).each(function(i, node){
@@ -27,17 +28,37 @@
         return new EF.Collection(vectors);
     };
 
-}(_, $));
+    EF.global = global;
 
-// var EF = EF || {};
-// var EF = EF || function(){};
+    _.extend(EF, {
+        ns: function(namespace) {
+            var parts = _.split(namespace, '.');
+            var parent = EF.global;
+            var len = parts.length;
+            var current;
+            var i;
 
+            for (i = 0; i < len; i++) {
+                current = parts[i];
+                parent[current] = parent[current] || {};
+                parent = parent[current];
+            }
+
+            return parent;
+        }
+    });
+
+}(_, jQuery));
+
+/**
+ * Abstract base class
+ */
 EF.Class = (function(_){
     var initializing = false;
-    var decomp = /xyz/.test(function(){ xyz; }) ? /\$super/ : /.*/;
+    var tokenizer = /xyz/.test(function(){ xyz; }) ? /\$super/ : /.*/;
     var Class = function(){};
     
-    Class.extend = function extend(config) {
+    Class.extend = function extend( config ) {
         var $super, prototype, name;
         
         $super = this.prototype;
@@ -47,35 +68,37 @@ EF.Class = (function(_){
         initializing = false;
 
         for (name in config) {
-            prototype[name] = _.isFunction(config[name]) && _.isFunction($super[name]) && decomp.test(config[name])
+            prototype[name] = _.isFunction(config[name]) && _.isFunction($super[name]) && tokenizer.test(config[name])
                 ? (function(name, fn){
                     return function() {
                         var tmp, ret;
+
                         tmp = this.$super;
                         this.$super = $super[name];
                         ret = fn.apply(this, _.toArray(arguments));
                         this.$super = tmp;
+                        
                         return ret;
                     };
                 }(name, config[name])) : config[name];
         }
 
-        var clazz, autorun;
+        var clazz, ctor;
 
         if (prototype.constructor !== undefined) {
-            autorun = prototype.constructor;
+            ctor = prototype.constructor;
             delete prototype.constructor;
         }
 
         clazz = function() {
-            if ( ! initializing && autorun) {
-                console.log(arguments);
-                autorun.apply(this, _.toArray(arguments));
+            if ( ! initializing && ctor) {
+                ctor.apply(this, _.toArray(arguments));
             }
         }
 
         clazz.prototype = prototype;
         clazz.prototype.constructor = clazz;
+        clazz.prototype.superclass = $super.constructor;
         clazz.extend = extend;
 
         return clazz;

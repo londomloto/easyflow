@@ -171,7 +171,12 @@ body {
 
 .e-shape,
 .e-link {
-    cursor: move;
+    cursor: grab;
+}
+
+.e-shape:active,
+.e-link:active {
+    cursor: grabbing;
 }
 
 .e-shape circle,

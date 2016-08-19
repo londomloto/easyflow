@@ -2,9 +2,7 @@
 EF.Shape = (function(_){
 
     var Shape = EF.Class.extend({
-
-        __super__: EF.Class,
-
+        
         data: {},
         vector: null,
         container: null,
@@ -28,7 +26,11 @@ EF.Shape = (function(_){
             return this.data[name];
         },
 
-        serialize: function() {}
+        serialize: function() {},
+
+        render: function(container) {
+            
+        }
     });
 
     Shape.instances = 0;

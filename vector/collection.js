@@ -1,23 +1,17 @@
 
-EF.Collection = (function(_){
+EF.ns('EF.vector');
+
+EF.vector.Collection = (function(_){
 
     var Collection = EF.Class.extend({
-
         items: [],
         length: 0,
         index: 0,
 
         constructor: function(array) {
-            this.items = array || [];
+            this.items  = array || [];
             this.length = this.items.length;
-            this.index = 0;
-
-            /*// register vector capability
-            _.forOwn(EF.Vector.prototype, _.bind(function(v, k){
-                if (_.isFunction(v) && this[k] === undefined) {
-                    this
-                }
-            }, this));*/
+            this.index  = 0;
         },
 
         add: function(item) {
@@ -26,6 +20,7 @@ EF.Collection = (function(_){
             } else {
                 this.items.push(item);
             }
+
             this.length = this.items.length;
             return this;
         },
@@ -35,7 +30,7 @@ EF.Collection = (function(_){
         },
         
         removeAt: function(index) {
-
+            
         },
         
         empty: function() {
@@ -74,6 +69,6 @@ EF.Collection = (function(_){
             return new Collection(array);
         }
     });
-    
+
     return Collection;
 }(_));

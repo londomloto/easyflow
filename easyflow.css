@@ -1,0 +1,44 @@
+
+.ef-svg {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    cursor: default;
+}
+
+.ef-shape {
+    stroke: #30D0C6;
+    stroke-width: 2px;
+    fill: #f4f4f4;
+}
+
+.ef-shape.ef-selected {
+    cursor: grab;
+    stroke: #FF4081;
+    fill: #ffffff;
+}
+
+.ef-shape.ef-dragging {
+    cursor: grabbing;
+}
+
+.ef-text {
+    height: 100%;
+    width: 100%;
+    display: table;
+    font-weight: 700;
+    font-size: 12px;
+    color: #4A4D6E;
+    line-height: 1;
+}
+
+.ef-text > span {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+    padding: 0 5px;
+}

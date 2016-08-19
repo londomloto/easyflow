@@ -1,5 +1,9 @@
 
-EF.Vector = (function(_, $){
+EF.ns('EF.vector');
+
+EF.vector.Vector = (function(_, $){
+
+    var Collection = EF.vector.Collection;
 
     var Vector = EF.Class.extend({
         ns: 'http://www.w3.org/2000/svg',
@@ -34,6 +38,11 @@ EF.Vector = (function(_, $){
             }
 
             this.node.data('vector', this);
+        },
+
+        // @Override
+        toString: function() {
+            return $('<div>').append(this.node).remove().html();
         },
 
         attr: function(name, value) {
@@ -105,7 +114,7 @@ EF.Vector = (function(_, $){
             }
 
             if (_.isString(vector)) {
-                vector = new EF.Vector(vector);
+                vector = new Vector(vector);
             }
 
             this.node.append(vector.node[0]); 
@@ -132,24 +141,16 @@ EF.Vector = (function(_, $){
                 array.push(vector);
             });
 
-            return new EF.Collection(array);
+            return new Collection(array);
         },
         render: function(container) {
-            if (container instanceof EF.Vector) {
+            if (container instanceof Vector) {
                 container.node.append(this.node);
             } else if (container instanceof jQuery) {
                 container.append(this.node);
             }
 
             this.container = container;
-        },
-
-        stringify: function() {
-            return $('<div>').append(this.node).remove().html();
-        },
-
-        jsonify: function() {
-
         },
 
         on: function(evt, func) {
@@ -183,11 +184,13 @@ EF.Vector = (function(_, $){
             }
         }
     });
-
-    // extend collection capabilities
+    
+    /**
+     * Extend collection capabilities
+     */
     _.forOwn(Vector.prototype, function(v, k){
-        if (_.isFunction(v) && EF.Collection.prototype[k] === undefined) {
-            EF.Collection.prototype[k] = function() {
+        if (_.isFunction(v) && Collection.prototype[k] === undefined) {
+            Collection.prototype[k] = function() {
                 var args = _.toArray(arguments);
                 _.forEach(this.items, function(item){
                     v.apply(item, args);
@@ -198,4 +201,4 @@ EF.Vector = (function(_, $){
     });
 
     return Vector;
-}(_, $));
+}(_, jQuery));
