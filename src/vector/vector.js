@@ -4,143 +4,140 @@ EF.vector.Vector = (function(_, $){
     var Collection = EF.vector.Collection;
 
     var Vector = EF.Class.extend({
-        ns: 'http://www.w3.org/2000/svg',
         
-        tag: '',
         node: null,
-        props: {},
         handler: {},
         
-        constructor: function(tag, config) {
+        constructor: function(tag, attr) {
 
             // defaults
-            this.tag = '';
-            this.node = null;
-            this.props = {};
-            this.data = {};
-
-            config = config || {};
-            _.extend(this, config);
+            this.handler = {};
 
             if (tag instanceof SVGElement) {
-                this.tag = tag.tagName.toLowerCase();
                 this.node = $(tag);
-                
-                _.forEach(tag.attributes, _.bind(function(a){
-                    this.prop(a.name, a.value);
-                }, this));
             } else {
-                this.tag = tag;
-                this.node = $(document.createElementNS(this.ns, this.tag));
-                this.attr(this.props);
+                this.node = $(document.createElementNS('http://www.w3.org/2000/svg', tag));
+            }
+
+            if (attr) {
+                this.attr(attr);
             }
 
             this.node.data('vector', this);
         },
 
-        // @Override
-        toString: function() {
-            return $('<div>').append(this.node).remove().html();
-        },
-
         attr: function(name, value) {
+            var me = this;
+            
             if (_.isPlainObject(name)) {
-                _.forOwn(name, _.bind(function(v, k){ this.attr(k, v); }, this));
+                _.forOwn(name, function(v, k){
+                    me.attr(k, v);
+                });
                 return this;
             }
 
             if (value === undefined) {
-                return this.prop(name);
+                return this.node.attr(name);
             }
 
-            this.prop(name, value);
             this.node[0].setAttribute(name, value);
+            
+            return this;
+        },
+
+        addClass: function(add) {
+            var classes = _.uniq(
+                _.concat(
+                    _.split(this.attr('class') || '', ' '),
+                    _.split(add, ' ')
+                )
+            );
+
+            this.attr('class', _.trim(_.join(classes, ' ')));
+            
+            return this;
+        },
+
+        removedClass: function(remove) {
+            var classes = _.split(this.attr('class') || '', ' ');
+            
+            _.pullAll(classes, _.split(remove, ' '));
+            this.attr('class', _.join(classes, ' '));
 
             return this;
         },
 
-        prop: function(name, value) {
+        style: function(name, value) {
+            var me = this;
+
             if (_.isPlainObject(name)) {
-                _.forOwn(name, _.bind(function(v, k){ this.props(k, v); }, this));
+                _.forOwn(name, function(v, k){
+                    me.style(k, v);
+                });
+
                 return this;
             }
 
-            if (value === undefined) {
-                return this.props[name];
-            }
+            this.node.css(name, value);
 
-            this.props[name] = value;
-        },
-
-        style: function(css, value) {
-            this.node.css(css, value);
-        },
-
-        addClass: function(addedClass) {
-            var classes = _.uniq(
-                _.concat(
-                    _.split((this.attr('class') || ''), ' '),
-                    _.split(addedClass, ' ')
-                )
-            );
-            
-            this.attr('class', _.trim(_.join(classes, ' ')));
-        },
-
-        removeClass: function(removedClass) {
-            var classes = _.split((this.attr('class') || ''), ' ');
-            _.pullAll(classes, _.split(removedClass, ' '));
-            this.attr('class', _.join(classes, ' '));
+            return this;
         },
 
         text: function(text) {
-            this.props.text = this.props.text || '';
-
             if (text === undefined) {
-                return this.props.text;
+                return this.node.html();
             }
 
-            this.props.text = text;
             this.node.html(text);
+
+            return this;
         },
 
         append: function(vector) {
-            
-            if (_.isArray(vector)) {
-                _.forEach(vector, _.bind(function(v, i){ this.append(v); }, this));
-                return this;
+            var nodes = [];
+
+            if ( ! _.isArray(vector)) {
+                vector = [vector];
             }
 
-            if (_.isString(vector)) {
-                vector = new Vector(vector);
-            }
+            nodes = _.map(vector, function(v){
+                if (_.isString(v)) {
+                    v = new Vector(v);
+                }
+                return v.node;
+            });
 
-            this.node.append(vector.node[0]); 
+            this.node.append(nodes);
+
             return this;
         },
+
         remove: function(selector) {
             if (selector === undefined) {
                 this.node.remove();
             } else {
                 this.node.find(selector).remove();
             }
+
             return this;
         },
+
         empty: function() {
             this.node.empty();
             return this;
         },
-        find: function(selector) {
-            var nodes = this.node.find(selector),
-                array = [];
 
-            nodes.each(function(i, el){
-                var vector = $(el).data('vector');
-                array.push(vector);
+        find: function(selector) {
+            var nodes = this.node.find(selector);
+            var array = [];
+
+            nodes.each(function(i, e){
+                array.push($(e).data('vector'));
             });
 
             return new Collection(array);
-        },
+        },  
+
         render: function(container) {
             if (container instanceof Vector) {
                 container.node.append(this.node);
@@ -180,6 +177,14 @@ EF.vector.Vector = (function(_, $){
                     }
                 }
             }
+        },
+
+        stringify: function() {
+            return $('<div>').append(this.node).remove().html();
+        },
+
+        serialize: function() {
+            return {};
         }
     });
     

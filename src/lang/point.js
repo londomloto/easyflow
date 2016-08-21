@@ -1,18 +1,23 @@
 
-EF.lang.Point = (function(){
+(function(){
 
-    var Point = EF.Class.extend({
-        
+    Graph.lang.Point = Graph.lang.Class.extend({
         constructor: function(x, y) {
             this.x = x;
             this.y = y;
         },
 
         distance: function(p) {
-            
-            // return (new EF.lang.Line(this, p)).length();
+
+        },
+
+        stringify: function() {
+            return this.x + ',' + this.y;
+        },
+
+        serialize: function() {
+            return {x: this.x, y: this.y};
         }
     });
-
-    return Point;
+    
 }());

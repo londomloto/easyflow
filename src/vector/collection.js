@@ -2,6 +2,7 @@
 EF.vector.Collection = (function(_){
 
     var Collection = EF.Class.extend({
+        
         items: [],
         length: 0,
         index: 0,
@@ -22,7 +23,23 @@ EF.vector.Collection = (function(_){
             this.length = this.items.length;
             return this;
         },
-                
+        
+        push: function() {
+
+        },
+
+        pop: function() {
+
+        },
+
+        shift: function() {
+
+        },
+
+        unshift: function() {
+
+        },
+
         remove: function() {
 
         },
