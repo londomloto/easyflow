@@ -8,7 +8,7 @@ Easyflow was builded based on Graphic library.
 
 ### Core Language
 
-##### Graph.extend(superclass, props)
+#### Graph.extend(superclass, props)
 Create new class using javascript classic inheritance technique.
 
 ```javascript
@@ -44,7 +44,7 @@ c1.render(/* paper */);
 
 ```
 
-##### Graph.point(x, y)
+#### Graph.point(x, y)
 Create point object
 
 ```javascript
@@ -53,7 +53,7 @@ p1.distance(p2);
 p1.stringify();		// 0,0;
 ```
 
-##### Graph.matrix(a, b, c, d, e, f)
+#### Graph.matrix(a, b, c, d, e, f)
 Create 2D matrix object
 
 ```javascript
@@ -69,7 +69,7 @@ m1.rotate(45);
 // ... other matrix operations
 ```
 
-##### Graph.path(command)
+#### Graph.path(command)
 Create path from path command. Example command: `M100,100L200,200...Z`;
 
 ```javascript
@@ -85,7 +85,7 @@ path.transform(matrix).command()
 
 ### Vector
 
-##### Graph.paper(x, y, width, height)
+#### Graph.paper(x, y, width, height)
 Create svg
 
 ```javascript
@@ -93,7 +93,7 @@ var paper = Graph.paper(0, 0, 1000, 1000);
 paper.attr('viewBox', '...');
 ```
 
-##### Graph.find(selector)
+#### Graph.find(selector)
 Find vector using standard css selector
 
 ```javascript
@@ -103,21 +103,21 @@ vectors.attr('fill', 'red');
 
 ### Vector - Paper
 
-##### paper.circle(cx, cy, r)
+#### paper.circle(cx, cy, r)
 Add circle to paper
 
 ```javascript
 var c1 = paper.circle(0, 0, 20);
 ```
 
-##### paper.rect(x, y, width, height, r)
+#### paper.rect(x, y, width, height, r)
 Add circle to paper
 
 ```javascript
 var r1 = paper.circle(0, 0, 20, 20, 4);
 ```
 
-##### paper.path(d)
+#### paper.path(d)
 Add path to paper
 
 ```javascript
