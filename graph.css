@@ -1,0 +1,9 @@
+
+.graph-circle:hover,
+.graph-ellipse:hover,
+.graph-polygon:hover,
+.graph-path:hover,
+.graph-rect:hover {
+    cursor: pointer;
+    stroke: #31D0C6;
+}

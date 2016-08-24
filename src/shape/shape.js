@@ -1,7 +1,7 @@
 
 (function(){
 
-    Graph.shape.Shape = Graph.lang.Class.extend({
+    Graph.shape.Shape = Graph.extend({
         
         vector: null,
         baseClass: 'graph-shape',

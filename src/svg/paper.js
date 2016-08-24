@@ -2,22 +2,29 @@
 (function(){
 
     Graph.svg.Paper = Graph.svg.Vector.extend({
-        baseClass: 'graph-elem-paper',
-
-        constructor: function(x, y, width, height) {
+        attrs: {
+            'class': 'graph-paper'
+        },
+        
+        constructor: function(width, height) {
             this.items = new Graph.svg.Collection();
 
-            var attr = {
-                version: '1.1',
-                xmlns: 'http://www.w3.org/2000/svg'
-            };
-
-            _.extend(attr, {
-                width: _.defaultTo(width, 0),
-                height: _.defaultTo(height, 0)
+            this.$super('svg', {
+                'xmlns': Graph.XMLNS_SVG,
+                'xmlns:link': Graph.XMLNS_XLINK,
+                'version': Graph.SVG_VERSION,
+                'width': _.defaultTo(width, 200),
+                'height': _.defaultTo(height, 200)
             });
 
-            this.$super('svg', attr);
+            this.style({
+                overflow: 'hidden',
+                position: 'relative'
+            });
+
+            this.elem.on('click', _.bind(function(e){
+                this.items.deselect();
+            }, this));
         },
 
         shape: function(name, config) {
@@ -39,26 +46,25 @@
     });
 
     var vectors = {
+        ellipse: 'Ellipse',
         circle: 'Circle',
-        rect: 'Rectangle',
+        rect: 'Rect',
         path: 'Path',
         polygon: 'Polygon',
-        group: 'Group'
+        group: 'Group',
+        text: 'Text'
     };
 
     _.forOwn(vectors, function(name, method){
         (function(name, method){
             Graph.svg.Paper.prototype[method] = function() {
-                var args, clazz, vector;
+                var args = _.toArray(arguments),
+                    clazz = Graph.svg[name], 
+                    vector = Graph.factory(clazz, args);
 
-                args = _.toArray(arguments);
-                clazz = Graph.svg[name];
-                args.unshift(clazz);
-
-                vector = new (Function.prototype.bind.apply(clazz, args));
+                vector.render(this);    
                 vector.paper = this;
-                vector.render(this.elem);
-                
+
                 this.items.push(vector);
                 return vector;
             };

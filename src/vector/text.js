@@ -27,6 +27,10 @@ EF.vector.Text = (function(_, $){
             this.components.html.children('span').html(text);
 
             return this;
+        },
+
+        pathinfo: function() {
+            
         }
     });
 

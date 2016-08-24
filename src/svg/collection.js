@@ -1,12 +1,11 @@
 
 (function(){
-    var Collection;
-
-    Graph.svg.Collection = Collection = Graph.lang.Class.extend({
+    
+    var Collection = Graph.svg.Collection = Graph.extend({
         constructor: function(items) {
             this.items = items || [];
         },
-
+        
         push: function() {
             var args = _.toArray(arguments);
             Array.prototype.push.apply(this.items, args);

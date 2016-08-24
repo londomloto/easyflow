@@ -6,48 +6,130 @@
     var Class = Graph.lang.Class = function() {};
 
     Class.extend = function extend(config) {
-        var $super, prototype, name;
+        var $super, proto, name, value, defs;
         
         $super = this.prototype;
         
         initializing = true;
-        prototype = new this();
+        proto = new this();
         initializing = false;
 
-        for (name in config) {
-            prototype[name] = _.isFunction(config[name]) && _.isFunction($super[name]) && tokenizer.test(config[name])
-                ? (function(name, fn){
-                    return function() {
-                        var tmp, ret;
+        defs = {};
 
-                        tmp = this.$super;
-                        this.$super = $super[name];
-                        ret = fn.apply(this, _.toArray(arguments));
-                        this.$super = tmp;
+        for (var name in config) {
+            value = config[name];
+            proto[name] = 
+                _.isFunction(value) && 
+                _.isFunction($super[name]) && 
+                tokenizer.test(value)
+                    ? (function(name, fn){
+                        return function() {
+                            var tmp, ret;
+                            tmp = this.$super;
+                            this.$super = $super[name];
+                            ret = fn.apply(this, _.toArray(arguments));
+                            this.$super = tmp;
                         
-                        return ret;
-                    };
-                }(name, config[name])) : config[name];
+                            return ret;
+                        };
+                    }(name, value)) : value;
+
+            if ( ! _.isFunction(value)) {
+                defs[name] = _.cloneDeep(value);
+            }
         }
 
         var clazz, ctor;
 
-        if ( ! _.isUndefined(prototype.constructor)) {
-            ctor = prototype.constructor;
-            delete prototype.constructor;
+        if ( ! _.isUndefined(proto.constructor)) {
+            ctor = proto.constructor;
+            delete proto.constructor;
         }
 
         clazz = function() {
-            if ( ! initializing && ctor) {
-                ctor.apply(this, _.toArray(arguments));
+            if ( ! initializing) {
+                var defs = this.constructor.defs, name;
+                
+                this.listeners = {};
+
+                // reset defaults
+                for (name in defs) {
+                    this[name] = _.cloneDeep(defs[name]);
+                }
+
+                ctor && ctor.apply(this, _.toArray(arguments));
             }
         }
 
-        clazz.prototype = prototype;
+        // statics
+        clazz.extend = extend;
+        clazz.defs = defs;
+        clazz.version = '1.0.0';
+        clazz.author = 'londomloto';
+
+        // instance
+        clazz.prototype = proto;
         clazz.prototype.constructor = clazz;
         clazz.prototype.superclass = $super.constructor;
 
-        clazz.extend = extend;
+        /**
+         * Register event handler
+         */
+        clazz.prototype.on = function(name, handler) {
+            var me = this, data;
+
+            if (_.isPlainObject(name)) {
+                _.forOwn(name, function(v, k){
+                    me.on(k, v);
+                });
+                return this;
+            }
+            
+            this.listeners[name] = this.listeners[name] || [];
+
+            data = {
+                orig: handler,
+                func: _.bind(handler, this)
+            };
+
+            this.listeners[name].push(data);
+            return this;
+        };
+
+        /**
+         * Unregister event handler
+         */
+        clazz.prototype.off = function(name, handler) {
+            var lsnr = this.listeners[name] || [];
+
+            if (lsnr.length) {
+                if (handler) {
+                    var data = _.find(lsnr, function(d){ return d.orig === handler; });
+                    data && _.pull(this.listeners[name], data);
+                } else {
+                    this.listeners[name] = [];
+                }
+            }
+
+            return this;
+        };
+
+        /**
+         * Execute event handler
+         */
+        clazz.prototype.fire = function(/* name, param1, param2, ...paramN */) {
+            var args = _.toArray(arguments),
+                name = args.shift(),
+                lsnr = this.listeners[name] || [];
+
+            if (lsnr.length) {
+                _.forEach(lsnr, function(data){
+                    (function(data){
+                        data.func();
+                    }(data));
+                });
+            }
+        };
 
         return clazz;
     };

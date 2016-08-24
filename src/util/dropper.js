@@ -1,7 +1,7 @@
 
 (function(){
 
-    Graph.util.Decorator = Graph.lang.Class.extend({
+    Graph.util.Dropper = Graph.extend({
         constructor: function(vector) {
             this.vector = vector;
         }

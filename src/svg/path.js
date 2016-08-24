@@ -2,21 +2,20 @@
 (function(){
 
     Graph.svg.Path = Graph.svg.Vector.extend({
+        attrs: {
+            'stroke': '#000000',
+            'stroke-width': 1,
+            'fill': 'none',
+            'style': '',
+            'class': 'graph-path'
+        },
         constructor: function(d) {
-
-            var attrs = _.extend({
-                'stroke': '#4A4D6E',
-                'stroke-width': '2',
-                'fill': 'none'
+            this.$super('path', {
+                d: Graph.path(d).absolute().toString()
             });
-
-            d = Graph.path(d).absolute().command();
-            
-            _.extend(attrs, {
-                d: d
-            });
-
-            this.$super('path', attrs);
+        },
+        pathinfo: function() {
+            return new Graph.lang.Path(this.attrs.d);
         }
     });
 

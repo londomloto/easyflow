@@ -1,38 +1,105 @@
 
 (function(){
 
+    var guid = 0;
+
     Graph.svg.Vector = Graph.lang.Class.extend({
-        
-        baseClass: '',
-        attrs: {},
 
-        constructor: function(type, attr) {
-            // defaults
-            this.paper = null;
-            this.attrs = {};
-            this.type = type;
+        attrs: {
+            'stroke': '#4A4D6E',
+            'stroke-width': 1,
+            'fill': 'none',
+            'style': '',
+            'class': '' 
+        },
 
-            this.elem = $(document.createElementNS('http://www.w3.org/2000/svg', type));
+        paper: null,
+        type: '',
+        selected: false,
+        transformed: false,
+
+        constructor: function(type, attrs) {
+            
+            this.cached = {
+                clientBBox: null,
+                originBBox: null
+            };
+
+            this.elem = Graph.$(Graph.doc.createElementNS(Graph.XMLNS_SVG, type));
             this.elem.data('vector', this);
 
-            attr = _.extend({ id: 'graph-elem-' + (++Graph.svg.Vector.id) }, attr || {});
+            attrs = _.extend({
+                'id': 'graph-node-' + (++guid)
+            }, this.attrs, attrs || {});
 
-            this.attr(attr);
-            this.addClass('graph-elem' + (this.baseClass ? ' ' + this.baseClass : ''));
-
-            this.decorator = new Graph.util.Decorator(this);
+            this.attr(attrs);
+            
+            this.matrix = new Graph.lang.Matrix();
             this.transformer = new Graph.util.Transformer(this);
+
+            if (this.type != 'svg') {
+                this.transformer.on({
+                    transform: _.bind(function() {
+                        this.transformed = true;
+                    }, this)
+                });
+
+                this.elem.on('click', _.bind(function(e){
+                    e.stopPropagation();
+                    this.select();
+                }, this));
+            }
+        },
+
+        resizable: function(state) {
+            state = _.defaultTo(state, true);
+
+            if (state) {
+                if ( ! this.resizer) {
+                    this.resizer = new Graph.util.Resizer(this);    
+                }
+            } else {
+                if (this.resizer) {
+                    this.resizer.destroy();
+                    this.resizer = null;
+                }
+            }
+
+            return this;
+        },
+
+        draggable: function(config) {
+            var me = this;
+
+            config = _.extend({enabled: true}, config || {})
+
+            if (config.enabled) {
+                if ( ! this.dragger) {
+                    this.dragger = new Graph.util.Dragger(this, config);    
+                    this.dragger.on({
+                        dragstart: function(){
+                            me.fire('dragstart');
+                        },
+                        dragmove: function() {
+                            me.fire('dragmove');
+                        },
+                        dragend: function() {
+                            me.fire('dragend');
+                        }
+                    });
+                }
+            } else {
+                if (this.dragger) {
+                    this.dragger.destroy();
+                    this.dragger = null;
+                }
+            }
+            
+            return this;
         },
 
         node: function() {
             return this.elem[0];
-        },  
-
-        resizable: function() {
-            if ( ! this.resizer) {
-                this.resizer = new Graph.util.Resizer(this);    
-            }
-            return this;
         },
 
         attr: function(name, value) {
@@ -50,90 +117,28 @@
             }
 
             this.attrs[name] = value;
-            this.elem[0].setAttribute(name, value);
-            
+
+            if (name.substring(0, 6) == 'xlink:') {
+                this.elem[0].setAttributeNS(Graph.XMLNS_XLINK, name.substring(6), String(value));
+            } else {
+                this.elem[0].setAttribute(name, String(value));
+            }
+
             return this;
         },
 
-        pathinfo: function() {
-            var a = this.attrs;
-            var p;
-
-            switch(this.type) {
-                case 'path':
-                    p = new Graph.lang.Path(a.d);
-                    break;
-
-                case 'circle':
-                    p = new Graph.lang.Path([
-                        ['M', a.cx, a.cy],
-                        ['m', 0, -a.r],
-                        ['a', a.r, a.r, 0, 1, 1, 0,  2 * a.r],
-                        ['a', a.r, a.r, 0, 1, 1, 0, -2 * a.r],
-                        ['z']
-                    ]);
-                    break;
-
-                case 'rect':
-                case 'image':
-                    if (a.r) {
-                        p = new Graph.lang.Path([
-                            ['M', a.x + a.r, a.y], 
-                            ['l', a.width - a.r * 2, 0], 
-                            ['a', a.r, a.r, 0, 0, 1, a.r, a.r], 
-                            ['l', 0, a.height - a.r * 2], 
-                            ['a', a.r, a.r, 0, 0, 1, -a.r, a.r], 
-                            ['l', a.r * 2 - a.width, 0], 
-                            ['a', a.r, a.r, 0, 0, 1, -a.r, -a.r], 
-                            ['l', 0, a.r * 2 - a.height], 
-                            ['a', a.r, a.r, 0, 0, 1, a.r, -a.r], 
-                            ['z']
-                        ]);
-                    } else {
-                        p = new Graph.lang.Path([
-                            ['M', a.x, a.y], 
-                            ['l', a.width, 0], 
-                            ['l', 0, a.height], 
-                            ['l', -a.width, 0], 
-                            ['z']
-                        ]);    
-                    }
-                    break;
-                case 'g':
-                    var bbox = {};
-                        
-                    try {
-                        bbox = this.elem[0].getBBox();
-                    } catch(e) {
-                        bbox = {
-                            x: this.elem[0].clientLeft,
-                            y: this.elem[0].clientTop,
-                            width: this.elem[0].clientWidth,
-                            height: this.elem[0].clientHeight
-                        };
-                    } finally {
-                        bbox = bbox || {};
-                    }
-                    
-                    p = new Graph.lang.Path([
-                        ['M', bbox.x, bbox.y], 
-                        ['l', bbox.width, 0], 
-                        ['l', 0, bbox.height], 
-                        ['l', -bbox.width, 0], 
-                        ['z']
-                    ]);
-                    break;
+        style: function(name, value) {
+            var me = this;
+            
+            if (_.isPlainObject(name)) {
+                _.forOwn(name, function(v, k){
+                    me.style(k, v);
+                });
+                return this;
             }
 
-            return p;
-        },
-
-        bbox: function() {
-            var path = this.pathinfo(),
-                bbox = path.dimension();
-
-            path = null;
-            return bbox;
+            this.elem.css(name, value);
+            return this;
         },
 
         addClass: function(added) {
@@ -141,7 +146,7 @@
                 _.join(
                     _.uniq(
                         _.concat(
-                            _.split((this.attrs['class'] || ''), ' '),
+                            _.split(this.attrs['class'], ' '),
                             _.split(added, ' ')
                         )
                     ),
@@ -150,6 +155,44 @@
             );
 
             this.attr('class', classes);
+        },
+
+        removeClass: function(removed) {
+            var classes = _.split(this.attrs['class'], ' ');
+
+            _.pullAll(classes, _.split(removed, ' '));
+            this.attr('class', _.join(classes, ' '));
+
+            return this;
+        },
+
+        pathinfo: function() {
+            return new Graph.lang.Path([]);
+        },
+
+        bbox: function(origin) {
+            var path, bbox;
+
+            origin = _.defaultTo(origin, false);
+
+            if (origin) {
+                bbox = this.cached.originBBox;
+                if (this.transformed || ! bbox) {
+                    path = this.pathinfo();
+                    bbox = this.cached.originBBox = path.bbox();
+                    this.transformed = false;
+                }
+            } else {
+                bbox = this.cached.clientBBox;
+                if (this.transformed || ! bbox) {
+                    path = this.pathinfo().transform(this.matrix);
+                    bbox = this.cached.clientBBox = path.bbox();
+                    this.transformed = false;
+                }
+            }
+            
+            path = null;
+            return bbox;
         },
 
         find: function(selector) {
@@ -163,44 +206,52 @@
             return new Graph.svg.Collection(vectors);
         },
 
-        append: function(vector) {
-            if (_.isString(vector)) {
-                vector = new Graph.svg.Vector(vector);
+        render: function(container) {
+            if (container instanceof Graph.svg.Vector) {
+                container.elem.append(this.elem);
+                this.container = container;
+            } else {
+                $(container).append(this.elem);
+                this.container = null;
             }
-            this.elem.append(vector.elem);
+
+            this.fire('render');
             return this;
         },
 
-        render: function(container) {
-            $(container).append(this.elem);
+        remove: function() {
+            this.elem.remove();
         },
 
-        translate: function(x, y) {
-            // this.matrix.translate(x, y);
-            // this.attr('transform', this.matrix.stringify());
+        empty: function() {
+            this.elem.empty();
         },
 
-        rotate: function(angle, cx, cy) {
-            // this.matrix.rotate(angle, cx, cy);
-            // this.attr('transform', this.matrix.stringify());
+        select: function() {
+            this.selected = true;
+            this.resizer && this.resizer.render();
         },
 
-        scale: function(x, y, cx, cy) {
-            // this.matrix.scale(x, y, cx, cy);
-            // this.attr('transform', this.matrix.stringify());
+        deselect: function() {
+            this.selected = false;
+            this.resizer && this.resizer.remove();
         },
 
-        drag: function(config) {
-            /*var me = this;
-            interact(this.elem[0]).draggable({
-                inertia: true,
-                onmove: function(e) {
-                    me.matrix.translate(e.dx, e.dy);
-                    me.attr('transform', me.matrix.stringify());
-                }
-            });*/
+        transform: function(command) {
+            return this.transformer.transform(command);
+        },
+
+        translate: function(dx, dy) {
+            return this.transformer.translate(dx, dy);
+        },
+
+        scale: function(sx, sy, cx, cy) {
+            return this.transformer.scale(sx, sy, cx, cy);
+        },
+
+        rotate: function(deg, cx, cy) {
+            return this.transformer.rotate(deg, cx, cy);
         }
     });
 
-    Graph.svg.Vector.id = 0;
 }());
