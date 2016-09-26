@@ -4,17 +4,19 @@
     Graph.svg.Rect = Graph.svg.Vector.extend({
 
         attrs: {
-            'stroke': '#000000',
-            'stroke-width': 1,
-            'fill': '#ffffff',
+            // 'stroke': '#333333',
+            // 'stroke-width': 1,
+            // 'fill': '#ffffff',
             'style': '',
-            'class': 'graph-rect'
+            // 'shape-rendering': 'crispEdges',
+            'class': 'graph-elem graph-elem-rect'
         },
 
         constructor: function(x, y, width, height, r) {
+            var me = this;
             r = _.defaultTo(r, 0);
 
-            this.$super('rect', {
+            me.$super('rect', {
                 x: _.defaultTo(x, 0),
                 y: _.defaultTo(y, 0),
                 rx: r,
@@ -22,6 +24,8 @@
                 width: _.defaultTo(width, 0),
                 height: _.defaultTo(height, 0)
             });
+            
+            me.origpath = me.pathinfo();
         },
 
         attr: function() {
@@ -37,7 +41,7 @@
             var a = this.attrs;
 
             if (a.r) {
-                return new Graph.lang.Path([
+                return Graph.path([
                     ['M', a.x + a.r, a.y], 
                     ['l', a.width - a.r * 2, 0], 
                     ['a', a.r, a.r, 0, 0, 1, a.r, a.r], 
@@ -50,7 +54,7 @@
                     ['z']
                 ]);
             } else {
-                return new Graph.lang.Path([
+                return Graph.path([
                     ['M', a.x, a.y], 
                     ['l', a.width, 0], 
                     ['l', 0, a.height], 
@@ -58,6 +62,52 @@
                     ['z']
                 ]);
             }
+        },
+        
+        resize: function(sx, sy, cx, cy, dx, dy) {
+            var matrix = this.matrix.clone(),
+                rotate = this.props.rotate;
+
+            var x, y, w, h;
+
+            matrix.scale(sx, sy, cx, cy);
+
+            this.reset();
+
+            x = matrix.x(this.attrs.x, this.attrs.y);
+            y = matrix.y(this.attrs.x, this.attrs.y);
+            w = this.attrs.width  * sx;
+            h = this.attrs.height * sy;
+
+            this.attr({
+                x: x,
+                y: y,
+                width: w,
+                height: h
+            });
+
+            if (rotate) {
+                this.rotate(rotate, x, y).apply();    
+            }
+
+            return {
+                matrix: matrix,
+                translate: {
+                    dx: dx,
+                    dy: dy
+                },
+                scale: {
+                    sx: sx,
+                    sy: sy,
+                    cx: cx,
+                    cy: cy
+                },
+                rotate: {
+                    deg: rotate,
+                    cx: x,
+                    cy: y
+                }
+            };
         }
     });
 

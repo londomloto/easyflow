@@ -1,12 +1,54 @@
 
+//////////////////////////////////////////////////////////////////
+/*
+ * Graph - SVG Library
+ * Documentation visit: https://github.com/londomloto/graph
+ *
+ * @author londomloto <roso.sasongko@gmail.com>
+ * @author londomloto <roso@kct.co.id>
+ */
+//////////////////////////////////////////////////////////////////
+
 /**
  * Lodash polyfill
  */
 (function(){
     var global = this;
 
-    _.int = parseInt;
     _.float = parseFloat;
+
+    _.gcd = function(array) {
+        if (array.length === 2) {
+            var a = array[0], b = array[1], t;
+
+            while (b > 0) {
+                t = b;
+                b = a % b;
+                a = t;
+            }
+
+            return a;
+        } else {
+            var r = array[0], len = array.length, i;
+            for (i = 1; i < len; i++) {
+                r = _.gcd([r, array[i]]);
+            }
+            return r;
+        }
+    };
+
+    _.lcm = function(array) {
+        if (array.length === 2) {
+            var a = array[0], b = array[1];
+            return a * (b / _.gcd([a, b]));
+        } else {
+            var r = array[0], len = array.length, i;
+            for (i = 1; i < len; i++) {
+                r = _.lcm([r, array[i]]);
+            }
+            return r;
+        }
+    };
 
     _.format = function() {
         var params = _.toArray(arguments),
@@ -17,6 +59,56 @@
                 : match;
         });
     }
+
+    _.insert = function(array, index, insert) {
+        Array.prototype.splice.apply(array, [index, 0].concat(insert));
+        return array;
+    };
+
+    /**
+     * Array move (swap)
+     * http://stackoverflow.com/questions/5306680/move-an-array-element-from-one-array-position-to-another/5306832#5306832
+     */
+    _.move = function(array, from, to) {
+        var size = array.length;
+        
+        while(from < 0) {
+            from += size;
+        }
+        
+        while(to < 0) {
+            to += size;
+        }
+
+        if (to >= size) {
+            var k = to - size;
+            while((k--) + 1) {
+                array.push(undefined);
+            }
+        }
+
+        array.splice(to, 0, array.splice(from, 1)[0]);
+        return array;
+    };
+
+    /**
+     * Array permutation
+     * https://github.com/lodash/lodash/issues/1701
+     */
+    _.permute = function(array, permuter) {
+        if(_.isFunction(permuter)) {
+            return _.reduce(array, function(result, value, key){
+                result[permuter(key, value)] = value;
+                return result;
+            }, []);
+        } else if (_.isArray(permuter)) {
+            return _.reduce(permuter, function(result, value, key){
+                result[key] = array[permuter[key]];
+                return result;
+            }, []);
+        }
+        return array;
+    };  
 
     _.isIE = function() {
         var na = global.navigator,
@@ -33,27 +125,83 @@
 /**
  * Graph core
  */
-(function(_){
-    var REGEX_PATH_CMD = /([achlmrqstvz])[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029,]*((-?\d*\.?\d*(?:e[\-+]?\d+)?[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029]*,?[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029]*)+)/ig,
-        REGEX_PATH_VAL = /(-?\d*\.?\d*(?:e[\-+]?\d+)?)[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029]*,?[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029]*/ig,
-        REGEX_TRAN_CMD = /((matrix|translate|rotate|scale|skewX|skewY)\((\-?\d+\.?\d*e?\-?\d*[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029]*,?[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029]*)+\))+/g,
-        REGEX_TRAN_SUB = /[\w\.\-]+/g,
-        GLOBAL = this;
+(function(){
 
-    GLOBAL.Graph = GLOBAL.Graph || {};
+    var REGEX_PATH_STR = /([achlmrqstvz])[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029,]*((-?\d*\.?\d*(?:e[\-+]?\d+)?[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029]*,?[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029]*)+)/ig;
+
+    var REGEX_PATH_VAL = /(-?\d*\.?\d*(?:e[\-+]?\d+)?)[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029]*,?[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029]*/ig;
+
+    var REGEX_TRAN_STR = /((matrix|translate|rotate|scale|skewX|skewY)*\((\-?\d+\.?\d*e?\-?\d*[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029]*,?[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029]*)+\))+/g;
+
+    var REGEX_TRAN_SUB = /[\w\.\-]+/g;
     
-    // declare consts
+    var REGEX_POLY_STR = /(\-?[0-9.]+)\s*,\s*(\-?[0-9.]+)/g;
+
+    var REGEX_PATH_CMD = /,?([achlmqrstvxz]),?/gi;
+    
+    var DOCUMENT = document;
+
+    var GLOBAL = this;
+
+    GLOBAL.Graph = GLOBAL.Graph || function(config) {};
+    
+    Graph.VERSION = '1.0.0';
+    
+    Graph.AUTHOR = 'PT. Kreasindo Cipta Teknologi';
+    
     _.extend(Graph, {
-        XMLNS_SVG: 'http://www.w3.org/2000/svg',
-        XMLNS_XLINK: 'http://www.w3.org/1999/xlink',
-        SVG_VERSION: '1.1'
+        config: {
+            base: 'easyflow/',
+            svg: {
+                version: '1.1'
+            },
+            xmlns: {
+                svg: 'http://www.w3.org/2000/svg',
+                xlink: 'http://www.w3.org/1999/xlink',
+                html: 'http://www.w3.org/1999/xhtml'
+            },
+            font: {
+                family: 'Segoe UI',
+                size: '12px',
+                line: 1
+            }
+        }
     });
 
     _.extend(Graph, {
-        version: '1.0.0',
         cached: {},
+        setup: function(name, value) {
+            if (_.isPlainObject(name)) {
+                _.extend(Graph.config, name);
+            } else {
+                Graph.config[name] = value;
+            }
+        },
+        toString: function() {
+            return 'Graph SVG Library presented by Kreasindo Cipta Teknologi';
+        }
+    });
 
+    _.extend(Graph, {
+        isHTML: function(obj) {
+            return obj instanceof HTMLElement;
+        },
+        isSVG: function(obj) {
+            return obj instanceof SVGElement;
+        },
+        isElement: function(obj) {
+            return obj instanceof Graph.dom.Element;
+        }
+    });
+
+    _.extend(Graph, {
         ns: function(namespace) {
+            var cached = Graph.lookup('Graph', 'ns', namespace);
+
+            if (cached.clazz) {
+                return cached.clazz;
+            }
+
             var parts = _.split(namespace, '.'),
                 parent = GLOBAL,
                 len = parts.length,
@@ -64,6 +212,10 @@
                 current = parts[i];
                 parent[current] = parent[current] || {};
                 parent = parent[current];
+            }
+
+            if (_.isFunction(parent)) {
+                cached.clazz = parent;
             }
 
             return parent;
@@ -88,7 +240,7 @@
                 }
             });
         },
-
+        
         mixin: function(target, source) {
             this.extend(target, source, target);
         },
@@ -107,16 +259,16 @@
                 }
             }
 
-            _.debounce(function(){
+            _.debounce(function(t){
                 _.forOwn(cached, function(v, k){
-                    if (k != token) {
+                    if (k != t) {
                         cached[k].credit--;
-                        if ( ! cached[k]) {
+                        if (cached[k].credit <= 0) {
                             delete cached[k];
                         }
                     }
                 });
-            });
+            })(token);
 
             return cached[token];
         },
@@ -147,17 +299,24 @@
 
                 return cache[token];
             }
-        } 
+        }
     });
 
     /**
-     * Element (jQuery)
+     * Expand namespaces
      */
-    _.extend(Graph, {
-        $: $,
-        doc: document
-    });
-
+    Graph.ns('Graph.lang');
+    Graph.ns('Graph.dom');
+    Graph.ns('Graph.collection');
+    Graph.ns('Graph.svg');
+    Graph.ns('Graph.svg.fn');
+    Graph.ns('Graph.router');
+    Graph.ns('Graph.util');
+    Graph.ns('Graph.plugin');
+    Graph.ns('Graph.shape');
+    Graph.ns('Graph.shape.common');
+    Graph.ns('Graph.shape.activity');
+    
     /**
      * Math
      */
@@ -170,6 +329,65 @@
          */
         rad: function(deg) {
             return deg % 360 * Math.PI / 180;
+        },
+        
+        /**
+         * Angle
+         */
+        angle: function(x1, y1, x2, y2) {
+            var dx = x1 - x2,
+                dy = y1 - y2;
+
+            if ( ! dx && ! dy) {
+                return 0;
+            }
+
+            return (180 + Math.atan2(-dy, -dx) * 180 / Math.PI + 360) % 360;
+        },
+
+        /**
+         * Angle at quadrant
+         */
+        theta: function(x1, y1, x2, y2) {
+            var y = -(y2 - y1),
+                x =   x2 - x1;
+
+            var r, d;
+
+            if (y.toFixed(10) == 0 && x.toFixed(10) == 0) {
+                r = 0;
+            } else {
+                r = Math.atan2(y, x);
+            }
+
+            if (r < 0) {
+                r = 2 * Math.PI + r;
+            }
+
+            d = 180 * r / Math.PI;
+
+            // normalize
+            d = (d % 360) + (d < 0 ? 360 : 0);
+
+            return d;
+        },
+
+        /**
+         * Get hypotenuse (magnitude) of triangle
+         */
+        magnitude: function(a, b) {
+            return Math.sqrt(a * a + b * b);
+        },
+        
+        /**
+         * Get sign of number
+         */
+        sign: function(num) {
+            return num < 0 ? -1 : 1;
+        },
+        
+        quadrant: function(x, y) {
+            return x >= 0 && y >= 0 ? 1 : (x >= 0 && y < 0 ? 4 : (x < 0 && y < 0 ? 3 : 2));
         }
     });
 
@@ -187,8 +405,18 @@
         point: function(x, y) {
             return new Graph.lang.Point(x, y);
         },
-        path: function(paths) {
-            return new Graph.lang.Path(paths);
+        line: function() {
+            var args = _.toArray(arguments);
+            return Graph.factory(Graph.lang.Line, args);
+        },
+        bbox: function(bbox) {
+            return new Graph.lang.BBox(bbox);
+        },
+        path: function(command) {
+            return new Graph.lang.Path(command);
+        },
+        curve: function(command) {
+            return new Graph.lang.Curve(command);
         },
         matrix: function(a, b, c, d, e, f) {
             return new Graph.lang.Matrix(a, b, c, d, e, f);
@@ -200,15 +428,20 @@
      * Vector
      */
     _.extend(Graph, {
-        vector: function(type, attrs) {
-            var vector = new Graph.svg.Vector(type, attrs);
-            return vector;
+        get: function(element) {
+            return Graph.$(element).data('vector');
         },
+        
         paper: function() {
             var args = _.toArray(arguments);
-            args.unshift(Graph.svg.Paper);
-            return new (Function.prototype.bind.apply(Graph.svg.Paper, args));
+            return Graph.factory(Graph.svg.Paper, args);
         },
+
+        page: function() {
+            var args = _.toArray(arguments);
+            return Graph.factory(Graph.shape.Page, args);
+        },
+        
         find: function(selector, context) {
             var elems = Graph.$(selector, context),
                 items = [];
@@ -218,25 +451,84 @@
                 vector && items.push(vector);
             });
 
-            return new Graph.svg.Collection(items);
+            return new Graph.collection.Vector(items);
         },
+
+        polar2point: function(distance, radian, origin) {
+            var x, y, d;
+
+            if (_.isUndefined(origin)) {
+                origin = Graph.point(0, 0);
+            }
+
+            x = Math.abs(distance * Math.cos(radian));
+            y = Math.abs(distance * Math.sin(radian));
+            d = Graph.deg(radian);
+
+            if (d < 90) {
+                y = -y;
+            } else if (d < 180) {
+                x = -x;
+                y = -y;
+            } else if (d < 270) {
+                x = -x;
+            }
+
+            return Graph.point(origin.props.x + x, origin.props.y + y);
+        },
+
+        point2polar: function() {
+            
+        },
+
+        polygon2dots: function(command) {
+            var array = [];
+            command.replace(REGEX_POLY_STR, function($0, x, y){
+                array.push([_.float(x), _.float(y)]);
+            });
+            return array;
+        },
+
+        polygon2path: function(command) {
+            var dots = Graph.polygon2dots(command);
+
+            if ( ! dots.length) {
+                return 'M0,0';
+            }
+            
+            var command = 'M' + dots[0][0] + ',' + dots[0][1];
+
+            for (var i = 1, ii = dots.length; i < ii; i++) {
+                command += 'L' + dots[i][0] + ',' + dots[i][1] + ',';
+            }
+            
+            command  = command.substring(0, command.length - 1);
+            command += 'Z';
+
+            return command;
+        },
+
+        seg2cmd: function(segments) {
+            return _.join(segments, ',').replace(REGEX_PATH_CMD, '$1');
+        },
+
         /**
-         * Convert path command into paths (segments)
+         * Convert path command into segments
          */
-        cmd2path: function(command) {
+        cmd2seg: function(command) {
             if ( ! command) {
                 return null;
             }
 
-            var cached = Graph.lookup('Graph', 'cmd2path', command),
+            var cached = Graph.lookup('Graph', 'cmd2seg', command),
                 sizes = {a: 7, c: 6, h: 1, l: 2, m: 2, r: 4, q: 4, s: 4, t: 2, v: 1, z: 0},
-                paths = [];
+                segments = [];
             
-            if (cached.paths) {
-                return _.cloneDeep(cached.paths);
+            if (cached.segments) {
+                return _.cloneDeep(cached.segments);
             }
 
-            command.replace(REGEX_PATH_CMD, function(match, cmd, val){
+            command.replace(REGEX_PATH_STR, function(match, cmd, val){
                 var 
                     params = [],
                     name = cmd.toLowerCase();
@@ -248,23 +540,23 @@
                 });
 
                 if (name == 'm' && params.length > 2) {
-                    paths.push(_.concat([cmd], params.splice(0, 2)));
+                    segments.push(_.concat([cmd], params.splice(0, 2)));
                     name = 'l';
                     cmd = cmd == 'm' ? 'l' : 'L';
                 }
 
                 if (name == 'r') {
-                    paths.push(_.concat([cmd], params));
+                    segments.push(_.concat([cmd], params));
                 } else while (params.length >= sizes[name]) {
-                    paths.push(_.concat([cmd], params.splice(0, sizes[name])));
+                    segments.push(_.concat([cmd], params.splice(0, sizes[name])));
                     if ( ! sizes[name]) {
                         break;
                     }
                 }
             });
             
-            cached.paths = paths;
-            return paths;
+            cached.segments = segments;
+            return segments;
         },
         cmd2transform: Graph.memoize(function(command) {
             var valid = {
@@ -276,8 +568,10 @@
                 skewY: true
             };
 
+            command += '';
+
             var transform = [],
-                matches = command.match(REGEX_TRAN_CMD);
+                matches = command.match(REGEX_TRAN_STR);
 
             if (matches) {
                 _.forEach(matches, function(sub){
@@ -338,12 +632,20 @@
             return segments;
         },
 
+        /**
+         * Convert line to curve
+         */
         line2curve: function(x1, y1, x2, y2) {
             return [x1, y1, x2, y2, x2, y2];
         },
 
+        /**
+         * Convert quadratic to curve
+         */
         quad2curve: function(x1, y1, ax, ay, x2, y2) {
-            var _13 = 1 / 3, _23 = 2 / 3;
+            var _13 = 1 / 3, 
+                _23 = 2 / 3;
+                
             return [
                 _13 * x1 + _23 * ax,
                 _13 * y1 + _23 * ay,
@@ -456,25 +758,31 @@
                 y = [p1y, p2y],
                 x = [p1x, p2x],
                 dot;
+            
             Math.abs(t1) > "1e12" && (t1 = .5);
             Math.abs(t2) > "1e12" && (t2 = .5);
+
             if (t1 > 0 && t1 < 1) {
                 dot = finddot(p1x, p1y, c1x, c1y, c2x, c2y, p2x, p2y, t1);
                 x.push(dot.x);
                 y.push(dot.y);
             }
+
             if (t2 > 0 && t2 < 1) {
                 dot = finddot(p1x, p1y, c1x, c1y, c2x, c2y, p2x, p2y, t2);
                 x.push(dot.x);
                 y.push(dot.y);
             }
+
             a = (c2y - 2 * c1y + p1y) - (p2y - 2 * c2y + c1y);
             b = 2 * (c1y - p1y) - 2 * (c2y - c1y);
             c = p1y - c1y;
             t1 = (-b + Math.sqrt(b * b - 4 * a * c)) / 2 / a;
             t2 = (-b - Math.sqrt(b * b - 4 * a * c)) / 2 / a;
+            
             Math.abs(t1) > "1e12" && (t1 = .5);
             Math.abs(t2) > "1e12" && (t2 = .5);
+
             if (t1 > 0 && t1 < 1) {
                 dot = finddot(p1x, p1y, c1x, c1y, c2x, c2y, p2x, p2y, t1);
                 x.push(dot.x);
@@ -485,26 +793,24 @@
                 x.push(dot.x);
                 y.push(dot.y);
             }
+            
             return {
                 min: {x: _.min(x), y: _.min(y)},
                 max: {x: _.max(x), y: _.max(y)}
             };
 
-            //////
-            
-            function finddot(p1x, p1y, c1x, c1y, c2x, c2y, p2x, p2y, t) {
-                var t1 = 1 - t;
-                return {
-                    x: Math.pow(t1, 3) * p1x + Math.pow(t1, 2) * 3 * t * c1x + t1 * 3 * t * t * c2x + Math.pow(t, 3) * p2x,
-                    y: Math.pow(t1, 3) * p1y + Math.pow(t1, 2) * 3 * t * c1y + t1 * 3 * t * t * c2y + Math.pow(t, 3) * p2y
-                };
-            }
         })
+
     });
 
-    Graph.ns('Graph.lang');
-    Graph.ns('Graph.svg');
-    Graph.ns('Graph.shape');
-    Graph.ns('Graph.util');
+    ///////// HELPER /////////
+    
+    function finddot(p1x, p1y, c1x, c1y, c2x, c2y, p2x, p2y, t) {
+        var t1 = 1 - t;
+        return {
+            x: Math.pow(t1, 3) * p1x + Math.pow(t1, 2) * 3 * t * c1x + t1 * 3 * t * t * c2x + Math.pow(t, 3) * p2x,
+            y: Math.pow(t1, 3) * p1y + Math.pow(t1, 2) * 3 * t * c1y + t1 * 3 * t * t * c2y + Math.pow(t, 3) * p2y
+        };
+    }
 
-}(_));
+}());

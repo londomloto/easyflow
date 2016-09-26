@@ -13,6 +13,55 @@ body {
     background-color: #4B4F6C;
     color: #fff;
     font-family: "Segoe UI";
+    overflow: hidden;
+}
+
+.e-page {
+    width: 2000px;
+    height: 1000px;
+    position: relative;
+    border-bottom: solid 1px #4A4D6E;
+    background-image: url(grid.png);
+    overflow: hidden;
+}
+
+.e-paper .e-page:last-child {
+    border-bottom: none;
+}
+
+.e-page:before,
+.e-page:after {
+    content: '';
+    display: block;
+    position: absolute;
+}
+
+.e-page:before {
+    width: 1px;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+}
+
+.e-page:before {
+    background-image: linear-gradient(#4A4D6E 30%, rgba(255,255,255,0) 0%);
+    background-position: right;
+    background-size: 1px 3px;
+    background-repeat: repeat-y;
+}
+
+.e-page:after {
+    height: 1px;
+    left: 0;
+    right: 0;
+    top: 50%;
+}
+
+.e-page:after {
+    background-image: linear-gradient(to right, #4A4D6E 30%, rgba(255,255,255,0) 0%);
+    background-position: bottom;
+    background-size: 3px 1px;
+    background-repeat: repeat-x;
 }
 
 .e-bg-cyan {
@@ -159,7 +208,7 @@ body {
 }
 
 .e-paper {
-    background-image: url(grid.png);
+
 }
 
 .e-center {
@@ -167,105 +216,54 @@ body {
     overflow: auto;
 }
 
-/** SHAPE */
-
-.e-shape,
-.e-link {
-    cursor: grab;
+/** stencil */
+.e-stencil {
+    
 }
 
-.e-shape:active,
-.e-link:active {
-    cursor: grabbing;
-}
-
-.e-shape circle,
-.e-shape rect,
-.e-shape polygon,
-.e-shape path {
-    stroke: #30D0C6;
-    stroke-width: 2px;
-    fill: #f4f4f4;
-}
-
-.e-link path {
-    stroke: #30D0C6;
-    stroke-width: 2px;
-    fill: none;
-}
-
-.e-link path.marker-end {
-    fill: #30D0C6;
+.e-stencil-item .graph-elem-line {
+    stroke-width: 2;
     stroke: #30D0C6;
 }
 
-.e-shape text {
-    fill: #4B4F6C;
-    text-anchor: middle;
-    font-size: 12px;
-    font-weight: 700;
+.e-stencil-item .graph-elem-rect,
+.e-stencil-item .graph-elem-polygon {
+    stroke-width: 2;
+    stroke: #30D0C6;
+    fill: rgba(255, 255, 255, 0);
 }
 
-.e-shape.terminal.stop circle.outer {
-    stroke: #FF4081;
-    fill: none;
+.e-stencil-item .graph-elem-rect.full {
+    fill: #FF4081;
+    stroke-width: 0;
 }
 
-.e-shape.terminal.stop circle.inner {
-    stroke: #FF4081;
+.e-stencil-item .graph-elem-circle {
+    stroke-width: 2;
+    stroke: #30D0C6;
+    fill: rgba(255, 255, 255, 0);
+}
+
+.e-stencil-item .graph-elem-circle.full {
     stroke-width: 0;
     fill: #FF4081;
 }
 
-.e-shape.terminal.stop text {
+.e-stencil-item .graph-elem-text {
+    stroke: #fff;
+    stroke-width: 0;
     fill: #fff;
+    font-family: 'Segoe UI';
 }
 
-.e-shape.point circle {
-    fill: #00AAFF;
-    stroke: #ffffff;
-    stroke-width: 2px;
-    filter: drop-shadow(0 0 2px rgba(0,0,0,.3));
+.e-stencil-item:hover .graph-elem,
+.e-stencil-item.graph-selected .graph-elem {
+    stroke: #FF4081;
 }
 
-/*.e-shape.point:hover circle {
-    fill: red;
-    box-shadow: 0 0 4px rgba(0, 0, 0, 1);
-}*/
-
-/** toolbox */
-.e-stencil {
-    padding-left: 15px;
-}
-.e-stencil-item {
-    display: inline-block;
-    width: 80px; 
-    height: 80px;
-    margin: 0 2px 2px 0;
-    cursor: pointer;
-    border-radius: 2px;
-}
-
-.e-stencil-item:hover {
-    background-color: #434665
-}
-
-.e-stencil-item svg {
-    width: 80px;
-    height: 80px;
-}
-
-.e-stencil .e-shape circle,
-.e-stencil .e-shape rect,
-.e-stencil .e-shape polygon,
-.e-stencil .e-shape path {
-    fill: none;
-}
-
-.e-stencil .e-shape text {
-    font-size: 10px;
-    font-weight: 700;
-    fill: #f4f4f4;
+.e-stencil-item:hover .graph-elem-rect.full,
+.e-stencil-item:hover .graph-elem-circle.full {
+    fill: #FF4081;
 }
 
 /** toolbar */

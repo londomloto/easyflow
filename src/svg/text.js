@@ -4,15 +4,22 @@
     Graph.svg.Text = Graph.svg.Vector.extend({
         
         attrs: {
+            // 'stroke': '#000000',
+            // 'stroke-width': .05,
+            // 'fill': '#000000',
+            // 'font-size': '12px',
+            // 'font-family': 'Arial',
             'text-anchor': 'middle',
-            'stroke': 'none',
-            'fill': '#000000',
-            'font-size': '10px',
-            'font-family': 'Arial'
+            'class': 'graph-elem graph-elem-text'
         },  
 
         props: {
-            text: ''
+            text: '',
+            angle: 0,
+            lineHeight: 1,
+            collectable: true,
+            selectable: true,
+            selected: false
         },
 
         rows: [],
@@ -23,25 +30,36 @@
                 y: _.defaultTo(y, 0)
             });
 
-            this.value(text);
-            this.on('render', _.bind(this.refresh, this));
+            this.attr({
+                'font-size': Graph.config.font.size,
+                'font-family': Graph.config.font.family
+            });
+            
+            this.text(text);
+
+            this.on('render', _.bind(this.arrange, this));
         },
 
-        value: function(text) {
+        text: function(text) {
             if (_.isUndefined(text)) {
                 return this.props.text;
             }
 
-            var font = _.int(this.attrs['font-size'], 10) || 10,
+            var font = this.fontSize(),
                 parts = (text || '').split("\n"),
+                doc = Graph.doc(),
                 span;
 
             this.empty();
             this.rows = [];
 
             _.forEach(parts, _.bind(function(t, i){
-                span = Graph.doc.createElementNS(Graph.XMLNS_SVG, 'tspan');
-                span.appendChild(Graph.doc.createTextNode(t));
+                span = doc.createElementNS(Graph.config.xmlns.svg, 'tspan');
+                span.setAttribute('text-anchor', 'middle');
+                span.setAttribute('alignment-baseline', 'center');
+                span.appendChild(doc.createTextNode(t));
+                Graph.$(span).data('vector', this);
+
                 this.rows[i] = span;
                 this.elem.append(span);
             }, this));
@@ -50,52 +68,77 @@
         },
 
         /**
-         * Synchronize position
+         * Arrange position
          */
-        refresh: function() {
+        arrange: function() {
             var rows = this.rows,
-                font = _.int(this.attrs['font-size'], 10) || 10;
+                size = this.fontSize(),
+                line = this.lineHeight(),
+                bbox = this.bbox(false, false).data();
 
             if (rows.length) {
                 for (var i = 0, ii = rows.length; i < ii; i++) {
                     if (i) {
                         rows[i].setAttribute('x', this.attrs.x);
-                        rows[i].setAttribute('dy', font * 1.2);
+                        rows[i].setAttribute('dy', size * line);
                     }
                 }
 
-                var box = this.bbox().value(),
-                    off = this.attrs.y - (box.y + box.height / 2);
+                rows[0].setAttribute('dy', 0);
 
-                if (off) {
-                    rows[0].setAttribute('dy', off);
-                }
+                // var box = this.bbox().data(),
+                //     off = this.attrs.y - (box.y + box.height / 2);
+
+                // if (off) {
+                //     rows[0].setAttribute('dy', off);    
+                // }
+                
             }
         },
-        
-        pathinfo: function() {
-            var bbox = {};
-                     
-            try {
-                bbox = this.elem[0].getBBox();
-            } catch(e) {
-                bbox = {
-                    x: this.elem[0].clientLeft,
-                    y: this.elem[0].clientTop,
-                    width: this.elem[0].clientWidth,
-                    height: this.elem[0].clientHeight
-                };
-            } finally {
-                bbox = bbox || {};
+
+        center: function(target) {
+            if (target) {
+                var targetBox = target.bbox(false, false).data(),
+                    matrix = this.matrix.data();
+
+                var textBox, dx, dy, cx, cy;
+
+                this.reset();
+
+                textBox = this.bbox(false, false).data();   
+
+                dx = targetBox.width / 2;
+                dy = targetBox.height / 2;
+                cx = textBox.x + textBox.width / 2;
+                cy = textBox.y + textBox.height / 2;
+
+                if (matrix.rotate) {
+                    this.translate(dx, dy).rotate(matrix.rotate).apply();
+                } else {
+                    this.translate(dx, dy).apply();
+                }
+
             }
-            
+        },
+
+        pathinfo: function() {
+            var size = this.dimension();
+
             return new Graph.lang.Path([
-                ['M', bbox.x, bbox.y], 
-                ['l', bbox.width, 0], 
-                ['l', 0, bbox.height], 
-                ['l', -bbox.width, 0], 
+                ['M', size.x, size.y], 
+                ['l', size.width, 0], 
+                ['l', 0, size.height], 
+                ['l', -size.width, 0], 
                 ['z']
             ]);
+        },
+
+        fontSize: function() {
+            return _.parseInt(this.attrs['font-size']);
+        },
+
+        lineHeight: function() {
+            return this.props.lineHeight;
         },
 
         toString: function() {
