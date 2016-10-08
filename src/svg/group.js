@@ -1,18 +1,19 @@
 
 (function(){
 
-    Graph.svg.Group = Graph.svg.Vector.extend({
+    Graph.svg.Group = Graph.extend(Graph.svg.Vector, {
 
         attrs: {
-            'class': 'graph-elem graph-elem-group'
+            'class': Graph.string.CLS_VECTOR_GROUP
         },
         
         constructor: function(x, y) {
-            this.$super('g');
+            // this.$super('g');
+            this.superclass.prototype.constructor.call(this, 'g');
 
             if ( ! _.isUndefined(x) && ! _.isUndefined(y)) {
-                this.matrix.translate(x, y);
-                this.attr('transform', this.matrix.toString());
+                this.graph.matrix.translate(x, y);
+                this.attr('transform', this.graph.matrix.toString());
             }
         },
 
@@ -26,8 +27,18 @@
                 ['l', -size.width, 0], 
                 ['z']
             ]);
+        },
+
+        toString: function() {
+            return 'Graph.svg.Group';
         }
         
     });
+
+    ///////// STATIC /////////
+    
+    Graph.svg.Group.toString = function() {
+        return 'function(x, y)';
+    };
 
 }());

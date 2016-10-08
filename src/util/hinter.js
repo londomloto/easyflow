@@ -21,27 +21,38 @@
             C: []
         },
 
-        constructor: function() {
-            var me = this, comp = this.components;
+        paper: null,
+        rendered: false,
 
-            comp.G = new Graph.svg.Group();
-            comp.G.addClass('graph-util-hinter');
-            comp.G.removeClass('graph-elem graph-elem-group');
-
-            comp.H = new Graph.svg.Line(0, 0, 0, 0);
-            comp.H.attr('shape-rendering', 'crispEdges');
-            comp.H.removeClass('graph-elem graph-elem-line');
-            comp.H.render(comp.G);
-
-            comp.V = new Graph.svg.Line(0, 0, 0, 0);
-            comp.V.attr('shape-rendering', 'crispEdges');
-            comp.V.removeClass('graph-elem graph-elem-line');
-            comp.V.render(comp.G);
+        constructor: function(paper) {
+            this.paper = paper;
+            this.initComponent();
         },
 
-        render: function(canvas) {
-            this.canvas = canvas;
-            this.canvas.append(this.components.G);
+        initComponent: function() {
+            var me = this, 
+                comp = me.components;
+
+            comp.G = (new Graph.svg.Group())
+                .addClass('graph-util-hinter')
+                .removeClass('graph-elem graph-elem-group')
+                .traversable(false)
+                .selectable(false);
+
+            comp.H = (new Graph.svg.Line(0, 0, 0, 0))
+                .removeClass('graph-elem graph-elem-line')
+                .render(comp.G);
+
+            comp.V = (new Graph.svg.Line(0, 0, 0, 0))
+                .removeClass('graph-elem graph-elem-line')
+                .render(comp.G);
+        },
+
+        render: function() {
+            if ( ! this.rendered) {
+                this.rendered = true;
+                this.components.G.render(this.paper);
+            }
         },
 
         suspend: function(bearing) {
@@ -55,7 +66,7 @@
         register: function(vector) {
             var me = this,
                 id = vector.id(),
-                box = vector.bbox(false, false).data();
+                box = vector.bbox().data();
 
             me.collection[id] = {
                 vector: vector,
@@ -90,11 +101,17 @@
             var me = this,
                 id = vector.id();
 
+            if ( ! this.rendered) {
+                this.render();
+            } else {
+                this.paper.elem.append(this.components.G.elem);
+            }
+
             // bring to front;
-            me.canvas.elem.append(me.components.G.elem);
+            // me.paper.elem.append(me.components.G.elem);
             
             if (me.collection[id].dirty) {
-                var box = vector.bbox(false, false).data();
+                var box = vector.bbox().data();
                 me.collection[id].vertices = {
                     M: [
                         Math.round(box.x, 2),
@@ -121,7 +138,7 @@
             _.forEach(me.collection, function(col, id){
                 if (col.vector !== vector) {
                     if (col.dirty) {
-                        var box = col.vector.bbox(false, false).data();
+                        var box = col.vector.bbox().data();
                         col.vertices = {
                             M: [
                                 Math.round(box.x, 2),
@@ -216,6 +233,7 @@
         deactivate: function() {
             this.suspend('H');
             this.suspend('V');
+            this.components.G.elem.detach();
 
             this.components.H.attr({
                 x1: 0,
@@ -236,6 +254,7 @@
 
             this.targets.M = [];
             this.targets.C = [];
+            
         }
     });
 

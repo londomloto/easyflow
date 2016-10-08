@@ -84,8 +84,8 @@
             for (var i = 0; i < LG_N; i++) {
                 var ct = h * LG_T[i] + h,
 
-                    xb = poly(ct, x1, x2, x3, x4),
-                    yb = poly(ct, y1, y2, y3, y4),
+                    xb = polynom(ct, x1, x2, x3, x4),
+                    yb = polynom(ct, y1, y2, y3, y4),
                     co = xb * xb + yb * yb;
 
                 sum += LG_C[i] * Math.sqrt(co);
@@ -187,24 +187,44 @@
         clone: function() {
             var segments = _.cloneDeep(this.segments);
             return new Graph.lang.Curve(segments);
+        },
+
+        toString: function() {
+            return Graph.seg2cmd(this.segments);
         }
     });
 
     ///////// HELPER /////////
             
-    function poly(t, n1, n2, n3, n4) {
+    function polynom(t, n1, n2, n3, n4) {
         var t1 = -3 * n1 + 9 * n2 -  9 * n3 + 3 * n4,
             t2 =  t * t1 + 6 * n1 - 12 * n2 + 6 * n3;
         return t * t2 - 3 * n1 + 3 * n2;
     }
 
     function intersection(curve1, curve2, number) {
+
+        var cached = Graph.lookup('Graph.lang.Curve', 'intersection', curve1.toString(), curve2.toString());
+
+        if (number) {
+            if (cached.intersectnum) {
+                return cached.intersectnum;
+            }
+        } else {
+            if (cached.intersection) {
+                return cached.intersection;
+            }
+        }
+
         var box1 = curve1.bbox(),
             box2 = curve2.bbox(),
-            result = number ? 0 : [];
+            nres = 0,
+            ares = [];
 
         if ( ! box1.intersect(box2)) {
-            return result;
+            cached.intersectnum = 0;
+            cached.intersection = [];
+            return number ? 0 : [];
         }
 
         var l1 = curve1.length(),
@@ -254,20 +274,33 @@
                         t2 = dj.t + Math.abs((is.props[cj] - dj[cj]) / (dj1[cj] - dj[cj])) * (dj1.t - dj.t);
                     
                     if (t1 >= 0 && t1 <= 1.001 && t2 >= 0 && t2 <= 1.001) {
-                        if (number) {
-                            result++;
-                        } else {
-                            is.props.t1 = Math.min(t1, 1);
-                            is.props.t2 = Math.min(t2, 1);
-                            result.push(is);
-                        }
+                        is.props.t1 = Math.min(t1, 1);
+                        is.props.t2 = Math.min(t2, 1);
+
+                        nres++;
+                        ares.push(is);
                     }
                 }
 
             }
         }
 
-        return result;
+        cached.intersectnum = nres;
+        cached.intersection = ares;
+
+        return number ? nres : ares;
     }
+
+    ///////// STATIC /////////
+    
+    Graph.lang.Curve.toString = function() {
+        return "function(command)";
+    };  
+
+    ///////// SHORTCUT /////////
+    
+    Graph.curve = function(command) {
+        return new Graph.lang.Curve(command);
+    };
 
 }());

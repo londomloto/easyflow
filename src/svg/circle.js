@@ -1,25 +1,31 @@
 
 (function(){
 
-    Graph.svg.Circle = Graph.svg.Vector.extend({
+    Graph.svg.Circle = Graph.extend(Graph.svg.Vector, {
 
         attrs: {
             // 'stroke': '#696B8A',
             // 'stroke-width': 1,
             // 'fill': '#ffffff',
             'style': '',
-            'class': 'graph-elem graph-elem-circle'
+            'class': Graph.string.CLS_VECTOR_CIRCLE
         },
         
         constructor: function(cx, cy, r) {
             var me = this;
+            
+            // me.$super('circle', {
+            //     cx: cx,
+            //     cy: cy,
+            //     r: r
+            // });
 
-            me.$super('circle', {
+            me.superclass.prototype.constructor.call(me, 'circle', {
                 cx: cx,
                 cy: cy,
                 r: r
             });
-
+            
         },
 
         pathinfo: function() {
@@ -35,7 +41,7 @@
         },
         
         resize: function(sx, sy, cx, cy, dx, dy) {
-            var matrix = this.matrix.clone(),
+            var matrix = this.graph.matrix.clone(),
                 rotate = this.props.rotate,
                 ax = this.attrs.cx,
                 ay = this.attrs.cy,
@@ -92,7 +98,17 @@
                     cy: y
                 }
             };
+        },
+
+        toString: function() {
+            return 'Graph.svg.Circle';
         }
     });
+
+    ///////// STATIC /////////
+    
+    Graph.svg.Circle.toString = function() {
+        return "function(cx, cy, r)";
+    };  
 
 }());

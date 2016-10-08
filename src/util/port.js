@@ -1,9 +1,7 @@
 
 (function(){
 
-    var guid = 0;
-
-    Graph.util.Port = Graph.extend({
+    var Port = Graph.util.Port = Graph.extend({
 
         props: {
             id: null,
@@ -12,22 +10,16 @@
             width: 10,
             height: 10,
             segment: 0,
-            weight: 0
+            weight: 0,
+            connected: false
         },
         
-        vector: null,
-        canvas: null,
         network: null,
 
         components: {
             port: null,
             slot: null,
             core: null
-        },
-
-        snapping: {
-            x: 0,
-            y: 0
         },
 
         connection: {
@@ -37,10 +29,12 @@
 
         links: [],
 
+        dragLink: null,
+
         constructor: function(x, y, options) {
             
             options = _.extend({
-                id: 'P' + (++guid),
+                id: 'P' + (++Port.guid),
                 x: _.defaultTo(x, 0),
                 y: _.defaultTo(y, 0)
             }, options || {});
@@ -55,66 +49,65 @@
                 comp = me.components, 
                 prop = me.props;
 
-            comp.port = new Graph.svg.Group();
-            comp.port.addClass('graph-util-port');
-            comp.port.removeClass('graph-elem graph-elem-group');
+            comp.port = (new Graph.svg.Group())
+                .addClass('graph-util-port')
+                .removeClass(Graph.string.CLS_VECTOR_GROUP);
+
             comp.port.on({
                 render: _.bind(me.onPortRender, me)
             });
 
-            comp.slot = comp.port.append(new Graph.svg.Ellipse(
-                prop.x,
-                prop.y,
-                prop.width,
-                prop.height
-            ));
+            comp.slot = (new Graph.svg.Ellipse(prop.x, prop.y, prop.width, prop.height))
+                .addClass('graph-util-port-slot')
+                .removeClass(Graph.string.CLS_VECTOR_ELLIPSE);
 
-            comp.slot.elem.data('port', me);
-
-            comp.slot.addClass('graph-util-port-slot');
-            comp.slot.removeClass('graph-elem graph-elem-ellipse');
-
-            comp.slot.elem.on({
-                click: function(e) {
-                    me.fire('click', e, me);
-                    e.stopPropagation();
-                }
-            });
-
-            comp.core = comp.port.append(new Graph.svg.Ellipse(
-                prop.x,
-                prop.y,
-                2,
-                2
-            ));
-
-            comp.core.addClass('graph-util-port-core');
-            comp.core.removeClass('graph-elem graph-elem-ellipse');
-            comp.core.attr({
-                'pointer-events': 'none'
-            });
-
-            comp.core.elem.on({
-                click: function(e) {
-                    e.stopPropagation();
-                }
-            });
+            comp.core = (new Graph.svg.Ellipse(prop.x, prop.y, 2, 2))
+                .addClass('graph-util-port-core')
+                .removeClass(Graph.string.CLS_VECTOR_ELLIPSE)
+                .clickable(false);
 
             for(var name in comp) {
-                comp[name].selectable(false);
-                comp[name].collectable(false);
-            }
+                comp[name].props.selectable = false;
+                comp[name].props.traversable = false;
+                comp[name].elem.data(Graph.string.ID_PORT, prop.id);
+                comp[name].elem.group('graph-util-port');
 
+                if (name != 'port') {
+                    comp[name].render(comp.port);
+                }
+            }
         },
 
         component: function() {
             return this.components.port;
         },
 
+        connected: function(state) {
+            if (_.isUndefined(state)) {
+                return this.props.connected;
+            }
+            this.props.connected = state;
+            return this;
+        },
+
+        vector: function() {
+            return this.network.vector;
+        },
+
         render: function() {
-            var network = this.network;
-            this.canvas = network.canvas;
-            this.components.port.render(network.components.block);
+            var me = this, network = me.network;
+
+            me.components.port.render(network.component());
+
+            network.on({
+                suspend: function() {
+                    if (network.$dropready) {
+                        console.log('dropready_false');
+                        network.$dropready = false;
+                    }
+                }
+            });
+
         },
 
         data: function(name, value) {
@@ -152,19 +145,18 @@
         },
         
         location: function() {
-            return new Graph.lang.Point(this.props.x, this.props.y);
+            return Graph.point(this.props.x, this.props.y);
         },
 
         offset: function() {
-            var offset = {
-                left: this.props.x,
-                top: this.props.y
-            };
+            var poffset = this.vector().paper().elem.position()
+                offset = {
+                    left: this.props.x,
+                    top: this.props.y
+                };
 
-            var pcanvas = this.canvas.elem.position();
-
-            offset.left += pcanvas.left;
-            offset.top  += pcanvas.top;
+            offset.left += poffset.left;
+            offset.top  += poffset.top;
 
             return offset;
         },
@@ -180,36 +172,43 @@
         setup: function() {
             var me = this,
                 comp = me.components,
-                prop = me.props,
-                linker = me.canvas.linker;
+                prop = me.props;
 
             if (me.draggable) {
                 return;
             }
 
-            me.draggable = interact(comp.slot.node()).draggable({
+            me.draggable = comp.slot.interactable().draggable({
                 manualStart: true,
                 inertia: false,
+
                 snap: {
                     targets: [
                         interact.createSnapGrid({x: 1, y: 1})
                     ]
                 },
                 onstart: function(e) {
-                    linker.source(me);
+                    
+                    /*linker.source(me);
 
                     me.connection.connecting = true;
                     me.draggable.setOptions('snap', {
                         targets: [
                             interact.createSnapGrid({x: 1, y: 1})
                         ]
-                    });
+                    });*/
                     
                 },
                 onmove: function(e) {
-                    linker.expandBy(e.dx, e.dy);
+                    if (me.dragLink) {
+                        me.dragLink.dragging(e.dx, e.dy);
+                    }
+                    // linker.expandBy(e.dx, e.dy);
                 },
                 onend: function(e) {
+                    if (me.dragLink) {
+                        me.dragLink.stopDragging();
+                    }
                     /*if (me.connection.connecting && ! me.connection.valid) {
                         linker.revert();
                     }*/
@@ -218,30 +217,58 @@
 
             me.draggable.styleCursor(false);
 
+            var dropel = comp.slot.node(),
+                paper = this.vector().paper();
+
             me.draggable.on({
                 move: function(e) {
-                    var i = e.interaction;
+                    var i = e.interaction, dragel;
 
-                    if (i.pointerIsDown && ! i.interacting() && e.currentTarget === comp.slot.node()) {
-                        linker.resume();
-                        i.start({name: 'drag'}, e.interactable, linker.pointer().node());    
+                    if (i.pointerIsDown && e.currentTarget === dropel) {
+                        if ( ! i.interacting()) {
+
+                            if ( ! me.dragLink) {
+                                me.dragLink = paper.link(me, me);
+                                me.dragLink.render();
+                            }
+
+                            me.dragLink.startDragging('head', i);
+                            
+                            dragel = me.dragLink.components.head.node();
+                            i.start({name: 'drag'}, e.interactable, dragel);
+                        }
                     }
                 }
             });
 
-            // droppable
-            me.droppable = interact(comp.slot.node()).dropzone({
+            me.droppable = comp.slot.interactable().dropzone({
                 overlap: .2,
-                accept: '.graph-util-linker-point'
+                accept: '.graph-util-link-head, .graph-util-link-tail'
             });
 
             me.droppable.on({
-                dropactivate: _.bind(me.onLinkerActivate, me),
-                dropdeactivate: _.bind(me.onLinkerDeactivate, me),
-                dragenter: _.bind(me.onLinkerEnter, me),
-                dragleave: _.bind(me.onLinkerLeave, me),
-                drop: _.bind(me.onLinkerDrop, me)
+                dropactivate: _.bind(me.onLinkActivate, me),
+                dropdeactivate: _.bind(me.onLinkDeactivate, me),
+                dragenter: _.bind(me.onLinkEnter, me),
+                dragleave: _.bind(me.onLinkLeave, me),
+                drop: _.bind(me.onLinkDrop, me)
             });
+
+            // droppable
+            /*me.droppable = comp.slot.interactable().dropzone({
+                overlap: .2,
+                accept: '.graph-util-linker-point',
+                manualStart: true
+            });
+            
+            me.droppable.on({
+                dropactivate: _.bind(me.onLinkActivate, me),
+                dropdeactivate: _.bind(me.onLinkDeactivate, me),
+                dragenter: _.bind(me.onLinkEnter, me),
+                dragleave: _.bind(me.onLinkLeave, me),
+                drop: _.bind(me.onLinkDrop, me)
+            });*/
+            
         },
 
         translate: function(dx, dy) {
@@ -279,7 +306,7 @@
             this.translate(x, y);
         },
 
-        addLink: function(link) {
+        connectLink: function(link) {
             var index = this.links.indexOf(link);
             if (index > -1) {
                 this.links.splice(index, 1);
@@ -288,7 +315,7 @@
             return this;
         },
 
-        removeLink: function(link) {
+        disconnectLink: function(link) {
             var index = this.links.indexOf(link);
             if (index > -1) {
                 this.links.splice(index, 1);
@@ -309,7 +336,7 @@
             this.setup();
         },
 
-        onLinkerActivate: function(e) {
+        onLinkActivate: function(e) {
             /*var port = Graph.$(e.target).data('port');
             console.log(port.network != this.network);
             if (port.network != this.network) {
@@ -319,56 +346,78 @@
             }*/
         },
 
-        onLinkerDeactivate: function(e) {
-            var port = Graph.$(e.target).data('port');
-            port.components.port.removeClass('drop-active');
+        onLinkDeactivate: function(e) {
+            var el = Graph.$(e.target), id;
+            if ((id = el.data(Graph.string.ID_PORT))) {
+                
+            }
+            // var port = Graph.$(e.target).data('port');
+            // port.components.port.removeClass('drop-active');
         },
 
-        onLinkerEnter: function(e) {
-            var me = this, 
-                snap = me.snapping, 
-                linker = me.canvas.linker;
+        onLinkEnter: function(e) {
+            var me = this,
+                link = Graph.manager.link.get(e.relatedTarget);
 
-            var offset;
+            if (link) {
+                var source = link.ports.source,
+                    target = link.ports.target;
 
-            if (linker.ports.source !== me) {
-                offset = me.offset();
+                if (source !== me && target !== me) {
+                    var offset = me.offset(),
+                        snap = {
+                            x: offset.left,
+                            y: offset.top
+                        };
 
-                snap.x = offset.left;
-                snap.y = offset.top;
-                snap.range = Infinity;
+                    e.draggable.setOptions('snap', {
+                        targets: [snap],
+                        endOnly: true
+                    });
 
-                e.draggable.setOptions('snap', {
-                    targets: [
-                        snap
-                    ],
-                    endOnly: true
-                });
-
-                me.connection.valid = true;
-                me.components.port.addClass('drop-enter');
+                    me.components.port.addClass('drop-enter');
+                }
             }
         },
 
-        onLinkerLeave: function(e) {
-            var me = this, linker = me.canvas.linker;
-            
-            if (linker.ports.source !== me) {
-                me.components.port.removeClass('drop-enter');
-                me.connection.valid = false;
+        onLinkLeave: function(e) {
+            var me = this,
+                link = Graph.manager.link.get(e.relatedTarget);
+
+            if (link) {
+                var source = link.ports.source,
+                    target = link.ports.target;
+
+                if (source !== me && target !== me) {
+                    me.components.port.removeClass('drop-enter');
+                }
             }
         },
 
-        onLinkerDrop: function(e) {
-            var me = this, linker = me.canvas.linker;
+        onLinkDrop: function(e) {
+            var me = this,
+                link = Graph.manager.link.get(e.relatedTarget);
 
-            if (linker.ports.source !== me) {
-                linker.target(me);
-                linker.commit();
-                me.components.port.removeClass('drop-enter');
-                me.connection.connecting = false;
+            if (link) {
+                var source = link.ports.source,
+                    target = link.ports.target;
+
+                if (source !== me && target !== me) {
+                    link.target(me);
+                    link.connect();
+                    me.components.port.removeClass('drop-enter');
+                }
             }
+        },
+
+        toString: function() {
+            return 'Graph.util.Port';
         }
     });
+
+
+    ///////// STATICS /////////
+    
+    Port.guid = 0;
 
 }());

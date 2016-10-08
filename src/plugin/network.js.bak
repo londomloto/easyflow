@@ -1,0 +1,383 @@
+
+(function(){
+
+    Graph.plugin.Network = Graph.extend({
+
+        props: {
+            segments: 4,
+            suspended: true,
+            rendered: false,
+            dragging: false,
+            directed: false,
+            dirty: false
+        },
+
+        cached: {
+            vertices: null
+        },
+
+        components: {
+            block: null
+        },
+
+        ports: [],
+        
+        vector: null,
+
+        constructor: function(vector, options) {
+            var me = this, delay;
+            
+            _.extend(me.props, options || {});
+
+            me.vector = vector;
+            me.vector.addClass('graph-linkable');
+
+            // TODO: check dirty state
+            me.props.dirty = vector.dirty();
+
+            me.initComponent(); 
+
+            /*me.vector.on({    
+                render: function() {
+                    delay = _.delay(function(){
+                        clearTimeout(delay);
+                        me.render();
+                    }, 0);
+                }
+            });
+
+            if (me.vector.props.rendered) {
+                delay = _.delay(function(){
+                    clearTimeout(delay);
+                    me.render();
+                }, 0);
+            }*/
+        },
+
+        initComponent: function() {
+            var me = this, comp = me.components;
+
+            comp.block = new Graph.svg.Group();
+            comp.block.selectable(false);
+            comp.block.traversable(false);
+            comp.block.addClass('graph-network');
+            comp.block.removeClass('graph-elem graph-elem-group');
+            comp.block.elem.group('graph-network');
+            
+            var vertices = me.vertices();
+
+            _.forEach(vertices, function(v, i){
+                var p = me.createPort(v);
+                me.ports.push(p);
+            });
+
+            me.vector.on({
+                dragstart:  _.bind(me.onVectorDragStart, me),
+                dragend:    _.bind(me.onVectorDragEnd, me),
+                select:     _.bind(me.onVectorSelect, me),
+                deselect:   _.bind(me.onVectorDeselect, me),
+                resize:     _.bind(me.onVectorResize, me),
+                pointerin:  _.bind(me.onVectorHover, me),
+                pointerout: _.bind(me.onVectorUnhover, me)
+            });
+
+            me.vector.droppable({
+                accept: '.graph-util-link-head, .graph-util-link-tail'
+            });
+
+            me.vector.on({
+                dropenter: _.bind(me.onLinkEnter, me)
+            });
+
+        },
+
+        directed: function(directed) {
+            if (_.isUndefined(directed)) {
+                return this.props.directed;
+            }
+
+            this.props.directed = directed;
+
+            if (directed) {
+                
+            }
+
+            return this;
+        },
+
+        createPort: function(point) {
+            var matrix = this.vector.matrix(true),
+                x = matrix.x(point.props.x, point.props.y),
+                y = matrix.y(point.props.x, point.props.y);
+
+            var port = new Graph.util.Port(x, y);
+            
+            port.props.weight  = point.weight;
+            port.props.segment = point.segment;
+            port.network = this;
+            
+            return port;
+        },
+
+        render: function() {
+            var me = this, 
+                comp = me.components,
+                vector = me.vector,
+                paper = me.vector.paper();
+
+            if (me.props.rendered) {
+                return;
+            }
+
+            me.props.rendered = true;
+            comp.block.render(paper);
+
+            _.forEach(me.ports, function(p){
+                p.render();
+            });
+            
+            paper.on('pointerdown', function(e){
+                var el = Graph.$(e.target);
+                if ( ! el.belong('graph-network') && ! el.belong('graph-util-port')) {
+                    me.suspend();
+                }
+                el = null;
+            });
+
+        },
+
+        vertices: function() {
+            var me = this, 
+                dirty = me.props.dirty || me.vector.props.dirty,
+                vector = me.vector, 
+                matrix = me.vector.matrix(true),
+                vertices = [];
+
+            var path, width, step, point;
+
+            if (dirty || _.isNull(me.cached.vertices)) {
+                
+                path = vector.pathinfo().transform(vector.graph.matrix);
+
+                switch(me.vector.props.type) {
+                    case 'ellipse':
+                    case 'circle':
+                        width = path.length();
+                        step = width / 8;
+
+                        point = Graph.point(path.segments[1][1], path.segments[1][2]);
+                        point.segment = 0;
+                        point.weight = 0;    
+                        vertices.push(point);
+
+                        for (var i = step; i <= width - step; i += step) {
+                            point = path.pointAt(i);
+                            point.segment = 0;
+                            point.weight = i / width;
+
+                            vertices.push(point);
+                        }
+
+                        break;
+                    default:
+                        _.forEach(path.segments, function(s, i){
+                            var c, l, q, p, n;
+                            if (s[0] != 'M') {
+                                c = Graph.curve([s]);
+                                l = c.length();
+                                q = l / me.props.segments;
+                                for (n = q; n <= l; n +=q) {
+                                    p = c.pointAt(c.t(n));
+                                    p.segment = i;
+                                    p.weight = n / l;
+                                    vertices.push(p);
+                                }
+                            }
+                        });
+                }
+                this.cached.vertices = vertices;
+            }
+            return this.cached.vertices;
+        },
+
+        component: function() {
+            return this.components.block;
+        },
+
+        suspend: function() {
+            this.props.suspended = true;
+
+            if (this.components.block) {
+                this.components.block.elem.detach();
+                // this.components.block.removeClass('visible');    
+                this.fire('suspend');
+            }
+        },
+
+        resume: function() {
+            var paper = this.vector.paper();
+
+            if (this.props.dragging) {
+                return;
+            }
+
+            if (this.vector.props.selected) {
+                return;
+            }
+
+            if ( ! this.props.suspended) {
+                return;
+            }
+
+            this.props.suspended = false;
+
+            if (this.components.block) {
+                if (this.props.rendered) {
+                    paper.elem.append(this.components.block.elem);    
+                } else {
+                    this.render();
+                }
+
+                this.fire('resume');
+            }
+        },
+
+        port: function(index) {
+            if (_.isUndefined(index)) {
+                return this.ports;
+            }
+
+            return this.ports[index];
+        },
+
+        links: function(index) {
+            var me = this, links = [];
+
+            _.forEach(me.ports, function(p){
+                Array.prototype.push.apply(links, p.links);
+            });
+
+            if (_.isUndefined(index)) {
+                return links;
+            }
+
+            return links[index];
+        },
+
+        refresh: function() {
+            
+        },
+
+        toString: function() {
+            return 'Graph.plugin.Network';
+        },
+
+        onVectorHover: function(e) {
+            this.resume();
+        },
+
+        onVectorUnhover: function(e) {
+            var el = Graph.$(e.relatedTarget);
+            if ( ! el.belong('graph-network') && ! el.belong('graph-util-port') && ! el.belong('graph-util-link')) {
+                this.suspend();
+            }
+            el = null;
+        },
+
+        onLinkEnter: function(e) {
+            var dragel = Graph.$(e.relatedTarget), link;
+            if (dragel.belong('graph-util-link')) {
+                this.resume();
+                link = Graph.manager.link.get(dragel);
+                if (link) {
+                    link.drag.dragger.setActiveDrops(dragel.node());
+                }
+            }
+        },
+
+        onVectorDragStart: function() {
+            this.props.dragging = true;
+            this.suspend();
+        },
+
+        onVectorDragEnd: function(e) {
+            var me = this,
+                ro = this.vector.props.rotate;
+
+            var rad, sin, cos, dx, dy;
+
+            if (ro) {
+                rad = Graph.rad(-ro),
+                sin = Math.sin(rad),
+                cos = Math.cos(rad);
+                dx = e.dx *  cos + e.dy * sin;
+                dy = e.dx * -sin + e.dy * cos;
+            } else {
+                dx = e.dx;
+                dy = e.dy;
+            }
+
+            _.forEach(me.ports, function(p){
+                p.translate(dx, dy);
+            });
+
+            me.props.dragging = false;
+            me.resume();
+        },
+
+        onVectorSelect: function() {
+            this.suspend();
+        },
+
+        onVectorDeselect: function() {
+            // this.suspend();
+        },
+
+        onVectorResize: function(e) {
+            var me = this,
+                path = me.vector.pathinfo().transform(me.vector.matrix(true));
+                
+            var current, distance, segment, curve, width, point, width, path;
+
+            switch(me.vector.props.type) {
+                case 'ellipse':
+                case 'circle':
+                    width = path.length();
+
+                    _.forEach(me.ports, function(port){
+                        distance = port.props.weight * width;
+                        point = path.pointAt(distance);
+                        
+                        if (point) {
+                            port.relocate(point.props.x, point.props.y);
+                            point = null;
+                        }
+                    });
+                    break;
+                default:
+                    _.forEach(me.ports, function(port){
+                        segment = path.segments[port.props.segment];
+                        if (segment) {
+                            if (port.props.segment !== current || ! curve) {
+                                curve = Graph.curve([segment]);
+                                width = curve.length();
+                            }
+
+                            distance = width * port.props.weight;
+                            point = curve.pointAt(curve.t(distance));
+                            
+                            if (point) {
+                                port.relocate(point.props.x, point.props.y);
+                                point = null;
+                            }
+                        }
+
+                        current = port.props.segment;
+                    });
+            }
+
+            curve = null;
+        }
+    });
+
+}());

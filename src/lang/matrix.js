@@ -49,7 +49,7 @@
 
             var x, y, z, tmp;
 
-            if (a instanceof Matrix) {
+            if (Graph.isMatrix(a)) {
                 matrix = [
                     [a.props.a, a.props.c, a.props.e], 
                     [a.props.b, a.props.d, a.props.f], 
@@ -113,6 +113,19 @@
         },
 
         rotate: function(angle, cx, cy) {
+            if (angle === undefined) {
+                
+                var px = this.delta(0, 1),
+                    py = this.delta(1, 0),
+                    deg = 180 / Math.PI * Math.atan2(px.y, px.x) - 90,
+                    rad = Graph.rad(deg);
+
+                return {
+                    deg: deg,
+                    rad: rad
+                };
+            }
+
             angle = Graph.rad(angle);
             cx = _.defaultTo(cx, 0);
             cy = _.defaultTo(cy, 0);
@@ -127,7 +140,22 @@
         },
 
         scale: function(sx, sy, cx, cy) {
-            y = _.defaultTo(sy, sx);
+            if (sx === undefined) {
+                var prop = this.props,
+                    sx = Graph.magnitude(prop.a, prop.b),
+                    sy = Graph.magnitude(prop.c, prop.d);
+
+                if (this.determinant() < 0) {
+                    sx = -sx;
+                }
+
+                return {
+                    x: sx,
+                    y: sy
+                };
+            }
+
+            sy = _.defaultTo(sy, sx);
 
             if (cx || cy) {
                 cx = _.defaultTo(cx, 0);
@@ -237,5 +265,22 @@
         }
 
     });
+
+    ///////// STATIC /////////
+    
+    Graph.lang.Matrix.toString = function() {
+        return "function(a, b, c, d, e, f)";
+    };  
+
+    ///////// SHORTCUT /////////
+    
+    Graph.matrix = function(a, b, c, d, e, f) {
+        return new Graph.lang.Matrix(a, b, c, d, e, f);
+    };
+
+    ///////// LANGUAGE CHECK /////////
+    Graph.isMatrix = function(obj) {
+        return obj instanceof Graph.lang.Matrix;
+    };
     
 }());

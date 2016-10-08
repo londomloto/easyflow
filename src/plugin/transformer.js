@@ -2,10 +2,17 @@
 (function(){
 
     Graph.plugin.Transformer = Graph.extend({
+        
+        props: {
+            scale: 1,
+            rotate: 0
+        },
+
         constructor: function(vector) {
             this.actions = [];
             this.vector = vector;
         },
+
         transform: function(command) {
             var me = this, transform = Graph.cmd2transform(command);
 
@@ -82,7 +89,7 @@
                 sx = 1, 
                 sy = 1;
                 
-            var mat = this.vector.matrix.clone();
+            var mat = this.vector.graph.matrix.clone();
             
             _.forEach(actions, function(act){
                 var arg = act.args,
@@ -109,7 +116,7 @@
                     events.translate = true;
                 } else if (cmd == 'rotate') {
                     if (len == 1) {
-                        bb = bb || me.vector.bbox(true, false).data();
+                        bb = bb || me.vector.bbox(true).data();
                         mat.rotate(arg[0], bb.x + bb.width / 2, bb.y + bb.height / 2);
                         deg += arg[0];
                     } else if (len == 3) {
@@ -125,7 +132,7 @@
                     events.rotate = true;
                 } else if (cmd == 'scale') {
                     if (len === 1 || len === 2) {
-                        bb = bb || me.vector.bbox(true, false).data();
+                        bb = bb || me.vector.bbox(true).data();
                         mat.scale(arg[0], arg[len - 1], bb.x + bb.width / 2, bb.y + bb.height / 2);
                         sx *= arg[0];
                         sy *= arg[len - 1];
@@ -146,7 +153,7 @@
                 }
             });
             
-            this.vector.matrix = mat;
+            this.vector.graph.matrix = mat;
             this.vector.attr('transform', mat);
 
             if (events.translate) {
@@ -154,12 +161,14 @@
                     dx: mat.e,
                     dy: mat.f
                 };
+                this.fire('translate', events.translate);
             }
 
             if (events.rotate) {
                 events.rotate = {
                     deg: deg
                 };
+                this.fire('rotate', events.rotate);
             }
 
             if (events.scale) {
@@ -167,10 +176,14 @@
                     sx: sx,
                     sy: sy
                 };
+                this.fire('scale', events.scale);
             }
-
-            this.fire('transform', events, this);
+            
             this.actions = [];
+        },
+
+        toString: function() {
+            return 'Graph.plugin.Transformer';
         }
     });
     

@@ -9,10 +9,16 @@
         },
 
         constructor: function(x, y) {
-            if (_.isUndefined(y)) {
-                var c = _.split(_.trim(x + ''), ',');
-                x = _.toNumber(c[0]);
-                y = _.toNumber(c[1]);
+            var tmp;
+
+            if (_.isPlainObject(x)) {
+                tmp = x;
+                x = tmp.x;
+                y = tmp.y;
+            } else if (_.isString(x)) {
+                tmp = _.split(_.trim(x), ',');
+                x = _.toNumber(tmp[0]);
+                y = _.toNumber(tmp[1]);
             }
 
             this.props.x = x;
@@ -71,6 +77,37 @@
             return new Point(this.props.x - p.props.x, this.props.y - p.props.y);
         },
 
+        alignment: function(p) {
+            var cx = this.props.x,
+                cy = this.props.y,
+                px = p.props.x,
+                py = p.props.y;
+
+            if (Math.abs(cx - px) <= 2) {
+                return 'h';
+            }
+
+            if (Math.abs(cy - py) <= 2) {
+                return 'v';
+            }
+
+            return false;
+        },
+
+        bbox: function() {
+            var x = this.props.x,
+                y = this.props.y;
+                
+            return Graph.bbox({
+                x: x,
+                y: y,
+                x2: x,
+                y2: y,
+                width: 0,
+                height: 0
+            });
+        },
+
         bearing: function(p) {
             var line = new Graph.lang.Line(this, p),
                 bear = line.bearing();
@@ -110,11 +147,41 @@
         },
 
         equals: function(p) {
-            return this.props.x === p.props.x && this.props.y === p.props.y;
+            return this.props.x == p.props.x && this.props.y == p.props.y;
         },
 
+        rotate: function(angle, origin) {
+            var rd = Graph.rad(angle), 
+                dx = this.props.x - (origin ? origin.props.x : 0),
+                dy = this.props.y - (origin ? origin.props.y : 0),
+                si = Math.sin(rd),
+                co = Math.cos(rd);
+
+            var rx = dx *  co + dy * si,
+                ry = dx * -si + dy * co;
+
+            this.props.x = this.props.x + rx;
+            this.props.y = this.props.y + ry;
+
+            return this;
+        },
+
+        transform: function(matrix) {
+            var x = this.props.x,
+                y = this.props.y;
+
+            this.props.x = matrix.x(x, y);
+            this.props.y = matrix.y(x, y);
+
+            return this;
+        },
+
+        comply: function(bbox) {
+
+        },  
+
         adhereToBox: function(box) {
-            if (box.contain(this)) {
+            if (box.contains(this)) {
                 return this;
             }
 
@@ -133,7 +200,7 @@
             return this.stringify();
         },
 
-        serialize: function() {
+        toJson: function() {
             return {
                 x: this.props.x, 
                 y: this.props.y
@@ -145,10 +212,26 @@
         }
     });
 
+    ///////// STATIC /////////
+    Graph.lang.Point.toString = function() {
+        return 'function(x, y)';
+    };
+
     ///////// HELPER /////////
     
     function snap(value, size) {
         return size * Math.round(value / size);
     }
+
+    ///////// SHORTCUT /////////
+    Graph.point = function(x, y) {
+        return new Graph.lang.Point(x, y);
+    };
+
+    ///////// LANGUAGE CHECK /////////
+    
+    Graph.isPoint = function(obj) {
+        return obj instanceof Graph.lang.Point;
+    };
     
 }());

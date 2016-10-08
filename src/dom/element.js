@@ -1,13 +1,28 @@
 
 (function(){
     
+    var REGEX_SVG_BUILDER = /^<(path|tspan|defs|marker)/i;
+
     var E = Graph.dom.Element = function(elem) {
         this.elem = elem instanceof jQuery ? elem : $(elem);
     };
-
+    
     _.extend(E.prototype, {
         node: function() {
             return this.elem[0];
+        },
+        length: function() {
+            return this.elem.length;
+        },
+        group: function(name) {
+            if (_.isUndefined(name)) {
+                return this.elem.data('component-group');
+            }
+            this.elem.data('component-group', name);
+            return this;
+        },
+        belong: function(group) {
+            return this.group() == group;
         },
         attr: function(name, value) {
             var me = this, node = this.elem[0];
@@ -86,6 +101,15 @@
 
             return false;
         },
+        find: function(selector) {
+            return new Graph.dom.Element(this.elem.find(selector));
+        },
+        parent: function() {
+            return new Graph.dom.Element(this.elem.parent());
+        },
+        closest: function(selector) {
+            return new Graph.dom.Element(this.elem.closest(selector));
+        },
         append: function(elem) {
             if (Graph.isElement(elem)) {
                 this.elem.append(elem.elem);
@@ -111,6 +135,15 @@
             }
             return this;
         },
+        remove: function() {
+            this.elem.remove();
+            this.elem = null;
+            return this;
+        },
+        detach: function() {
+            this.elem = this.elem.detach();
+            return this;
+        },
         on: function(types, selector, data, fn, /*INTERNAL*/ one) {
             this.elem.on.call(this.elem, types, selector, data, fn, one);
             return this;
@@ -118,15 +151,33 @@
         off: function(types, selector, fn) {
             this.elem.off.call(this.elem, types, selector, fn);
             return this;
+        },
+        text: function(text) {
+            this.elem.text(text);
+            return this;
+        },
+        html: function(html) {
+            this.elem.html(html);
+            return this;
+        },
+        contextmenu: function(state) {
+            state = _.defaultTo(state, true);
+            if ( ! state) {
+                this.elem.on('contextmenu', function(e){
+                    return false;
+                });
+            }
+        },
+        toString: function() {
+            return 'Graph.dom.Element';
         }
     });
     
     var borrows = [
         'css', 
         'prop', 'data', 
-        'each', 'hover', 'empty', 'remove',
-        'trigger', 'scrollTop', 'scrollLeft', 'html',
-        'text'
+        'each', 'hover', 'empty',
+        'trigger', 'scrollTop', 'scrollLeft'
     ];
 
     _.forEach(borrows, function(method) {
@@ -142,12 +193,13 @@
     /// SHORTHAND ///
 
     Graph.$ = function(selector, context) {
-        return new Graph.dom.Element($(selector, context));
-    };
-
-    Graph.$svg = function(type) {
-        var node = document.createElementNS(Graph.config.xmlns.svg, type);
-        return new Graph.dom.Element($(node));
+        if (_.isString(selector) && /^</.test(selector)) {
+            var builder = selector.match(REGEX_SVG_BUILDER);
+            if (builder) {
+                selector = Graph.doc().createElementNS(Graph.config.xmlns.svg, builder[1]);    
+            }
+        }
+        return new Graph.dom.Element(selector, context);
     };
 
     Graph.doc = function() {

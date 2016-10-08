@@ -1,27 +1,34 @@
 
 (function(){
 
-    Graph.svg.Polygon = Graph.svg.Vector.extend({
+    Graph.svg.Polygon = Graph.extend(Graph.svg.Vector, {
         
         attrs: {
             // 'stroke': '#696B8A',
             // 'stroke-width': 1,
             // 'fill': '#ffffff',
             'style': '',
-            'class': 'graph-elem graph-elem-polygon'
+            'class': Graph.string.CLS_VECTOR_POLYGON
         },
 
         constructor: function(points) {
-            this.$super('polygon', {
+            // this.$super('polygon', {
+            //     points: points
+            // });
+
+            this.superclass.prototype.constructor.call(this, 'polygon', {
                 points: points
             });
-
-            var me = this;
-
         },
 
-        draggable: function(config) {
-            this.$super(config);
+        attr: function(name, value) {
+            if (name == 'points' && _.isArray(value)) {
+                value = _.join(_.map(value, function(p){
+                    return p[0] + ',' + p[1];
+                }), ' ');
+            }
+            
+            return this.superclass.prototype.attr.call(this, name, value); // this.$super(name, value);
         },
 
         pathinfo: function() {
@@ -30,8 +37,8 @@
         },
         
         resize: function(sx, sy, cx, cy, dx, dy) {
-            var matrix = this.matrix.clone(),
-                origin = this.matrix.clone(),
+            var matrix = this.graph.matrix.clone(),
+                origin = this.graph.matrix.clone(),
                 rotate = this.props.rotate,
                 ps = this.pathinfo().segments,
                 dt = [],
@@ -85,7 +92,16 @@
                     cy: ry
                 }
             };
+        },
+        toString: function() {
+            return 'Graph.svg.Polygon';
         }
     });
+
+    ///////// STATIC /////////
+    
+    Graph.svg.Polygon.toString = function() {
+        return 'function(points)';
+    };
 
 }());

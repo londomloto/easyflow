@@ -4,8 +4,10 @@
     Graph.plugin.Dragger = Graph.extend({
         
         props: {
+            vector: null,
             enabled: true,
-            suspended: false,
+            rendered: false,
+            suspended: true,
             inertia: false,
             ghost: false,
             bound: false,
@@ -14,35 +16,39 @@
             hint: false
         },
 
-        rotate: {
+        rotation: {
             deg: 0,
             rad: 0,
             sin: 0,
             cos: 1
         },
 
-        snaps: [
-
-        ],
+        scaling: {
+            x: 1,
+            y: 1
+        },
 
         trans: {
+            vector: null,
+            paper: null,
             dx: 0,
             dy: 0
         },
 
-        vector: null,
-        canvas: null,
-        
         components: {
             holder: null,
             helper: null
         },
 
+        cached: {
+            snapping: null
+        },
+
         constructor: function(vector, options) {
             var me = this;
 
-            me.vector = vector;
-            me.vector.addClass('graph-draggable');
+            vector.addClass('graph-draggable');
+            me.props.vector = vector.guid();
 
             options = _.extend({
                 enabled: true,
@@ -50,44 +56,65 @@
             }, options || {});
 
             _.forEach(['axis', 'grid', 'bbox', 'ghost', 'hint'], function(name){
-                if ( ! _.isUndefined(options[name])) {
+                if (options[name] !== undefined) {
                     me.props[name] = options[name];
                 }
             });
 
-            _.extend(me.props, options);
+            _.assign(me.props, options);
 
-            if (me.vector.rendered) {
+            me.initComponent();
+
+            vector.on({
+                render: _.bind(me.onVectorRender, me)
+            });
+
+            if (vector.props.rendered) {
                 me.setup();
-            } else {
-                me.vector.on({
-                    transform: _.bind(me.onVectorTransform, me),
-                    render: _.bind(me.onVectorRender, me),
-                    reset: _.bind(me.onVectorReset, me)
-                });
             }
+        },
 
+        vector: function() {
+            return Graph.manager.vector.get(this.props.vector);
+        },
+
+        initComponent: function() {
+            var me = this, comp = me.components;
+
+            if (me.props.ghost) {
+                comp.holder = (new Graph.svg.Group())
+                    .addClass('graph-dragger')
+                    .removeClass('graph-elem graph-elem-group')
+                    .traversable(false)
+                    .selectable(false);
+
+                comp.helper = (new Graph.svg.Rect(0, 0, 0, 0, 0))
+                    .addClass('graph-dragger-helper')
+                    .removeClass('graph-elem graph-elem-rect')
+                    .traversable(false)
+                    .selectable(false)
+                    .render(comp.holder);
+            }
         },
 
         setup: function() {
             var me = this, 
-                canvas = me.vector.paper(),
+                vector = me.vector(),
+                paper = vector.paper(),
                 options = {};
 
             if (me.plugin) {
                 return;
             }
 
-            me.canvas = canvas;
-
-            if (canvas.scroller) {
+            if (paper.utils.scroller) {
                 // options.autoScroll = {
-                //     container: canvas.scroller.node()
+                //     container: paper.utils.scroller.node()
                 // };
             }
 
-            if (me.props.hint && canvas.hinter) {
-                canvas.hinter.register(me.vector);
+            if (me.props.hint && paper.utils.hinter) {
+                paper.utils.hinter.register(me.vector);
             }
 
             _.extend(options, {
@@ -97,26 +124,24 @@
                 onend: _.bind(me.onDragEnd, me)
             });
 
-            me.plugin = interact(me.vector.node()).draggable(options);
+            me.plugin = vector.interactable().draggable(options);
             me.plugin.styleCursor(false);
+            me.plugin.on('move', _.bind(me.onPointerMove, me));
 
-            me.plugin.on({
-                down: _.bind(me.onPointerDown, me),
-                move: _.bind(me.onPointerMove, me)
-            });
+            var matrix = vector.matrix(true),
+                rotate = matrix.rotate(),
+                scale = matrix.scale();
 
-            me.dragRotate(me.vector.props.rotate);
+            me.rotate(rotate.deg);
+            me.scale(scale.x, scale.y);
 
-            me.dragSnap({
+            me.snap({
                 mode: 'grid',
                 x: me.props.grid[0],
                 y: me.props.grid[1]
             });
 
             me.plugin.draggable(me.props.enabled);
-
-            me.render();
-            me.suspend();
         },
 
         enable: function() {
@@ -133,60 +158,57 @@
             }
         },
 
+        ghost: function(ghost) {
+            if (ghost === undefined) {
+                return this.props.ghost;
+            }
+            this.props.ghost = ghost;
+            return this;
+        },
+
+        render: function() {
+            var me = this, 
+                comp = me.components,
+                vector = me.vector();
+
+            if ( ! me.props.rendered) {
+                me.props.rendered = true;
+                me.components.holder.render(vector.parent());
+            }
+
+            if (me.props.ghost) {
+                me.redraw();
+            }   
+            
+        },
+
         suspend: function() {
             this.props.suspended = true;
             if (this.components.holder) {
-                this.components.holder.removeClass('visible');
+                this.components.holder.elem.detach();
+                // this.components.holder.removeClass('visible');
             }
         },
 
         resume: function() {
             this.props.suspended = false;
+
             if (this.components.holder) {
-                this.components.holder.addClass('visible');
-            }
-        },
-
-        render: function() {
-            var canvas = this.canvas, // this.vector.paper(),
-                comp = this.components;
-
-            if (this.props.ghost) {
-                if ( ! comp.holder) {
-                    comp.holder = canvas.group();
-                    comp.holder.props.collectable = false;
-                    comp.holder.props.selectable = false;
-                    comp.holder.addClass('graph-dragger').removeClass('graph-elem graph-elem-group');
-                    this.vector.parent().append(comp.holder);
-                }
-
-                if ( ! comp.helper) {
-                    comp.helper = canvas.rect(0, 0, 0, 0);
-                    comp.helper.addClass('graph-dragger-helper').removeClass('graph-elem graph-elem-rect');
-                    comp.helper.props.collectable = false;
-                    comp.helper.props.selectable = false;
-                    comp.holder.append(comp.helper);
-
-                    comp.helper.attr({
-                        'fill': 'transparent',
-                        'stroke': '#333',
-                        'stroke-width': 1,
-                        'stroke-dasharray': '4 3'
-                    });
+                if ( ! this.props.rendered) {
+                    this.render();
+                } else {
+                    this.vector().parent().elem.append(this.components.holder.elem);
+                    this.redraw();
                 }
             }
-
-            this.redraw();
         },
 
         redraw: function() {
             var comp = this.components;
 
-            this.resume();
-
             if (comp.helper) {
-                var vbox = this.vector.bbox(false, false).data(),
-                    hbox = comp.helper.bbox(false, false).data();
+                var vbox = this.vector().bbox().data(),
+                    hbox = comp.helper.bbox().data();
 
                 var dx = vbox.x - hbox.x,
                     dy = vbox.y - hbox.y;
@@ -200,21 +222,34 @@
             }
         },
 
-        dragRotate: function(deg) {
+        rotate: function(deg) {
             var rad = Graph.rad(deg);
-
-            this.rotate.deg = deg;
-            this.rotate.rad = rad;
-            this.rotate.sin = Math.sin(rad);
-            this.rotate.cos = Math.cos(rad);
+            this.rotation.deg = deg;
+            this.rotation.rad = rad;
+            this.rotation.sin = Math.sin(rad);
+            this.rotation.cos = Math.cos(rad);
         },
 
-        dragSnap: function(snap) {
-            var me = this, snaps = me.snaps;
+        scale: function(sx, sy) {
+            sy = _.defaultTo(sy, sx);
+            this.scaling.x = sx;
+            this.scaling.y = sy;
+        },
+
+        snap: function(snap) {
+
+            if (snap === undefined) {
+                return this.cached.snapping;
+            }
+
+            var me = this, snaps = [];
+
+            // save original request
+            this.cached.snapping = snap;
 
             if (_.isArray(snap)) {
                 _.forEach(snap, function(s){
-                    snaps.unshift(fixsnap(s));
+                    snaps.push(fixsnap(s));
                 });
             } else {
                 snaps.push(fixsnap(snap));
@@ -224,7 +259,6 @@
                 this.plugin.setOptions('snap', {
                     targets: snaps
                 });
-                
                 // this.plugin.setOptions('snap', {
                 //     targets: snaps
                 //     relativePoints: [
@@ -245,7 +279,7 @@
                         snap.x = 0;
                     }
                     snap = interact.createSnapGrid({x: snap.x, y: snap.y});
-                } else if (snap.mode == 'anchor') {
+                } else {
                     snap.range = _.defaultTo(snap.range, 20);
                 }
                 return snap;
@@ -255,14 +289,14 @@
         resetSnap: function() {
             this.snaps = [];
 
-            this.dragSnap({
+            this.snap({
                 mode: 'grid',
                 x: this.props.grid[0],
                 y: this.props.grid[1]
             });
         },
 
-        dragBound: function(bound) {
+        bound: function(bound) {
             /*if ( ! this.plugin) {
                 return;
             }
@@ -293,37 +327,28 @@
             this.setup();
         },
 
-        onVectorTransform: function(e) {
-            if (e.rotate) {
-                this.dragRotate(this.rotate.deg + e.rotate.deg);
-            }
-        },
-
-        onVectorReset: function() {
-            this.dragRotate(0);
-        },
-
-        onPointerDown: function(e) {
-            this.fire('pointerdown', e, this);    
-        },
-
         onPointerMove: function(e) {
             var i = e.interaction;
-
             if (this.props.ghost) {
-                if (i.pointerIsDown && ! i.interacting() && e.currentTarget === this.vector.node()) {
-                    if (this.props.suspended) {
-                        this.resume();
-                        this.redraw();
+                if (i.pointerIsDown && ! i.interacting()) {
+                    if (e.currentTarget === this.vector().node()) {
+                        if (this.props.suspended) {
+                            this.resume();
+                        }
+                        i.start({name: 'drag'}, e.interactable, this.components.helper.node());        
                     }
-                    i.start({name: 'drag'}, e.interactable, this.components.helper.node());    
-                }    
+                }
             }
         },
 
         onDragStart: function(e) {
-            this.vector.addClass('dragging');
+            var vector = this.vector(),
+                paper = vector.paper();
 
+            vector.addClass('dragging');
+
+            this.trans.vector = vector;
+            this.trans.paper = paper;
             this.trans.dx = 0;
             this.trans.dy = 0;
 
@@ -333,59 +358,77 @@
                 ghost: this.props.ghost
             };
 
-            if (this.props.hint && this.canvas.hinter) {
-                this.canvas.hinter.activate(this.vector);
+            if (this.props.hint && paper.utils.hinter) {
+                paper.utils.hinter.activate(vector);
             }
 
-            this.fire('dragstart', edata, this);
+            this.fire('dragstart', edata);
         },
 
         onDragMove: function(e) {
-            var axs = this.props.axis,
-                deg = this.rotate.deg,
-                sin = this.rotate.sin,
-                cos = this.rotate.cos;
+            var trans = this.trans,
+                paper = trans.paper,
+                vector = trans.vector,
+                helper = this.components.helper,
+                axs = this.props.axis,
+                deg = this.rotation.deg,
+                sin = this.rotation.sin,
+                cos = this.rotation.cos,
+                scaleX = this.scaling.x,
+                scaleY = this.scaling.y;
+
+            var edx = _.defaultTo(e.dx, 0),
+                edy = _.defaultTo(e.dy, 0);
 
             var dx, dy, hx, hy, tx, ty;
             
             dx = dy = hx = hy = tx = ty = 0;
+                
+            edx /= scaleX;
+            edy /= scaleY;
 
             if (axs == 'x') {
-                dx = hx = e.dx;
+                dx = hx = edx;
                 dy = hy = 0;
 
-                tx = e.dx *  cos + 0 * sin;
-                ty = e.dx * -sin + 0 * cos;
+                tx = edx *  cos + 0 * sin;
+                ty = edx * -sin + 0 * cos;
             } else if (axs == 'y') {
                 dx = hx = 0;
-                dy = hy = e.dy;
+                dy = hy = edy;
 
-                tx = 0 *  cos + e.dy * sin;
-                ty = 0 * -sin + e.dy * cos;
+                tx = 0 *  cos + edy * sin;
+                ty = 0 * -sin + edy * cos;
             } else {
-                hx = e.dx;
-                hy = e.dy;
+                hx = edx;
+                hy = edy;
 
-                dx = tx = e.dx *  cos + e.dy * sin;
-                dy = ty = e.dx * -sin + e.dy * cos;  
+                dx = tx = edx *  cos + edy * sin;
+                dy = ty = edx * -sin + edy * cos;  
             }
 
             this.trans.dx += tx;
             this.trans.dy += ty;
 
-            if (this.props.hint && this.canvas.hinter) {
-                this.canvas.hinter.watch(dx, dy);
+            if (this.props.hint && paper.utils.hinter) {
+                paper.utils.hinter.watch(dx, dy);
             }
 
-            if (this.components.helper) {
-                this.components.helper.translate(hx, hy).apply();
+            if (helper) {
+                helper.translate(hx, hy).apply();
             } else {
-                this.vector.translate(dx, dy).apply(); 
+                vector.translate(dx, dy).apply(); 
             }
-            
+
+            var pgx = _.defaultTo(e.pageX, e.x0),
+                pgy = _.defaultTo(e.pageY, e.y0);
+
+            pgx /= scaleX;
+            pgy /= scaleY;
+
             var edata = {
-                pageX: _.defaultTo(e.pageX, e.x0),
-                pageY: _.defaultTo(e.pageY, e.y0),
+                pageX: pgx,
+                pageY: pgy,
 
                 dx: dx,
                 dy: dy,
@@ -396,35 +439,42 @@
                 ghost: this.props.ghost
             };
 
-            this.fire('dragmove', edata, this);
+            this.fire('dragmove', edata);
         },
 
         onDragEnd: function(e) {
-            var dx = this.trans.dx,
-                dy = this.trans.dy;
-
-            if (this.props.hint && this.canvas.hinter) {
-                this.canvas.hinter.deactivate();
+            var trans = this.trans,
+                paper = trans.paper,
+                vector = trans.vector,
+                helper = this.components.helper,
+                dx = trans.dx,
+                dy = trans.dy;
+                
+            if (this.props.hint && paper.utils.hinter) {
+                paper.utils.hinter.deactivate();
             }
 
-            if (this.components.helper) {
-                this.vector.translate(dx, dy).apply();
+            if (helper) {
+                vector.translate(dx, dy).apply();
                 this.redraw();
                 this.suspend();
             }
 
-            this.vector.removeClass('dragging');
+            vector.removeClass('dragging');
 
             var edata = {
                 dx: dx,
                 dy: dy,
                 ghost: this.props.ghost
             };
-
-            this.fire('dragend', edata, this);
-
+            
+            this.fire('dragend', edata);
+            
+            this.trans.vector = null;
+            this.trans.paper = null;
             this.trans.dx = 0;
             this.trans.dy = 0;
+
         }
     });
 

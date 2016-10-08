@@ -1,247 +1,308 @@
 
 (function(){
 
-    Graph.router.Orthogonal = Graph.extend({
-        
-        canvas: null,
-        source: null,
-        target: null,
+    var R = Graph.router.Router;
 
-        constructor: function(canvas, source, target) {
-            this.canvas = canvas;
-            this.source = source;
-            this.target = target;
-
-            this.opposite = {
-                N: 'S',
-                S: 'N',
-                E: 'W',
-                W: 'E'
-            };
-
-            this.radians = {
-                N: -Math.PI / 2 * 3,
-                S: -Math.PI / 2,
-                E: 0,
-                W: Math.PI
-            };
+    Graph.router.Orthogonal = R.extend({
+        props: {
+            type: 'orthogonal',
+            step: 10,
+            maxLoops: 500,
+            maxAngle: 270,
+            angle: 0,
+            command: 'M 0 0 L 0 0',
+            segments: [['M', 0, 0], ['L', 0, 0]]
         },
+        constructor: function(paper, source, target, options) {
+            var me = this, step;
 
-        bearing: function(from, to) {
-            if (from.props.x == to.props.x) return from.props.y > to.props.y ? 'N' : 'S';
-            if (from.props.y == to.props.y) return from.props.x > to.props.x ? 'W' : 'E';
-            return null;
-        },
+            // me.$super(paper, source, target, options);
+            me.superclass.prototype.constructor.call(me, paper, source, target, options);
 
-        pointbox: function(point) {
-            return new Graph.lang.BBox({
-                x: point.props.x,
-                y: point.props.y,
-                x2: point.props.x,
-                y2: point.props.y,
-                width: 0,
-                height: 0
+            step = me.props.step;
+
+            me.directions = [
+                {dx:  step, dy:  0   , cost: step, angle: null},
+                {dx:  0   , dy:  step, cost: step, angle: null},
+                {dx:  0   , dy: -step, cost: step, angle: null},
+                {dx: -step, dy:  0   , cost: step, angle: null}
+            ];
+
+            _.forEach(me.directions, function(dir){
+                dir.angle = Graph.theta(0, 0, dir.dx, -dir.dy);
             });
-        },
 
-        expandbox: function(box, val) {
-            return box.expand(-val, -val, 2 * val, 2 * val);
-        },
-
-        boundary: function(box1, box2) {
-            var x1, y1, x2, y2;
-
-            box1 = box1.data();
-            box2 = box2.data();
-
-            x1 = Math.min(box1.x, box2.x);
-            y1 = Math.min(box1.y, box2.y);
-            x2 = Math.max(box1.x + box1.width, box2.x + box2.width);
-            y2 = Math.max(box1.y + box1.height, box2.y + box2.height);
-
-            return new Graph.lang.BBox({
-                x: x1,
-                y: y1,
-                x2: x2,
-                y2: y2,
-                width: x2 - x1,
-                height: y2 - y1  
-            });
-        },
-
-        boxsize: function(box, bearing) {
-            var data = box.data();
-            return data[(bearing == 'W' || bearing == 'E') ? 'width' : 'height'];
-        },
-
-        midpoint: function(from, to) {
-            var x = (from.props.x + to.props.x) / 2,
-                y = (from.props.y + to.props.y) / 2;
-            return new Graph.lang.Point(x, y);
-        },
-
-        pick: function(p1, p2, box) {
-            var point = new Graph.lang.Point(p1.props.x, p2.props.y);
-            if (box.contain(point)) {
-                point = new Graph.lang.Point(p2.props.x, p1.props.y);
-            }
-            return point;
-        },
-
-        i2e: function(from, to, fromBox, toBox, bearing) {
-            var me = this,
-                boundary = me.expandbox(me.boundary(fromBox, toBox), 1),
-                reversed = boundary.center().distance(to) > boundary.center().distance(from),
-                start = reversed ? to : from,
-                end = reversed ? from : to,
-                route = {};
-
-            var p1, p2, p3;
-
-            if (bearing) {
-                p1 = Graph.polar2point(boundary.width() + boundary.height(), me.radians[bearing], start);
-                p1 = boundary.pointNearestPoint(p1).move(p1, -1);
-            } else {
-                p1 = boundary.pointNearestPoint(start).move(start, 1);
-            }
-
-            p2 = me.pick(p1, end, boundary);
-
-            if (p1.round().equals(p2.round())) {
-                p2 = Graph.polar2point(boundary.width() + boundary.height(), Graph.rad(p1.theta(start)) + Math.PI / 2, end);
-                p2 = boundary.pointNearestPoint(p2).move(end, 1).round();
-                p3 = me.pick(p1, p2, boundary);
-                route.points = reversed ? [p2, p3, p1] : [p1, p3, p2];
-            } else {
-                route.points = reversed ? [p2, p1] : [p1, p2];
-            }
-
-            route.direction = reversed ? me.bearing(p1, to) : me.bearing(p2, to);
-            return route;
-        },
-
-        e2v: function(from, to, fromBox) {
-            var me = this,
-                po = me.pick(from, to, fromBox);
-            
-            me.canvas.circle(po.props.x, po.props.y, 3).render();
-            
-            return {
-                points: [po],
-                direction: me.bearing(po, to)
+            me.penalties = {
+                  0: 0,
+                 90: step / 2,
+                180: 0,
+                270: step / 2
             };
         },
-
-        e2e: function(from, to, fromBox, toBox) {
+        backtrace: function(parents, point, from, to, patch) {
             var me = this,
-                route = me.e2v(to, from, toBox),
-                p1 = route.points[0];
-            
-            var p2;
+                step = me.props.step,
+                ways = me.directions.length,
+                routes = [],
+                prevdiff = Graph.point(0, 0),
+                current = point,
+                parent;
 
-            if (fromBox.contain(p1)) {
-                route = me.e2v(from, to, fromBox);
-                p2 = route.points[0];
-
-                if (toBox.contain(p2)) {
-                    var fb = from.move(p2, -me.boxsize(fromBox, me.bearing(from, p2)) / 2),
-                        tb = to.move(p1, -me.boxsize(toBox, bearing(to, p1)) / 2),
-                        md = me.midpoint(fb, tb);
-
-                    var sr = me.e2v(from, md, fromBox),
-                        er = me.v2v(md, to, sr.direction);
-
-                    route.points = [sr.points[0], er.points[0]];
-                    route.direction = er.direction;
+            while ((parent = parents[current])) {   
+                var currdiff = parent.difference(current);
+                
+                if ( ! currdiff.equals(prevdiff)) {
+                    routes.unshift(current);
+                    prevdiff = currdiff;
                 }
+
+                current = parent;
             }
 
-            return route;
-        },
+            routes.unshift(current);
 
-        v2v: function(from, to, bearing) {
-            var me = this,
-                p1 = new Graph.lang.Point(from.props.x, to.props.y),
-                p2 = new Graph.lang.Point(to.props.x, from.props.y),
-                d1 = me.bearing(from, p1),
-                d2 = me.bearing(from, p2),
-                ob = me.opposite[bearing];
+            // refine
+            var size = routes.length,
+                maxs = size - 1;
 
-            var po = (d1 == bearing || (d1 != ob && (d2 == ob || d2 != bearing))) ? p1 : p2;
+            var first, last, orient;
 
-            return  {
-                points: [po],
-                direction: me.bearing(po, to)
-            };
-        },
+            if (size >= 2) {
 
-        route: function() {
-            var me = this,
-                sdot = me.source.location().clone(),
-                tdot = me.target.location().clone(),
-                sbox = me.source.vector ? me.source.vector.bbox(false, false).clone() : null,
-                tbox = me.target.vector ? me.target.vector.bbox(false, false).clone() : null,
-                vertices = [],
-                routes = [];
+                first = routes[0];
 
-            var bearing;
+                if ( ! from.equals(first)) {
+                    routes[0].props.x = from.props.x;
+                    routes[0].props.y = from.props.y;
 
-            if (sbox && tbox) {
-                vertices = [
-                    sbox.center(),
-                    sdot,
-                    tdot,
-                    tbox.center()
-                ];
+                    orient = R.dirorient(routes[0], routes[1], ways);
 
-                var vmax = vertices.length - 1;
-                var route, ortho, from, to, i;
+                    if (orient == 'H') {
+                        routes[1].props.y = routes[0].props.y;
+                    } else if (orient == 'V') {
+                        routes[1].props.x = routes[0].props.x;
+                    }
+                }
 
-                for (i = 0; i < vmax; i++) {
-                    route = null;
-                    from = vertices[i];
-                    to = vertices[i + 1];
-                    ortho = !!me.bearing(from, to);
+                last = routes[maxs];
 
-                    if (i === 0) {
-                        if (i + 1 === vmax) {
-                            if (sbox.intersect(me.expandbox(tbox, 1))) {
-                                route = me.i2e(from, to, sbox, tbox);
-                            } else if ( ! ortho) {
-                                route = me.e2e(from, to, sbox, tbox);
-                            }
+                if ( ! to.equals(last)) {
+                    
+                    if (size === 2) {
+                        orient = R.dirorient(routes[maxs - 1], routes[maxs], ways);
+                        if (orient == 'H') {
+                            routes[maxs].props.x = to.props.x;
                         } else {
-                            if (sbox.contain(to)) {
-                                //route = me.i2e(from, to, sbox, me.expandbox(me.pointbox(to), 20));
-                            } else if ( ! ortho) {
-                                route = me.e2v(from, to, sbox);
-                            }
+                            routes[maxs].props.y = to.props.y;
                         }
-                    } else if (i + 1 == vmax) {
-                        var loop = ortho && me.bearing(to, from) == bearing;
-                        if (tbox.contain(from) || loop) {
-                            //route = me.i2e(from, to, me.expandbox(me.pointbox(from), 20), tbox, bearing);
-                        } else if ( ! ortho) {
-                            route = me.v2e(from, to, tbox, bearing);
-                        }
-                    } else if ( ! ortho) {
-                        route = me.v2v(from, to, bearing);
-                    }
-
-                    if (route) {
-                        Array.prototype.push.apply(routes, route.points);
-                        bearing = route.direction;
+                        routes.push(to.clone());
                     } else {
-                        bearing = me.bearing(from, to);
-                    }
+                        routes[maxs].props.x = to.props.x;
+                        routes[maxs].props.y = to.props.y;
 
-                    if (i + 1 < vmax) {
-                        routes.push(to);
-                    }
+                        orient = R.dirorient(routes[maxs - 1], routes[maxs], ways);
 
+                        if (orient == 'H') {
+                            routes[maxs - 1].props.y = routes[maxs].props.y;
+                        } else {
+                            routes[maxs - 1].props.x = routes[maxs].props.x;
+                        }
+                    }
                 }
+                
             }
-            return routes;
+
+            var segments = [];
+
+            if (patch) {
+                segments = me.props.segments;
+
+                if (patch == 'start') { 
+                    segments[0][0] = 'L';
+                    
+                    segments = _.map(routes, function(r){
+                        return ['L', r.props.x, r.props.y];
+                    }).concat(segments);
+
+                    segments[0][0] = 'M';
+                } else {
+                    segments = segments.concat(_.map(routes, function(r){
+                        return ['L', r.props.x, r.props.y];
+                    }));
+                }
+
+                me.props.segments = segments;
+                me.commit();
+                me.tidify();
+
+            } else {
+                segments = _.map(routes, function(p){
+                    return ['L', p.props.x, p.props.y];
+                });
+
+                segments[0][0] = 'M';
+                
+                me.props.segments = segments;
+                me.commit();
+            }
+
+            return me;    
+        },
+
+        fallback: function(from, to, patch) {
+            return this;
+        },
+
+        route: function(from, to, patch) {
+            var me = this,
+                step = me.props.step,
+                ways = me.directions.length,
+                loop = me.props.maxLoops;
+
+            var heap, fpoint, tpoint;
+            
+            heap = new R.util.Heap();
+
+            patch = _.defaultTo(patch, false);
+
+            if ( ! from) {
+                from = me.ports.source.location();
+            }
+
+            if ( ! to) {
+                to = me.ports.target.location();
+            }
+
+            fpoint = from.clone().snap(step, step);
+            tpoint = to.clone().snap(step, step);
+
+            var parents = {},
+                distances = {},
+                srckey = fpoint.toString(),
+                tarkey = tpoint.toString();
+
+            var prevangle, currkey, currpoint, currdist, currangle,
+                nextkey, nextpoint, deltadir, dist, dir, i;
+
+            heap.add(srckey, fpoint.manhattan(tpoint));
+            distances[srckey] = 0;
+
+            while( ! heap.isEmpty() && loop > 0) {
+                
+                currkey   = heap.pop();
+                currpoint = Graph.point(currkey);
+                currdist  = distances[currkey];
+                prevangle = currangle;
+
+                currangle = parents[currkey]
+                    ? R.dirangle(parents[currkey], currpoint, ways)
+                    : (me.props.angle !== null ? me.props.angle : R.dirangle(fpoint, currpoint, ways));
+
+                if (tarkey == currkey) {
+                    me.props.angle = currangle;
+                    return me.backtrace(parents, currpoint, from, to, patch);
+                }
+                
+                for (i = 0; i < ways; i++) {
+                    dir = me.directions[i];
+                    deltadir = R.dirchange(currangle, dir.angle);
+                    
+                    if (deltadir > me.props.maxAngle) {
+                        continue;
+                    }
+
+                    nextpoint = currpoint.clone().expand(dir.dx, dir.dy);
+                    nextkey   = nextpoint.toString();
+
+                    if (heap.isClose(nextkey)) {
+                        continue;
+                    }
+
+                    if (tarkey == nextkey) {
+                        parents[nextkey] = currpoint;
+                        me.props.angle = R.dirangle(currpoint, nextpoint, ways);
+                        return me.backtrace(parents, nextpoint, from, to, patch);
+                    }
+
+                    dist = currdist + dir.cost + me.penalties[deltadir];
+
+                    if ( ! heap.isOpen(nextkey) || dist < distances[nextkey]) {
+                        parents[nextkey] = currpoint;
+                        distances[nextkey] = dist;
+                        heap.add(nextkey, dist + nextpoint.manhattan(tpoint));
+                    }
+                }
+                loop--;
+            }
+
+            heap = null;
+
+            me.fallback(from, to, patch);
+            return me;
+        },
+
+        patch: function() {
+            this.route();
+            return this;
+        },
+
+        tidify: function() {
+            var me = this,
+                ss = this.props.segments, 
+                ws = this.directions.length,
+                rs = [];
+
+            var size, last, prev, curr, cdir, pdir,
+                prnd, crnd, x, y;
+
+            _.forEach(ss, function(s, i){
+                
+                if ( ! rs.length) {
+                    rs.push(s);
+                    x = s[1];
+                    y = s[2];
+                } else {
+                    last = rs.length - 1;
+                    rs.push(s);
+
+                    prev = Graph.point(x, y);
+                    curr = Graph.point(s[1], s[2]);
+
+                    prnd = prev.clone().round();
+                    crnd = curr.clone().round();
+
+                    cdir = R.dirangle(prnd, crnd, ws);
+                    cdir = [0, 180, 360].indexOf(cdir) !== -1 ? 'H' : 'V';
+
+                    if (prnd.equals(crnd)) {
+                        if (rs[last][0] != 'M') {
+                            rs.splice(last, 1);
+                        } else {
+                            rs.pop();
+                        }
+                        cdir = pdir;
+                    } else {
+                        if (cdir == pdir) {
+                            if (rs[last][0] != 'M') {
+                                rs.splice(last, 1);
+                            } else {
+                                rs.pop();
+                            }
+                            cdir = pdir;
+                        }
+                    }
+                    
+                    pdir = cdir;
+
+                    x = s[1];
+                    y = s[2];
+                }
+            });
+
+            this.props.segments = rs;
+            this.commit();
+
+            return this;
         }
     });
 

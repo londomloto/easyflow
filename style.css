@@ -249,7 +249,7 @@ body {
     fill: #FF4081;
 }
 
-.e-stencil-item .graph-elem-text {
+.e-stencil-item .graph-elem-text tspan {
     stroke: #fff;
     stroke-width: 0;
     fill: #fff;
@@ -284,13 +284,13 @@ body {
     text-align: center;
     line-height: 36px;
     font-size: 28px;
-    color: #696B8A;
+    color: #555;
     margin: 0 3px;
 }
 
 .e-toolbar a:hover {
     color: #fff;
-    background-color: #696B8A;
+    background-color: #555;
 }
 .e-toolbar a:active {
     

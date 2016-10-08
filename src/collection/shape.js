@@ -15,7 +15,7 @@
         
         push: function(shape) {
             this.items.push(shape);
-            this.fire('push', shape, this);
+            this.fire('push', {shape: shape});
         },
 
         pop: function() {
@@ -28,7 +28,7 @@
 
         unshift: function(shape) {
             this.items.unshift(shape);
-            this.fire('unshift', shape, this);
+            this.fire('unshift', {shape: shape});
         },
 
         last: function() {
@@ -42,7 +42,15 @@
                     predicate.call(c, c, i);
                 }(c));
             });
+        },
+
+        toString: function() {
+            return 'Graph.collection.Shape';
         }
     });
+
+    Graph.collection.Shape.toString = function() {
+        return 'function(shapes)';
+    };
 
 }());

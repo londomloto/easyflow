@@ -32,31 +32,38 @@
 
             return null;
         },
-        
-        x: function() {
-            return this.props.x;
+
+        pathinfo: function() {
+            var a = this.props;
+
+            return Graph.path([
+                ['M', a.x, a.y], 
+                ['l', a.width, 0], 
+                ['l', 0, a.height], 
+                ['l', -a.width, 0], 
+                ['z']
+            ]);
         },
-        
-        y: function() {
-            return this.props.y;
-        },
-        
+
         origin: function() {
-            return new Graph.lang.Point(this.props.x, this.props.y);
+            var x = this.props.x, 
+                y = this.props.y;
+
+            return Graph.point(x, y);
         },
 
         center: function() {
-            return new Graph.lang.Point(
-                this.props.x + this.props.width / 2,
-                this.props.y + this.props.height / 2
-            );
+            var x = this.props.x + this.props.width / 2,
+                y = this.props.y + this.props.height / 2;
+
+            return Graph.point(x, y);
         },
 
         corner: function() {
-            return new Graph.lang.Point(
-                this.props.x + this.props.width, 
-                this.props.y + this.props.height
-            );
+            var x = this.props.x + this.props.width,
+                y = this.props.y + this.props.height;
+
+            return Graph.point(x, y);
         },
         
         width: function() {
@@ -68,23 +75,24 @@
         },
         
         clone: function() {
-            return new BBox(_.cloneDeep(this.props));
+            var props = _.extend({}, this.props);
+            return new BBox(props);
         },
 
-        contain: function(obj) {
+        contains: function(obj) {
             var contain = true,
                 bbox = this.props,
                 dots = [];
 
             var vbox, papa, mat, dot;
 
-            if (obj instanceof Graph.lang.Point) {
+            if (Graph.isPoint(obj)) {
                 dots = [
                     [obj.props.x, obj.props.y]
                 ];
-            } else if (obj instanceof Graph.svg.Vector) {
+            } else if (Graph.isVector(obj)) {
                 dots = obj.dots(true);
-            } else if (obj instanceof Graph.lang.BBox) {
+            } else if (Graph.isBBox(obj)) {
                 dots = [
                     [obj.props.x, obj.props.y],
                     [obj.props.x2, obj.props.y2]
@@ -114,10 +122,28 @@
         },
 
         expand: function(dx, dy, dw, dh) {
-            this.props.x += _.defaultTo(dx, 0);
-            this.props.y += _.defaultTo(dy, 0);
-            this.props.width  += _.defaultTo(dw, 0);
-            this.props.height += _.defaultTo(dh, 0);
+            var ax, ay;
+            if (_.isUndefined(dy)) {
+                ax = Math.abs(dx);
+                
+                dx = -ax;
+                dy = -ax;
+                dw = 2 * ax;
+                dh = 2 * ax;
+            } else {
+                ax = Math.abs(dx);
+                ay = Math.abs(dy);
+
+                dx = -ax;
+                dy = -ay;
+                dw = 2 * ax;
+                dh = 2 * ay;
+            }
+            
+            this.props.x += dx;
+            this.props.y += dy;
+            this.props.width  += dw;
+            this.props.height += dh;
 
             return this;
         },
@@ -125,17 +151,16 @@
         intersect: function(tbox) {
             var me = this,
                 bdat = me.props,
-                tdat = tbox.data(),
-                func = me.contain;
+                tdat = tbox.data();
 
-            return tbox.contain(bdat.x, bdat.y)
-                || tbox.contain(bdat.x2, bdat.y)
-                || tbox.contain(bdat.x, bdat.y2)
-                || tbox.contain(bdat.x2, bdat.y2)
-                || me.contain(tdat.x, tdat.y)
-                || me.contain(tdat.x2, tdat.y)
-                || me.contain(tdat.x, tdat.y2)
-                || me.contain(tdat.x2, tdat.y2)
+            return tbox.contains(bdat.x, bdat.y)
+                || tbox.contains(bdat.x2, bdat.y)
+                || tbox.contains(bdat.x, bdat.y2)
+                || tbox.contains(bdat.x2, bdat.y2)
+                || me.contains(tdat.x, tdat.y)
+                || me.contains(tdat.x2, tdat.y)
+                || me.contains(tdat.x, tdat.y2)
+                || me.contains(tdat.x2, tdat.y2)
                 || (bdat.x < tdat.x2 && bdat.x > tdat.x || tdat.x < bdat.x2 && tdat.x > bdat.x)
                 && (bdat.y < tdat.y2 && bdat.y > tdat.y || tdat.y < bdat.y2 && tdat.y > bdat.y);
         },
@@ -173,7 +198,7 @@
         },
 
         pointNearestPoint: function(point) {
-            if (this.contain(point)) {
+            if (this.contains(point)) {
                 var side = this.sideNearestPoint(point);
                 switch (side){
                     case 'right': return Graph.point(this.props.x + this.props.width, point.props.y);
@@ -185,5 +210,23 @@
             return point.clone().adhereToBox(this);
         }
     });
+
+    ///////// STATICS /////////
+    
+    Graph.lang.BBox.toString = function() {
+        return 'function(bounds)';
+    };
+
+    ///////// SHORTCUT /////////
+    
+    Graph.bbox = function(bbox) {
+        return new Graph.lang.BBox(bbox);
+    };
+
+    ///////// LANGUAGE CHECK /////////
+    
+    Graph.isBBox = function(obj) {
+        return obj instanceof Graph.lang.BBox;
+    };
 
 }());

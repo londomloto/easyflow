@@ -369,7 +369,7 @@
             function add (element, type, listener, useCapture) {
                 var elementIndex = indexOf(elements, element),
                     target = targets[elementIndex];
-
+                
                 if (!target) {
                     target = {
                         events: {},

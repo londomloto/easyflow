@@ -30,13 +30,17 @@ gulp.task('build', function(cb){
             'src/svg/image.js',
             'src/svg/line.js',
             'src/svg/path.js',
+            'src/svg/polyline.js',
             'src/svg/polygon.js',
             'src/svg/rect.js',
             'src/svg/text.js',
 
             'src/collection/vector.js',
             
-            'src/router/**/*.js',
+            'src/router/router.js',
+            'src/router/manhattan.js',
+            'src/router/orthogonal.js',
+
             'src/util/**/*.js',
             'src/plugin/**/*.js',
             'src/shape/base.js',

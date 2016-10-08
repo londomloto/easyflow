@@ -1,26 +1,23 @@
-
 (function(){
 
     var Path = Graph.lang.Path = Graph.extend({
 
         __CLASS__: 'Graph.lang.Path',
         
-        paths: [],
         segments: [],
 
         constructor: function(command) {
             var segments = [];
             
-            if (command instanceof Path) {
+            if (Graph.isPath(command)) {
                 segments = _.cloneDeep(command.segments);
             } else if (_.isArray(command)) {
-                segments = _.clone(command);
+                segments = _.cloneDeep(command);
             } else {
                 segments = Graph.cmd2seg(command);
             }
 
             this.segments = segments;
-            this.paths = this.segments;
         },
 
         absolute: function() {
@@ -393,7 +390,7 @@
 
         bbox: function(){
             if ( ! this.segments.length) {
-                return new Graph.lang.BBox({x: 0, y: 0, width: 0, height: 0, x2: 0, y2: 0});
+                return Graph.bbox({x: 0, y: 0, width: 0, height: 0, x2: 0, y2: 0});
             }
 
             var cached = Graph.lookup(this.__CLASS__, 'bbox', this.toString());
@@ -431,7 +428,7 @@
                 ymax = _.max(Y),
                 width = xmax - xmin,
                 height = ymax - ymin,
-                bbox = {
+                bounds = {
                     x: xmin,
                     y: ymin,
                     x2: xmax,
@@ -442,7 +439,7 @@
                     cy: ymin + height / 2
                 };
 
-            cached.bbox = new Graph.lang.BBox(bbox);
+            cached.bbox = Graph.bbox(bounds);
             return cached.bbox;
         },
         
@@ -451,7 +448,7 @@
                 return;
             }
 
-            var cached = Graph.lookup(this.__CLASS__, 'transform', this + '', matrix + '');
+            var cached = Graph.lookup(this.__CLASS__, 'transform', this.toString(), matrix.toString());
 
             if (cached.transform) {
                 return cached.transform;
@@ -472,6 +469,10 @@
             
             cached.transform = new Path(segments);
             return cached.transform;
+        },
+
+        lengthAt: function(point) {
+
         },
 
         pointAt: function(length) {
@@ -504,8 +505,40 @@
 
             c = Graph.curve([['M', x, y], s]);
             point = c.pointAt(1);
+
             c = null;
+
             return point;
+        },
+
+        segmentAt: function(length) {
+            var segments = this.curve().segments,
+                index = -1,
+                total = 0;
+            
+            var x, y, l, c;
+
+            _.forEach(segments, function(s, i){
+                if (s[0] == 'M') {
+                    x = s[1];
+                    y = s[2];
+                } else {
+                    c = Graph.curve([['M', x, y], s]);
+                    x = c.x();
+                    y = c.y();
+                    l = c.length();
+
+                    if (l + total > length) {
+                        index = i;
+                        return false;
+                    }
+
+                    total += l;
+                    c = null;
+                }
+            });
+
+            return index;
         },
 
         length: function() {
@@ -562,6 +595,7 @@
                 }
                 sp += s.shift() + s;
             }
+
             sub.end = Graph.path(sp);
             return sub;
         },
@@ -603,30 +637,25 @@
                 l1 = 0,
                 l2 = 0;
 
-            var x, y, xm, ym, c1, c2;
+            var x, y, c1, c2;
 
             _.forEach(segments, function(s, i){
                 if (s[0] != 'Z') {
                     if (s[0] == 'M') {
-                        x = xm = s[1];
-                        y = ym = s[2];
+                        x = s[1];
+                        y = s[2];
                     } else {
                         if (s[0] == 'L') {
                             c1 = Graph.curve([['M', x, y], ['C', x, y, x, y, s[1], s[2]]]);
                             x = s[1];
                             y = s[2];
-                        } else if (s[0] == 'C') {
+                        } else {
                             c1 = Graph.curve([['M', x, y], s]);
                             x = c1.x();
                             y = c1.y();
-                        } else {
-                            c1 = Graph.curve([['M', x, y], ['C', x, y, xm, ym, xm, ym]]);
-                            x = xm;
-                            y = ym;
                         }
 
                         c2 = c1.clone();
-
                         c2.segments[1][5] = vx;
                         c2.segments[1][6] = vy;  
 
@@ -653,6 +682,10 @@
             return this;
         },
 
+        intersect: function(path) {
+            return intersection(this, path, true) > 0;
+        },
+
         intersection: function(path) {
             return intersection(this, path);
         },
@@ -660,6 +693,66 @@
         intersectnum: function(path) {
             return intersection(this, path, true);
         },
+
+        alpha: function(point) {
+
+        },
+
+        contains: function(point) {
+            var b, p, d, x, y;
+
+            x = point.props.x;
+            y = point.props.y;
+            b = this.bbox();
+            d = b.data();
+            
+            p = new Path([['M', x, y], ['H', d.x2 + 10]]);
+
+            return b.contains(point) && this.intersectnum(p) % 2 == 1;
+        },
+
+        /**
+         * Get point on path that closest to target point
+         */
+        nearest: function(point) {
+            var length  = this.length(),
+                tolerance = 20,
+                bestdist = Infinity;
+
+            var best, bestlen, currpoint, currdist, i;
+
+            for (i = 0; i < length; i += tolerance) {
+                currpoint = this.pointAt(i);
+                currdist  = taxicab(currpoint, point);
+
+                if (currdist < bestdist) {
+                    bestdist = currdist;
+                    best = currpoint;
+                    bestlen = i;
+                }
+            }
+
+            tolerance /= 2;
+
+            var prev, next, prevlen, nextlen, prevdist, nextdist;
+            
+            while(tolerance > .5) {
+                if ((prevlen = bestlen - tolerance) >= 0 && (prevdist = taxicab((prev = this.pointAt(prevlen)), point)) < bestdist) {
+                    best = prev;
+                    bestlen = prevlen;
+                    bestdist = prevdist;
+                } else if ((nextlen = bestlen + tolerance) <= length && (nextdist = taxicab((next = this.pointAt(nextlen)), point)) < bestdist) {
+                    best = next;
+                    bestlen = nextlen;
+                    bestdist = nextdist;
+                } else {
+                    tolerance /= 2;
+                }
+            }
+
+            best.props.distance = bestlen;
+            return best;
+        },  
 
         isSimple: function() {
             var simple = true;
@@ -690,6 +783,12 @@
     
     ///////// HELPERS /////////
     
+    function taxicab(point1, point2) {
+        var dx = point1.props.x - point2.props.x,
+            dy = point1.props.y - point2.props.y;
+        return dx * dx + dy * dy;
+    }
+
     function intersection(path1, path2, number) {
         var curve1 = path1.curve(),   
             segments1 = curve1.segments,
@@ -710,14 +809,10 @@
                 y1 = y1m = si[2];
             } else {
                 if (si[0] == 'C') {
-                    // bz1 = [x1, y1].concat(si.slice(1));
-                    // x1 = bz1[6];
-                    // y1 = bz1[7];
                     bz1 = Graph.curve([['M', x1, y1], si]);
                     x1 = bz1.x();
                     y1 = bz1.y();
                 } else {
-                    // bz1 = [x1, y1, x1, y1, x1m, y1m, x1m, y1m];
                     bz1 = Graph.curve([['M', x1, y1], ['C', x1, y1, x1m, y1m, x1m, x1m]]);
                     x1 = x1m;
                     y1 = y1m;
@@ -730,16 +825,10 @@
                         y2 = y2m = sj[2];
                     } else {
                         if (sj[0] == 'C') {
-                            // bz2 = [x2, y2].concat(sj.slice(1));
-                            // x2 = bz2[6];
-                            // y2 = bz2[7];
                             bz2 = Graph.curve([['M', x2, y2], sj]);
                             x2 = bz2.x();
                             y2 = bz2.y();
                         } else {
-                            // bz2 = [x2, y2, x2, y2, x2m, y2m, x2m, y2m];
-                            // x2 = x2m;
-                            // y2 = y2m;
                             bz2 = Graph.curve([['M', x2, y2],['C', x2, y2, x2m, y2m, x2m, y2m]]);
                             x2 = x2m;
                             y2 = y2m;
@@ -764,5 +853,23 @@
 
         return result;
     }
+
+    ///////// STATIC /////////
+    
+    Graph.lang.Path.toString = function() {
+        return "function(command)";
+    };  
+
+    ///////// SHORTCUT /////////
+    
+    Graph.path = function(command) {
+        return new Graph.lang.Path(command);
+    };
+
+    ///////// LANGUAGE CHECK /////////
+    
+    Graph.isPath = function(obj) {
+        return obj instanceof Graph.lang.Point;
+    };
 
 }());

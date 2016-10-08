@@ -16,7 +16,6 @@
         origins: [],
         guests: [],
         batch: [],
-        helper: null,
         
         trans: {
             sorting: false,
@@ -50,7 +49,7 @@
                 prependchild: _.bind(me.onItemAdded, me)
             });
 
-            if (me.vector.rendered) {
+            if (me.vector.props.rendered) {
                 me.setup();
             }
         },
@@ -59,7 +58,7 @@
         setup: function() {
             var me = this,
                 vector = me.vector,
-                canvas = vector.paper(),
+                paper = vector.paper(),
                 context = vector.node();
 
             if (me.plugin) {
@@ -80,8 +79,8 @@
 
             me.plugin.styleCursor(false);
 
-            if (canvas.collector) {
-                canvas.collector.on({
+            if (paper.utils.collector) {
+                paper.utils.collector.on({
                     afterdrag: function(e) {
                         var origin = e.origin;
                         if (_.indexOf(me.sortables, origin) > -1) {
@@ -230,7 +229,7 @@
 
             _.forEach(me.sortables, function(s){
                 if ( ! s.$sorting) {
-                    var sbox = s.bbox(false, false).data(),
+                    var sbox = s.bbox().data(),
                         dy = me.props.height- sbox.y + me.props.offsetTop;
 
                     s.translate(0, dy).apply();
@@ -335,8 +334,7 @@
         },
 
         onVectorRender: function() {
-            var me = this, canvas = me.vector.paper();
-            me.setup();
+            this.setup();
         },
 
         onItemAdded: function(item) {
@@ -364,7 +362,7 @@
 
             me.sortables.push(item);
 
-            if (item.rendered && ! item.$sorting) {
+            if (item.props.rendered && ! item.$sorting) {
                 delay = _.delay(function(){
                     clearTimeout(delay);
                     me.arrange();
@@ -380,14 +378,16 @@
             }, 0);
         },
 
-        onItemResize: function(e, item) {
-            var sorter = item.$sorter || this, defer;
+        onItemResize: function(e) {
+            var item = e.publisher,
+                sorter = item.$sorter || this, defer;
 
             suppress(item, true);
 
             _.forEach(sorter.sortables, function(s){
                 if (s !== item) {
-                    s.fire('resize.sortable', e, s);
+                    e.type = 'resize.sortable';
+                    s.fire(e);
                 }
             });
 
@@ -409,8 +409,9 @@
             }
         },
 
-        onItemDragStart: function(e, item) {
+        onItemDragStart: function(e) {
             var me = this, 
+                item = e.publisher,
                 bsize = me.batch.length;
 
             var bbox;
@@ -428,7 +429,7 @@
             me.trans.drag = item;
             me.trans.sorting = true;
 
-            bbox = item.bbox(false, false).data();  
+            bbox = item.bbox().data();  
             width = me.props.width;
             height = bbox.height;
 
@@ -439,7 +440,7 @@
                 } else {
                     height = 0;
                     me.suspendBatch(me.batch, function(b){
-                        var box = b.bbox(false, false).data();
+                        var box = b.bbox().data();
                         height += box.height;
 
                         b.$sorter = me;
@@ -454,7 +455,7 @@
             });   
         },
 
-        onItemDragEnd: function(e, item) {
+        onItemDragEnd: function(e) {
             var me = this;
 
             if ( ! me.props.enabled) {
@@ -470,14 +471,19 @@
             }
         },
 
-        onItemCollect: function(e, item) {
-            var sorter = item.$sorter || this;
+        onItemCollect: function(e) {
+            var item = e.publisher,
+                sorter = item.$sorter || this;
+
             sorter.batch.push(item);
         },
 
         onItemDecollect: function(e, item) {
-            var sorter = item.$sorter || this, offset;
+            var item = e.publisher,
+                sorter = item.$sorter || this, offset;
+
             offset = _.indexOf(sorter.batch, item);
+            
             if (offset > -1) {
                 sorter.batch.splice(offset, 1);
             }
@@ -495,8 +501,8 @@
                 return;
             }
 
-            drag = Graph.get(e.relatedTarget);
-            drop = Graph.get(e.target);
+            drag = Graph.manager.vector.get(e.relatedTarget);
+            drop = Graph.manager.vector.get(e.target);
 
             if (drag.$collector) {
                 
@@ -513,7 +519,7 @@
                             me.batch.push(v);
                         }
                         
-                        box = v.bbox(false, false).data();
+                        box = v.bbox().data();
                         height += box.height;
 
                         if (box.width > width) {
@@ -535,7 +541,7 @@
 
                         me.enroll(drag);
 
-                        bbox = drag.bbox(false, false).data();
+                        bbox = drag.bbox().data();
                         height = bbox.height;
                         width = me.props.width;
 

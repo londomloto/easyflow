@@ -13,7 +13,8 @@
             }
         },
         constructor: function() {
-            this.$super();
+            // this.$super();
+            this.superclass.prototype.constructor.call(this);
         },
         initComponent: function() {
             this.component = new Graph.svg.Group();

@@ -1,17 +1,25 @@
 
 (function(){
 
-    Graph.svg.Ellipse = Graph.svg.Vector.extend({
+    Graph.svg.Ellipse = Graph.extend(Graph.svg.Vector, {
         attrs: {
             // 'stroke': '#696B8A',
             // 'stroke-width': 1,
             // 'fill': '#ffffff',
             // 'style': '',
-            'class': 'graph-elem graph-elem-ellipse'
+            'class': Graph.string.CLS_VECTOR_ELLIPSE
         },
 
         constructor: function(cx, cy, rx, ry) {
-            this.$super('ellipse', {
+            
+            // this.$super('ellipse', {
+            //     cx: cx,
+            //     cy: cy,
+            //     rx: rx,
+            //     ry: ry
+            // });
+
+            this.superclass.prototype.constructor.call(this, 'ellipse', {
                 cx: cx,
                 cy: cy,
                 rx: rx,
@@ -32,7 +40,7 @@
         },
         
         resize: function(sx, sy, cx, cy, dx, dy) {
-            var matrix = this.matrix.clone().scale(sx, sy, cx, cy),
+            var matrix = this.graph.matrix.clone().scale(sx, sy, cx, cy),
                 rotate = this.props.rotate;
 
             var mx = matrix.x(this.attrs.cx, this.attrs.cy),
@@ -55,7 +63,7 @@
                 this.rotate(rotate, mx, my).apply();    
             }
 
-            var bb = this.bbox(false, false).data();
+            var bb = this.bbox().data();
 
             gx = mx - rx - dx;
             gy = my - ry - dy;
@@ -85,7 +93,16 @@
                     cy: gy
                 }
             };
+        },
+        toString: function() {
+            return 'Graph.svg.Ellipse';
         }
     });
+
+    ///////// STATIC /////////
+    
+    Graph.svg.Ellipse.toString = function() {
+        return "function(cx, cy, rx, ry)";
+    };
 
 }());

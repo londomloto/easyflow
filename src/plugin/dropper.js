@@ -8,28 +8,19 @@
             accept: '.graph-draggable'
         },
 
-        config: {},
-
-        constructor: function(vector, config) {
+        constructor: function(vector, options) {
             var me = this;
 
             me.vector = vector;
             me.vector.addClass('graph-dropzone').removeClass('graph-draggable');
-                
-            config = config || {};
-
-            _.forEach(['accept', 'overlap'], function(name){
-                me.props[name] = config[name];
-                delete config[name];
-            });
-
-            me.config = _.extend({}, config);
-
+            
+            _.assign(me.props, options || {});
+            
             me.vector.on({
                 render: _.bind(me.onVectorRender, me)
             });
 
-            if (me.vector.rendered) {
+            if (me.vector.props.rendered) {
                 me.setup();
             }
         },
@@ -41,8 +32,7 @@
                 return;
             }
 
-            me.plugin = interact(me.vector.node()).dropzone({
-
+            var config = _.extend({}, me.props, {
                 checker: _.bind(me.onDropValidate, me),
 
                 ondropactivate: _.bind(me.onDropActivate, me),
@@ -51,10 +41,12 @@
                 ondragleave: _.bind(me.onDragLeave, me),
                 ondrop: _.bind(me.onDrop, me)
             });
+
+            me.plugin = me.vector.interactable().dropzone(config);
         },
 
         onDropValidate: function( edrop, edrag, dropped, dropzone, dropel, draggable, dragel ) {
-            return true;
+            return dropped;
             /*if (dropped) {
                 if (this.config.validate) {
                     var args = _.toArray(arguments);
@@ -70,23 +62,27 @@
         },
 
         onDropActivate: function(e) {
-            this.vector.addClass('activate');
+            this.vector.addClass('drop-activate');
         },
 
         onDropDeactivate: function(e) {
-            this.vector.removeClass('activate');
+            this.vector.removeClass('drop-activate');
         },
 
         onDragEnter: function(e) {
-            this.vector.removeClass('activate').addClass('enter');
+            this.vector.removeClass('drop-activate').addClass('drop-enter');
+            e.type = 'dropenter';
+            this.fire(e);
         },
 
         onDragLeave: function(e) {
-            this.vector.removeClass('enter').addClass('activate');
+            this.vector.removeClass('drop-enter').addClass('drop-activate');
+            e.type = 'dropleave';
+            this.fire(e);
         },
 
         onDrop: function(e) {
-            this.vector.removeClass('activate enter leave');
+            this.vector.removeClass('drop-activate drop-enter');
         }
     });
 

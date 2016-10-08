@@ -5,32 +5,42 @@
 
         items: [],
 
-        constructor: function(items) {
-            this.items = items || [];
+        constructor: function(vectors) {
+            this.items = _.map(vectors, function(v){
+                return v.guid();
+            });
         },
 
         has: function(vector) {
-            return _.indexOf(this.items, vector) > -1;
+            var id = vector.guid();
+            return _.indexOf(this.items, id) > -1;
         },
         
         not: function(vector) {
+            var guid = vector.guid();
+
             var items = _.filter(this.items, function(o) {
-                return o !== vector;
+                return o != guid;
             });
+
             return new Collection(items);
         },
-        
-        length: function() {
+
+        count: function() {
             return this.items.length;
         },
 
-        indexOf: function(vector) {
-            return _.indexOf(this.items, vector);
+        index: function(vector) {
+            var id = vector.guid();
+            return _.indexOf(this.items, id);
         },
         
         push: function(vector) {
-            this.items.push(vector);
-            this.fire('push', vector, this);
+            var id = vector.guid();
+
+            this.items.push(id);
+            this.fire('push', {vector: vector});
+
             return this;
         },
 
@@ -43,34 +53,41 @@
         },
 
         unshift: function(vector) {
-            this.items.unshift(vector);
-            this.fire('unshift', vector, this);
+            var id = vector.guid();
+
+            this.items.unshift(id);
+            this.fire('unshift', {vector: vector});
+
             return this;
         },
 
         pull: function(vector) {
-            _.pull(this.items, vector);
-            this.fire('pull', vector, this);
+            var id = vector.guid();
+
+            _.pull(this.items, id);
+            this.fire('pull', {vector: vector});
+
             return this;
         },
 
+        clear: function() {
+            this.items = [];
+        },
+
         each: function(handler) {
-            _.forEach(this.items, function(vector){
+            _.forEach(this.items, function(id){
+                var vector = Graph.manager.vector.get(id);
                 handler.call(vector, vector);
             });
         },
         
-        pathinfo: function() {
-            var bbox = this.bbox(), path;
-            return new Graph.lang.Path([]);
-        },
-        
         bbox: function() {
             var x = [], y = [], x2 = [], y2 = [];
-            var box;
+            var vector, box;
 
             for (var i = this.items.length - 1; i >= 0; i--) {
-                box = this.items[i].bbox(false, false).data();
+                vector = Graph.manager.vector.get(this.items[i]);
+                box = vector.bbox().data();
 
                 x.push(box.x);
                 y.push(box.y);
@@ -83,7 +100,7 @@
             x2 = _.max(x2);
             y2 = _.max(y2);
 
-            return new Graph.lang.BBox({
+            return Graph.bbox({
                 x: x,
                 y: y,
                 x2: x2,
@@ -94,9 +111,19 @@
         },
 
         toArray: function() {
-            return this.items;
+            return _.map(this.items, function(id){
+                return Graph.manager.vector.get(id);
+            });
+        },
+
+        toString: function() {
+            return 'Graph.collection.Vector';
         }
     });
+
+    Graph.collection.Vector.toString = function() {
+        return 'function(vectors)';
+    };
 
     _.forOwn(Graph.svg.Vector.prototype, function(value, name){
         (function(name, value){

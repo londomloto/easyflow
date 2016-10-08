@@ -1,7 +1,7 @@
 
 (function(){
 
-    Graph.svg.Text = Graph.svg.Vector.extend({
+    Graph.svg.Text = Graph.extend(Graph.svg.Vector, {
         
         attrs: {
             // 'stroke': '#000000',
@@ -10,22 +10,33 @@
             // 'font-size': '12px',
             // 'font-family': 'Arial',
             'text-anchor': 'middle',
-            'class': 'graph-elem graph-elem-text'
+            'class': Graph.string.CLS_VECTOR_TEXT
         },  
 
         props: {
+            id: '',
+            guid: '',
             text: '',
-            angle: 0,
+            type: 'text',
+            rotate: 0,
             lineHeight: 1,
-            collectable: true,
+            fontSize: 12,
+            traversable: true,
+            focusable: false,
             selectable: true,
-            selected: false
+            selected: false,
+            rendered: false
         },
 
         rows: [],
 
         constructor: function(x, y, text) {
-            this.$super('text', {
+            // this.$super('text', {
+            //     x: _.defaultTo(x, 0),
+            //     y: _.defaultTo(y, 0)
+            // });
+
+            this.superclass.prototype.constructor.call(this, 'text', {
                 x: _.defaultTo(x, 0),
                 y: _.defaultTo(y, 0)
             });
@@ -34,37 +45,52 @@
                 'font-size': Graph.config.font.size,
                 'font-family': Graph.config.font.family
             });
-            
-            this.text(text);
 
-            this.on('render', _.bind(this.arrange, this));
+            this.draw(text);
+            this.on('render', _.bind(this.onTextRender, this));
         },
 
-        text: function(text) {
-            if (_.isUndefined(text)) {
-                return this.props.text;
+        attr: function(name, value) {
+            var result = this.superclass.prototype.attr.apply(this, [name, value]);
+            
+            if (name == 'font-size' && value !== undefined) {
+                this.props.fontSize = _.parseInt(value) || 12;
             }
 
-            var font = this.fontSize(),
-                parts = (text || '').split("\n"),
-                doc = Graph.doc(),
-                span;
+            return result;
+        },
 
-            this.empty();
-            this.rows = [];
+        draw: function(text) {
+            var me = this, parts, span;
 
-            _.forEach(parts, _.bind(function(t, i){
-                span = doc.createElementNS(Graph.config.xmlns.svg, 'tspan');
-                span.setAttribute('text-anchor', 'middle');
-                span.setAttribute('alignment-baseline', 'center');
-                span.appendChild(doc.createTextNode(t));
-                Graph.$(span).data('vector', this);
+            if (text === undefined) {
+                return me.props.text;
+            }
 
-                this.rows[i] = span;
-                this.elem.append(span);
-            }, this));
+            parts = (text || '').split("\n");
 
-            this.props.text = text;
+            me.empty();
+            me.rows = [];
+
+            _.forEach(parts, function(t, i){
+                me.addSpan(t);
+            });
+
+            me.props.text = text;
+        },
+
+        addSpan: function(text) {
+            var me = this, span;
+
+            text = _.defaultTo(text, '');
+
+            span = Graph.$('<tspan>');
+            span.text(text);
+
+            me.elem.append(span);
+            me.rows.push(span);
+
+            return span;
         },
 
         /**
@@ -72,19 +98,19 @@
          */
         arrange: function() {
             var rows = this.rows,
-                size = this.fontSize(),
-                line = this.lineHeight(),
-                bbox = this.bbox(false, false).data();
+                size = this.props.fontSize,
+                line = this.props.lineHeight,
+                bbox = this.bbox().data();
 
             if (rows.length) {
                 for (var i = 0, ii = rows.length; i < ii; i++) {
                     if (i) {
-                        rows[i].setAttribute('x', this.attrs.x);
-                        rows[i].setAttribute('dy', size * line);
+                        rows[i].attr('x', this.attrs.x);
+                        rows[i].attr('dy', size * line);
                     }
                 }
 
-                rows[0].setAttribute('dy', 0);
+                rows[0].attr('dy', 0);
 
                 // var box = this.bbox().data(),
                 //     off = this.attrs.y - (box.y + box.height / 2);
@@ -96,16 +122,54 @@
             }
         },
 
+        wrap: function(width) {
+            var text = this.props.text,
+                words = text.split(/\s+/).reverse(),
+                lines = [],
+                lineNo = 0,
+                lineHeight = this.props.lineHeight,
+                ax = this.attrs.x,
+                ay = this.attrs.y,
+                dy = 0;
+
+            var word, span;
+
+            this.empty();
+
+            span = this.addSpan();
+            span.attr({
+                x: ax, 
+                y: ay, 
+                dy: dy + 'em'
+            });
+
+            while((word = words.pop())) {
+                lines.push(word);
+                span.text(lines.join(' '));
+                if (span.node().getComputedTextLength() > width) {
+                    lines.pop();
+                    span.text(lines.join(' '));
+                    lines = [word];
+                    span = this.addSpan(word);
+                    span.attr({
+                        x: ax, 
+                        y: ay, 
+                        dy: (++lineNo * lineHeight) + 'em'
+                    });
+                }
+            }
+        },
+
         center: function(target) {
             if (target) {
-                var targetBox = target.bbox(false, false).data(),
-                    matrix = this.matrix.data();
+                var targetBox = target.bbox().data(),
+                    matrix = this.graph.matrix.data();
 
                 var textBox, dx, dy, cx, cy;
 
                 this.reset();
 
-                textBox = this.bbox(false, false).data();   
+                textBox = this.bbox().data();   
 
                 dx = targetBox.width / 2;
                 dy = targetBox.height / 2;
@@ -133,17 +197,20 @@
             ]);
         },
 
-        fontSize: function() {
-            return _.parseInt(this.attrs['font-size']);
-        },
-
-        lineHeight: function() {
-            return this.props.lineHeight;
-        },
-
         toString: function() {
-            return this.props.text;
+            return 'Graph.svg.Text';
+        },
+
+        onTextRender: function() {
+            var me = this;
+            me.arrange();
         }
     });
+
+    ///////// STATIC /////////
+    
+    Graph.svg.Text.toString = function() {
+        return 'function(x, y, text)';
+    };
 
 }());

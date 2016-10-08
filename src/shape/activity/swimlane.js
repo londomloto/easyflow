@@ -11,7 +11,7 @@
             offsetTop: 0,
 
             height: 150,
-            width: 200,
+            width: 760,
             rotate: 0,
 
             headerHeight: 30,
@@ -60,7 +60,8 @@
 
         render: function(parent, method) {
             var me = this;
-            me.$super(parent, method);
+            // me.$super(parent, method);
+            me.superclass.prototype.render.call(me, parent, method);
             me.page.on('scroll', _.bind(me.onPageScroll, me));
         },
 
@@ -118,20 +119,20 @@
             comp.block.attr({
                 width: e.width
             });
-            comp.block.resizer.redraw();
+            comp.block.plugins.resizer.redraw();
         },
 
         onBlockRender: function() {
             var comp = this.components,
                 data = this.props,
-                bbox = comp.block.bbox(false, false).data(),
-                bmat = comp.block.ctm();
+                bbox = comp.block.bbox().data(),
+                bmat = comp.block.matrix(true);
 
             this.props.offsetLeft = bmat.x(bbox.x, bbox.y);
             this.props.offsetTop  = bmat.y(bbox.x, bbox.y);
 
-            // comp.block.attr('width', comp.block.canvas.attrs.width - data.x * 2);
-            // comp.block.dirty = true;
+            // comp.block.attr('width', comp.block.paper().attrs.width - data.x * 2);
+            // comp.block.dirty(true);
         },
 
         onBlockCollect: function(e) {
@@ -141,7 +142,7 @@
 
         onBlockResize: function(e) {
             var comp = this.components,
-                bbox = comp.block.bbox(false, false).data();
+                bbox = comp.block.bbox().data();
 
             // resize head
             comp.head.resize(1, e.sy, e.cx, e.cy, 0, 0);
@@ -154,8 +155,9 @@
 
             e.width  = this.props.width;
             e.height = this.props.height;
+            e.type   = 'resize';
 
-            comp.group.fire('resize', e, comp.group);
+            comp.group.fire(e);
         },
 
         onTextRender: function() {

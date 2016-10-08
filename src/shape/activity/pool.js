@@ -12,7 +12,8 @@
         },
         
         constructor: function(config) {
-            this.$super(config);
+            // this.$super(config);
+            this.superclass.prototype.constructor.call(this, config);
         },
 
         initComponent: function() {

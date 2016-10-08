@@ -4,10 +4,10 @@
     Graph.plugin.Resizer = Graph.extend({
         
         props: {
-            snap: [1, 1],
             suspended: true,
-            handlePath: Graph.config.base + 'img/resize-control.png',
-            handleSize: 17
+            handleImage: Graph.config.base + 'img/resize-control.png',
+            handleSize: 17,
+            rendered: false
         },
 
         components: {
@@ -34,127 +34,136 @@
             dy: 0
         },
 
+        cached: {
+            snapping: null,
+            vertices: null
+        },
+
         constructor: function(vector) {
             var me = this;
             
             me.vector = vector;
             me.vector.addClass('graph-resizable');
+            me.props.handleImage = Graph.config.base + 'img/resize-control.png';
 
-            me.props.handlePath = Graph.config.base + 'img/resize-control.png';
-            me.props.handleSize = 17;
-
-            me.cached = {
-                vertices: null
-            };
-
-            me.vector.on({
-                select: function() {
-                    if ( ! me.components.holder) {
-                        me.render();
-                        me.resume();
-                    } else {
-                        me.resume();
-                    }
-                },
-                deselect: function() {
-                    if ( ! me.props.suspended) {
-                        me.suspend();    
-                    }
-                },
-                dragstart: function(e, v) {
-                    me.suspend();
-                },
-                dragend: function(e, v) {
-                    me.resume();
-                    if  (v.props.selected) {
-                        me.redraw();
-                    } else {
-                        me.redraw();
-                        me.suspend();
-                    }
-                }
-            });
+            me.initComponent();
         },
 
-        render: function() {
-            var me = this, 
-                comp = me.components,
-                canvas = me.vector.paper();
+        initComponent: function() {
+            var me = this, comp = me.components;
 
-            if (comp.holder) {
-                me.redraw();
-                return;
-            }
+            comp.holder = (new Graph.svg.Group())
+                .addClass('graph-resizer')
+                .removeClass('graph-elem graph-elem-group');
+
+            comp.holder.elem.group('graph-resizer');
+
+            comp.holder.on({
+                render: _.bind(me.onHolderRender, me)
+            });
             
-            comp.holder = canvas.group();
-            comp.holder.addClass('graph-resizer').removeClass('graph-elem graph-elem-group');
-            comp.holder.props.collectable = false;
-            comp.holder.props.selectable = false;
-            me.vector.parent().append(comp.holder);
+            comp.helper = (new Graph.svg.Rect(0, 0, 0, 0, 0))
+                .addClass('graph-resizer-helper')
+                .removeClass('graph-elem graph-elem-rect')
+                .selectable(false)
+                .clickable(false)
+                .render(comp.holder);
 
-            comp.helper = canvas.rect(0, 0, 0, 0);
-            comp.helper.addClass('graph-resizer-helper').removeClass('graph-elem graph-elem-rect');
-            comp.helper.props.collectable = false;
-            comp.helper.props.selectable = false;
-            comp.holder.append(comp.helper);
+            comp.helper.elem.group('graph-resizer');
 
             me.handle = {};
 
-            var snap = me.props.snap;
-
             var handle = {
-                ne: {snap: snap},
-                se: {snap: snap},
-                sw: {snap: snap},
-                nw: {snap: snap},
-                 n: {snap: snap, axis: 'y'},
-                 e: {snap: snap, axis: 'x'},
-                 s: {snap: snap, axis: 'y'},
-                 w: {snap: snap, axis: 'x'}
+                ne: {},
+                se: {},
+                sw: {},
+                nw: {},
+                 n: {axis: 'y'},
+                 e: {axis: 'x'},
+                 s: {axis: 'y'},
+                 w: {axis: 'x'}
             };
 
             _.forOwn(handle, function(c, dir){
                 (function(dir){
 
-                    comp.handle[dir] = canvas.image(me.props.handlePath, 0, 0, me.props.handleSize, me.props.handleSize);
-                    comp.handle[dir].props.collectable = false;
-                    comp.handle[dir].props.selectable = false;
-                    comp.handle[dir].props.dir = dir;
+                    comp.handle[dir] = (new Graph.svg.Image(
+                        me.props.handleImage,
+                        0,
+                        0,
+                        me.props.handleSize,
+                        me.props.handleSize
+                    ))
+                    .selectable(false)
+                    .removeClass('graph-elem graph-elem-image')
+                    .addClass('graph-resizer-handle handle-' + dir);
 
-                    comp.handle[dir].removeClass('graph-elem graph-elem-image');
-                    comp.handle[dir].addClass('graph-resizer-handle handle-' + dir);
-                    comp.handle[dir].draggable(c).on('pointerdown', function(e){
-                        e.stopImmediatePropagation();
+                    comp.handle[dir].elem.group('graph-resizer');
+                    comp.handle[dir].props.dir = dir;
+                    comp.handle[dir].draggable(c);
+                    comp.handle[dir].on('pointerdown', function(e){
+                        e.stopPropagation();
                     });
                     
                     comp.handle[dir].on('dragstart', _.bind(me.onHandleMoveStart, me));
                     comp.handle[dir].on('dragmove', _.bind(me.onHandleMove, me));
                     comp.handle[dir].on('dragend', _.bind(me.onHandleMoveEnd, me));
 
-                    comp.holder.append(comp.handle[dir]);
+                    comp.handle[dir].render(comp.holder);
                 }(dir));
             });
+        },
 
+        invalidate: function(cache)  {
+            this.cached[cache] = null;
+        },
+
+        dirty: function(state) {
+            if (state === undefined) {
+                return this.cached.vertices ? true : false;
+            }
+
+            if (state) {
+                this.invalidate('vertices');
+            }
+
+            return this;
+        },
+
+        render: function() {
+            var me = this, 
+                comp = me.components,
+                vector = me.vector;
+
+            if (me.props.rendered) {
+                me.redraw();
+                return;
+            }
+
+            comp.holder.render(vector.parent());
+
+            me.props.rendered = true;
             me.redraw();
         },
 
-        grid: function(dx, dy) {
-            this.props.snap = [dx, dy];
+        snap: function(snap) {
+            this.cached.snapping = snap;
         },
 
         vertices: function() {
             var me = this, 
+                vector = me.vector,
                 vertices = me.cached.vertices;
 
             var dt, m1, m2, b1, b2, ro, p1, p2, cx, cy;
 
-            if (this.vector.dirty || ! vertices) {
+            if ( ! vertices) {
 
-                m1 = me.vector.matrix.clone();
-                b1 = me.vector.bbox(true, false).data();
-                p1 = me.vector.pathinfo().transform(m1);
+                m1 = vector.matrix().clone();
+                b1 = vector.bbox(true).data();
+                p1 = vector.pathinfo().transform(m1);
                 
-                ro = m1.data().rotate;
+                ro = m1.rotate().deg;
                 cx = b1.x + b1.width / 2;
                 cy = b1.y + b1.height / 2;
                 
@@ -232,7 +241,7 @@
         },
 
         redraw: function() {
-            var me = this, comp = me.components, dirty, vx;
+            var me = this, comp = me.components, vx;
 
             if ( ! comp.holder) {
                 return;
@@ -271,7 +280,8 @@
         suspend: function() {
             this.props.suspended = true;
             if (this.components.holder) {
-                this.components.holder.removeClass('visible');
+                this.components.holder.elem.detach();
+                // this.components.holder.removeClass('visible');
             }
         },
 
@@ -279,12 +289,21 @@
             this.props.suspended = false;
 
             if (this.components.holder) {
-                this.components.holder.addClass('visible');
+                if ( ! this.props.rendered) {
+                    this.render();
+                } else {
+                    this.vector.parent().elem.append(this.components.holder.elem);
+                    this.redraw();
+                }
             }
         },
 
-        onHandleMoveStart: function(e, handle) {
-            var me = this;
+        onHolderRender: function(e) {
+            
+        },
+
+        onHandleMoveStart: function(e) {
+            var me = this, handle = e.publisher;
 
             _.forOwn(me.components.handle, function(a, b){
                 if (a !== handle) {
@@ -292,16 +311,20 @@
                 }
             });
 
+            if (handle.draggable().snap() !== this.cached.snapping) {
+                handle.draggable().snap(this.cached.snapping);    
+            }
+            
             handle.show();
             handle.removeClass('dragging');
         },
 
-        onHandleMove: function(e, handle) {
-            var me = this;
+        onHandleMove: function(e) {
+            var me = this, handle = e.publisher;
             
             var tr = this.trans,
-                dx = _.defaultTo(e.dx, 0),
-                dy = _.defaultTo(e.dy, 0);
+                dx = e.dx,
+                dy = e.dy;
 
             switch(handle.props.dir) {
                 case 'ne':
@@ -364,15 +387,16 @@
             }
 
             me.components.helper.attr({
-                width: tr.cw,
+                width:  tr.cw,
                 height: tr.ch
             });
 
         },
 
-        onHandleMoveEnd: function(e, handle) {
+        onHandleMoveEnd: function(e) {
             var me = this,
-                tr = this.trans;
+                tr = this.trans,
+                handle = e.publisher;
 
             var sx, sy, cx, cy, dx, dy;
 
@@ -419,9 +443,9 @@
             var resize = me.vector.resize(sx, sy, cx, cy, dx, dy);
             
             me.redraw();
-            me.fire('resize', resize, me);          
+            me.fire('resize', resize);
         }
-
+        
     });
 
 }());

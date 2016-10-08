@@ -1,0 +1,712 @@
+
+(function(){
+
+    var Link = Graph.util.Link = Graph.extend({
+        
+        props: {
+            router: 'manhattan',
+            // router: 'orthogonal',
+            selected: false,
+            command: 'M 0 0 L 0 0',
+            vertexImage: Graph.config.base + 'img/resize-control.png',
+            vertexSize: 17,
+            loopback: false,
+            pristine: true,
+            rendered: false
+        },
+
+        ports: {
+            source: null,
+            target: null
+        },
+
+        router: null,
+        paper: null,
+
+        components: {
+            block: null,
+            coat: null,
+            path: null,
+            edit: null,
+            helper: null
+        },
+
+        vertices: [],
+
+        drag: {
+            enabled: true,
+            dragger: null,
+            pole: null,
+            x: 0,
+            y: 0
+        },
+
+        __construct: function(router) {
+            
+        },
+
+        constructor: function(paper, source, target, options) {
+            this.props = _.extend({
+                id: 'L' + (++Link.guid)
+            }, this.props, options || {});
+
+            this.props.vertexImage = Graph.config.base + 'img/resize-control.png';
+
+            this.paper = paper;
+            this.ports.source = source;
+            this.ports.target = target;
+
+            this.props.loopback = source && target && source === target;
+            this.createRouter();
+            this.initComponent();
+
+            Graph.manager.link.register(this);
+        },
+
+        initComponent: function() {
+            var comp = this.components;
+
+            comp.block = (new Graph.svg.Group())
+                .addClass('graph-util-link')
+                .removeClass(Graph.string.CLS_VECTOR_GROUP);
+
+            comp.block.on({
+                render: _.bind(this.onBlockRender, this)
+            });
+
+            comp.coat = (new Graph.svg.Path('M 0 0'))
+                .addClass('graph-util-link-coat')
+                .removeClass(Graph.string.CLS_VECTOR_PATH);
+
+            comp.coat.interactable();
+
+            comp.coat.on({
+                pointerdown: _.bind(this.onPathClick, this)
+            });
+
+            comp.path = (new Graph.svg.Path('M 0 0'))
+                .addClass('graph-util-link-path')
+                .removeClass(Graph.string.CLS_VECTOR_PATH)
+                .attr('marker-end', 'url(#marker-arrow)');
+
+            comp.path.clickable(false);
+
+            // resize helper
+            comp.helper = (new Graph.svg.Polygon('0,0 0,0 0,0 0,0'))
+                .removeClass(Graph.string.CLS_VECTOR_POLYGON)
+                .addClass('graph-util-link-helper');
+
+            // drag handle
+            comp.head = (new Graph.svg.Ellipse(0, 0, 10, 10))
+                .addClass('graph-util-link-head');
+
+            comp.tail = (new Graph.svg.Ellipse(0, 0, 10, 10))
+                .addClass('graph-util-link-tail');
+
+            // vertex edit
+            comp.edit = (new Graph.svg.Group())
+                .addClass('graph-util-link-edit')
+                .removeClass(Graph.string.CLS_VECTOR_GROUP);
+
+            for(var name in comp) {
+                comp[name].props.traversable = false;
+                comp[name].props.selectable = false;
+                comp[name].elem.data(Graph.string.ID_LINK, this.props.id);
+                comp[name].elem.group('graph-util-link');
+            }
+
+            comp.coat.render(comp.block);
+            comp.path.render(comp.block);
+        },
+
+        render: function(paper) {
+            if ( ! _.isUndefined(paper)) {
+                this.paper = paper;
+            }
+
+            if ( ! this.props.rendered) {
+                this.props.rendered = true;
+                this.components.block.render(this.paper);
+            }
+            
+            return this;
+        },
+
+        source: function(source) {
+            if (_.isUndefined(source)) {
+                return this.ports.source;
+            }
+
+            this.ports.source = source;
+            this.props.loopback = this.ports.source && 
+                                this.ports.target && 
+                                this.ports.source === this.ports.target;
+
+            this.router.source(source);
+
+            return this;
+        },
+
+        target: function(target) {
+            if (_.isUndefined(target)) {
+                return this.ports.target;
+            }
+
+            this.ports.target = target;
+            this.props.loopback = this.ports.source && 
+                                this.ports.target && 
+                                this.ports.source === this.ports.target;
+
+            this.router.target(target);
+
+            return this;
+        },
+
+        createRouter: function() {
+            var type = this.props.router, router;
+
+            switch(type) {
+                default:
+                case 'manhattan':
+                    router = new Graph.router.Manhattan(
+                        this.paper,
+                        this.ports.source,
+                        this.ports.target
+                    );
+                    break;
+                case 'orthogonal':
+                    router = new Graph.router.Orthogonal(
+                        this.paper,
+                        this.ports.source,
+                        this.ports.target
+                    );
+                    break;
+            }
+
+            this.router = router;
+            return router;
+        },
+
+        pathinfo: function() {
+            var command = this.router.command();
+            return Graph.path(command);
+        },
+        
+        /**
+         * Connect source to target using configure router or manual command
+         */
+        connect: function(command) {
+            var me = this, comp = me.components;
+
+            me.render();
+
+            if (command) {
+                me.router.supply(command);
+                me.props.command = command;
+            } else {
+                me.router.route();
+                command = me.props.command = me.router.command();
+            }
+
+            me.props.pristine = false;
+
+            comp.path.attr('d', command);
+            comp.coat.attr('d', command);
+
+            me.ports.source.connectLink(me);
+            me.ports.target.connectLink(me);
+
+            me.updateControls();
+            me.updateVertices();
+            me.fire('connect');
+        },
+
+        disconnect: function() {
+            this.ports.source.disconnectLink(this);
+            this.ports.target.disconnectLink(this);
+
+            this.fire('disconnect');
+        },
+
+        refresh: function() {
+            var command = this.router.route().props.command;
+            this.connect(command);
+        },
+
+        patch: function() {
+            var me = this, router = me.router;
+
+            router.supply(me.props.command);
+            router.patch();
+            me.connect(router.command());
+        },
+
+        startDragging: function(pole, dragger) {
+            var offset;
+            
+            switch(pole) {
+                case 'head':
+                    offset = this.router.start();
+                    break;
+
+                case 'tail':
+                    offset = this.router.end();
+                    break;
+            }
+
+            this.drag.enabled = true;
+            this.drag.dragger = dragger;
+            this.drag.pole = pole;
+            this.drag.x = offset.props.x;
+            this.drag.y = offset.props.y;
+
+            this.components[pole].attr({
+                rx: 3,
+                ry: 3
+            });
+
+            this.resumeControl();
+        },
+
+        dragging: function(dx, dy) {
+            var pole = this.drag.pole,
+                comp = this.components,
+                segments = this.router.segments(),
+                maxs = segments.length - 1;
+
+            switch(pole) {
+                case 'head':
+                    comp.head.translate(dx, dy).apply();
+                    break;
+                case 'tail':
+                    comp.tail.translate(dx, dy).apply();
+                    break;
+            }
+
+            this.drag.x += dx;
+            this.drag.y += dy;
+
+            this.router.modify(maxs, this.drag.x, this.drag.y);
+            this.router.commit();
+
+            var command = this.router.command();
+
+            this.components.path.attr('d', command);
+            this.components.coat.attr('d', command);
+        },
+
+        stopDragging: function() {
+            var pole = this.drag.pole;
+
+            this.components[pole].attr({
+                rx: 10,
+                ry: 10
+            });
+
+            switch(pole) {
+                case 'head':
+
+                    break;
+                case 'tail':
+
+                    break;
+            }
+
+            this.drag.enabled = false;
+            this.drag.dragger = null;
+            this.drag.pole = null;
+            this.drag.x = 0;
+            this.drag.y = 0;
+            
+        },
+
+        updateControls: function() {
+            var me = this,
+                comp = me.components,
+                start = me.router.start(),
+                end = me.router.end();
+
+            comp.tail.reset();
+            comp.tail.attr({
+                cx: start.props.x,
+                cy: start.props.y
+            });
+
+            comp.head.reset();
+            comp.head.attr({
+                cx: end.props.x,
+                cy: end.props.y
+            });
+        },
+
+        updateVertices: function() {
+            var me = this, segments = this.pathinfo().curve().segments;
+            var vertex;
+
+            _.forEach(me.vertices, function(vertex){
+                vertex.component.interactable().destroy();
+                vertex.component.remove();
+            });
+
+            me.vertices = [];
+
+            var x, y, c, l;
+
+            _.forEach(segments, function(s, i){
+                if (s[0] == 'M') {
+                    x = s[1];
+                    y = s[2];
+                } else {
+                    c = Graph.curve([['M', x, y], s]);
+                    x = c.x();
+                    y = c.y();
+                    l = c.length() / 2;
+
+                    vertex = c.pointAt(c.t(l));
+                    vertex.range = [i - 1, i];
+
+                    me.addVertex(vertex);
+                }
+            });
+        },
+
+        addVertex: function(vertex) {
+            var me = this,
+                vx = vertex.props.x,
+                vy = vertex.props.y,
+                vz = me.props.vertexSize / 2,
+                va = Math.round(vertex.alpha),
+                pt = Graph.point(vx, vy);
+            
+            if ([0, 180, 360].indexOf(va) !== -1) {
+                pt.props.bearing = 'N';
+                pt.props.orient  = 'H';
+            } else if ([90, 270].indexOf(va) !== -1) {
+                pt.props.bearing = 'E';
+                pt.props.orient  = 'V';
+            } else {
+                pt.props.bearing = null;
+                pt.props.orient  = null;
+            }
+
+            pt.segment = {
+                range: vertex.range,
+                start: vertex.start,
+                end:   vertex.end
+            };
+
+            vertex = null;
+
+            pt.component = new Graph.svg.Image(
+                me.props.vertexImage,
+                vx - vz,
+                vy - vz,
+                me.props.vertexSize,
+                me.props.vertexSize
+            );
+
+            pt.component.elem.data(Graph.string.ID_LINK, this.props.id);
+            
+            pt.component.removeClass(Graph.string.CLS_VECTOR_IMAGE);
+            pt.component.addClass('graph-util-link-vertex');
+            pt.component.props.traversable = false;
+            pt.component.props.selectable = false;
+            pt.component.render(me.components.edit);
+
+            me.vertices.push(pt);
+
+            if (me.components.block.props.rendered) {
+                pt.component.tree.paper = me.tree.paper;
+                pt.component.props.rendered = true;
+            }
+
+            ///////// MANHATTAN RESIZER /////////
+            
+            if ( ! pt.props.bearing) {
+                return pt;
+            }
+
+            pt.component.addClass('vertex-' + pt.props.bearing.toLowerCase());
+
+            pt.component.draggable({
+                axis: (pt.props.orient == 'V' ? 'x' : 'y'),
+                hint: false
+            });
+
+            var helper = me.components.helper,
+                router = me.router,
+                orient = pt.props.orient;
+
+            var sr = pt.segment.range,
+                ss = pt.segment.start,
+                se = pt.segment.end,
+                sd = orient == 'V' ? (ss.y < se.y ? 'D' : 'U') : (ss.x < se.x ? 'R' : 'L'),
+                sx = Math.min(ss.x, se.x),
+                sy = Math.min(ss.y, se.y),
+                ex = Math.max(ss.x, se.x),
+                ey = Math.max(ss.y, se.y),
+                hx = 0, 
+                hy = 0, 
+                hw = 0, 
+                hh = 0;
+
+            var ps, pm;
+
+            pt.component.on({
+                dragstart: function(e) {
+
+                    router.supply(me.props.command);
+
+                    ps = router.segments();
+                    pm = ps.length - 1;
+
+                    hx = sx;
+                    hy = sy;
+
+                    if (orient == 'V') {
+                        hh = Math.abs(ey - sy);
+                    } else {
+                        hw = Math.abs(ex - sx);
+                    }
+
+                    helper.addClass('visible');
+
+                    helper.attr('points', [
+                        [hx,      hy],
+                        [hx + hw, hy],
+                        [hx + hw, hy + hh],
+                        [hx,      hy + hh]
+                    ]);
+                },
+                dragmove: function(e) {
+                    if (orient == 'V') {
+                        hw += e.dx;
+                    } else {
+                        hh += e.dy;
+                    }
+                    helper.attr('points', [
+                        [hx,      hy],
+                        [hx + hw, hy],
+                        [hx + hw, hy + hh],
+                        [hx,      hy + hh]
+                    ]);
+                },
+                dragend: function(e) {
+                    var f = sr[0], t = sr[1];
+
+                    if (orient == 'V') {
+                        if (pm === 1) {
+                            if (sd == 'D') {
+                                router.insert(1, hx + hw, hy);
+                                router.insert(2, hx + hw, hy + hh);
+                            } else {
+                                router.insert(1, hx + hw, hy + hh);
+                                router.insert(2, hx + hw, hy);
+                            }
+                        } else {
+                            if (f === 0) {
+                                if (sd == 'D') {
+                                    router.insert(1, hx + hw, hy);
+                                    router.modify(2, hx + hw, hy + hh);
+                                } else {
+                                    router.insert(1, hx + hw, hy + hh);
+                                    router.modify(2, hx + hw, hy);
+                                }
+                            } else if (t === pm) {
+                                if (sd == 'D') {
+                                    router.modify(f, hx + hw, hy);
+                                    router.insert(t, hx + hw, hy + hh);
+                                } else {
+                                    router.modify(f, hx + hw, hy + hh);
+                                    router.insert(t, hx + hw, hy);
+                                }
+                            } else {
+                                if (sd == 'D') {
+                                    router.modify(f, hx + hw, hy);
+                                    router.modify(t, hx + hw, hy + hh);
+                                } else {
+                                    router.modify(f, hx + hw, hy + hh);
+                                    router.modify(t, hx + hw, hy);
+                                }
+                            }
+                        }
+                    } else {
+                        if (pm === 1) {
+                            if (sd == 'R') {
+                                router.insert(1, hx, hy + hh);
+                                router.insert(2, hx + hw, hy + hh);
+                            } else {
+                                router.insert(1, hx + hw, hy + hh);
+                                router.insert(2, hx, hy + hh);
+                            }
+                        } else {
+                            if (f === 0) {
+                                if (sd == 'R') {
+                                    router.modify(t, hx + hw, hy + hh);
+                                    router.insert(1, hx, hy + hh);
+                                } else {
+                                    router.modify(t, hx, hy + hh);
+                                    router.insert(1, hx + hw, hy + hh);
+                                }
+                            } else if (t === pm) {
+                                if (sd == 'R') {
+                                    router.modify(f, hx, hy + hh);
+                                    router.insert(t, hx + hw, hy + hh);
+                                } else {
+                                    router.modify(f, hx + hw, hy + hh);
+                                    router.insert(t, hx, hy + hh);
+                                }
+                            } else {
+                                if (sd == 'R') {
+                                    router.modify(f, hx, hy + hh);
+                                    router.modify(t, hx + hw, hy + hh);
+                                } else {
+                                    router.modify(f, hx + hw, hy + hh);
+                                    router.modify(t, hx, hy + hh);
+                                }
+                            }
+                        }
+                    }
+
+                    router.commit();
+                    router.tidify();
+
+                    var command = router.command();
+
+                    me.connect(command);
+                    helper.removeClass('visible');
+                }
+            });
+
+            return pt;
+        },
+
+        suspendEdit: function() {
+            var me = this, comp = me.components;
+
+            _.forEach(['helper', 'edit'], function(name){
+                if (comp[name].$rendered) {
+                    comp[name].elem.detach();
+                }
+            });
+        },
+
+        resumeEdit: function() {
+            var me = this, comp = me.components;
+
+            _.forEach(['helper', 'edit'], function(name){
+                if ( ! comp[name].$rendered) {
+                    comp[name].render(comp.block);
+                    comp[name].$rendered = true;
+                    comp[name].fire('render');
+                } else {
+                    comp.block.elem.append(comp[name].elem);
+                }
+            });
+        },
+
+        suspendControl: function() {
+            var me = this, comp = me.components;
+            _.forEach(['head', 'tail'], function(name){
+                if (comp[name].$rendered) {
+                    comp[name].elem.detach();
+                }
+            });
+        },
+
+        resumeControl: function() {
+            var me = this, comp = me.components;
+            _.forEach(['head', 'tail'], function(name){
+                if ( ! comp[name].$rendered) {
+                    comp[name].$rendered = true;
+                    comp[name].render(comp.block);
+                    comp[name].fire('render');
+                } else {
+                    comp.block.elem.append(comp[name].elem);
+                }
+            });
+
+            me.updateControls();
+        },
+
+        select: function() {
+            this.props.selected = true;
+            this.components.block.addClass('selected');
+            this.resumeEdit();
+            this.resumeControl();
+        },
+
+        deselect: function() {
+            this.props.selected = false;
+            this.components.block.removeClass('selected');
+            this.suspendEdit();
+            this.suspendControl();
+        },
+
+        toJson: function() {
+            var json;
+            json = _.extend({}, this.props);
+            return json;
+        },
+
+        toString: function() {
+            return 'Graph.util.Link';
+        },
+
+        onBlockRender: function() {
+            var comp = this.components;
+            for(var name in comp) {
+                if (name != 'block') {
+                    comp[name].tree.paper = comp.block.tree.paper;
+                }
+            }
+        },
+
+        onPathClick: function(e) {
+            var me = this;
+            me.select();
+        },
+
+        onStartConnecting: function() {
+
+        },
+
+        onConnecting: function(e, pole) {
+            var me = this, 
+                comp = me.components,
+                router = me.router;
+
+            if (pole === comp.head) {
+                
+            } else if (pole === comp.tail) {
+
+            }
+        },
+
+        destroy: function() {
+            this.disconnect();
+
+            _.forEach(this.vertices, function(v){
+                v.component.remove();
+                v = null;
+            });
+
+            _.forEach(this.components, function(c){
+                c.remove();
+                c = null;
+            });
+
+            this.vertices = null;
+            this.components = null;
+            this.router = null;
+
+            Graph.manager.link.unregister(this);
+        }
+
+    });
+
+    ///////// STATICS /////////
+    
+    Link.guid = 0;
+
+}());

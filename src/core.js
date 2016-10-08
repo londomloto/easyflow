@@ -13,8 +13,6 @@
  * Lodash polyfill
  */
 (function(){
-    var global = this;
-
     _.float = parseFloat;
 
     _.gcd = function(array) {
@@ -139,17 +137,33 @@
 
     var REGEX_PATH_CMD = /,?([achlmqrstvxz]),?/gi;
     
+    var GLOBAL = typeof window != 'undefined' && window.Math == Math ? window : (typeof self != 'undefined' && self.Math == Math ? self : Function('return this')());
+
     var DOCUMENT = document;
 
-    var GLOBAL = this;
+    /**
+     * Size for cached result
+     */
+    var CACHE_SIZE = 100;
 
-    GLOBAL.Graph = GLOBAL.Graph || function(config) {};
+    /**
+     * Size for memoize function
+     */
+    var MEMO_SIZE = 1000;
+
+    /**
+     * Banner
+     */
+    GLOBAL.Graph = GLOBAL.Graph || {};
+
     
-    Graph.VERSION = '1.0.0';
-    
-    Graph.AUTHOR = 'PT. Kreasindo Cipta Teknologi';
-    
+    /**
+     * Core helper
+     */
     _.extend(Graph, {
+        VERSION: '1.0.0',
+        AUTHOR: 'Kreasindo Cipta Teknologi',
+        cached: {},
         config: {
             base: 'easyflow/',
             svg: {
@@ -165,11 +179,7 @@
                 size: '12px',
                 line: 1
             }
-        }
-    });
-
-    _.extend(Graph, {
-        cached: {},
+        },
         setup: function(name, value) {
             if (_.isPlainObject(name)) {
                 _.extend(Graph.config, name);
@@ -177,11 +187,41 @@
                 Graph.config[name] = value;
             }
         },
+        global: function() {
+            return GLOBAL;
+        }/*,
         toString: function() {
-            return 'Graph SVG Library presented by Kreasindo Cipta Teknologi';
+            return 'SVG Library presented by ' + Graph.AUTHOR;
+        }*/
+    });
+
+    /**
+     * Params name
+     */
+    _.extend(Graph, {
+        string: {
+            ID_VECTOR: 'graph-vector-id',
+            ID_LINK: 'graph-link-id',
+            ID_PORT: 'graph-port-id',
+
+            CLS_VECTOR_SVG: 'graph-paper',
+            CLS_VECTOR_RECT: 'graph-elem graph-elem-rect',
+            CLS_VECTOR_PATH: 'graph-elem graph-elem-path',
+            CLS_VECTOR_TEXT: 'graph-elem graph-elem-text',
+            CLS_VECTOR_LINE: 'graph-elem graph-elem-line',
+            CLS_VECTOR_GROUP: 'graph-elem graph-elem-group',
+            CLS_VECTOR_IMAGE: 'graph-elem graph-elem-image',
+            CLS_VECTOR_CIRCLE: 'graph-elem graph-elem-circle',
+            CLS_VECTOR_ELLIPSE: 'graph-elem graph-elem-ellipse',
+            CLS_VECTOR_POLYGON: 'graph-elem graph-elem-polygon',
+            CLS_VECTOR_POLYLINE: 'graph-elem graph-elem-polyline',
+            CLS_VECTOR_VIEWPORT: 'graph-viewport'
         }
     });
 
+    /**
+     * DOM helper
+     */
     _.extend(Graph, {
         isHTML: function(obj) {
             return obj instanceof HTMLElement;
@@ -194,6 +234,9 @@
         }
     });
 
+    /**
+     * Language & Core helper
+     */
     _.extend(Graph, {
         ns: function(namespace) {
             var cached = Graph.lookup('Graph', 'ns', namespace);
@@ -221,6 +264,39 @@
             return parent;
         },
 
+        uuid: function() {
+            // credit: http://stackoverflow.com/posts/2117523/revisions
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16|0;
+                var v = c == 'x' ? r : (r&0x3|0x8);
+                return v.toString(16);
+            });
+        },
+
+        /**
+         * Simple hashing
+         */
+        hash: function(str) {
+            var hash = 0, chr, len, i;
+            
+            if ( ! str.length) {
+                return hash;
+            }
+
+            for (i = 0, len = str.length; i < len; i++) {
+                chr   = str.charCodeAt(i);
+                hash  = ((hash << 5) - hash) + chr;
+                hash |= 0;
+            }
+
+            return hash;
+        },
+
+        // prepare for prototypal factory
+        create: function($super, props) {
+            
+        },
+
         factory: function(clazz, args) {
             args = [clazz].concat(args);
             return new (Function.prototype.bind.apply(clazz, args));
@@ -240,6 +316,14 @@
                 }
             });
         },
+
+        extend: function(clazz, props) {
+            if (_.isPlainObject(clazz)) {
+                props = clazz;
+                clazz = Graph.lang.Class;
+            }
+            return clazz.extend(props);
+        },
         
         mixin: function(target, source) {
             this.extend(target, source, target);
@@ -247,24 +331,32 @@
 
         lookup: function(/* tag, ...tokens */) {
             var args = _.toArray(arguments),
-                tag = args.shift(),
+                group = args.shift(),
                 token = _.join(args, '|'),
-                cached = Graph.cached[tag] = Graph.cached[tag] || {};
+                cached = Graph.cached[group] = Graph.cached[group] || {},
+                credit = group == 'Regex.event' ? null : CACHE_SIZE;
 
             if (cached[token]) {
-                cached[token].credit = 100;
+                cached[token].credit = credit;
             } else {
                 cached[token] = {
-                    credit: 100
+                    credit: credit,
+                    remove: (function(group, token){
+                        return function() {
+                            delete Graph.cached[group][token];    
+                        };
+                    }(group, token))
                 }
             }
 
             _.debounce(function(t){
                 _.forOwn(cached, function(v, k){
                     if (k != t) {
-                        cached[k].credit--;
-                        if (cached[k].credit <= 0) {
-                            delete cached[k];
+                        if (cached[k].credit !== null) {
+                            cached[k].credit--;
+                            if (cached[k].credit <= 0) {
+                                delete cached[k];
+                            }
                         }
                     }
                 });
@@ -290,7 +382,7 @@
                     return cache[token];
                 }
 
-                if (saved.length >= 1e3) {
+                if (saved.length >= MEMO_SIZE) {
                     delete cache[saved.shift()];
                 }
 
@@ -303,22 +395,102 @@
     });
 
     /**
+     * Topic
+     */
+    _.extend(Graph, {
+        
+        topic: {
+            subscribers: {},
+            topics: {}
+        },
+
+        publish: function(topic, message) {
+            var subs = Graph.topic.subscribers,
+                lsnr = subs[topic] || [];
+
+            _.forEach(lsnr, function(handler){
+                (function(){
+                    handler.call(null, message);
+                }(handler));
+            });
+        },
+
+        subscribe: function(topic, handler) {
+
+            if (_.isPlainObject(topic)) {
+                var unsub = [];
+
+                _.forOwn(topic, function(h, t){
+                    (function(t, h){
+                        var s = Graph.subscribe(t, h);
+                        unsub.push({topic: t, sub: s});
+                    }(t, h));
+                });
+
+                return {
+                    unsubscribe: (function(unsub){
+                        return function(topic) {
+                            if (topic) {
+                                var f = _.find(unsub, function(u){
+                                    return u.topic == topic;
+                                });
+                                f && f.sub.unsubscribe();
+                            } else {
+                                _.forEach(unsub, function(u){
+                                    u.sub.unsubscribe();
+                                });
+                            }
+                        };
+                    }(unsub))
+                };
+            }
+
+            var subs = Graph.topic.subscribers, data;
+
+            subs[topic] = subs[topic] || [];
+            subs[topic].push(handler);
+
+            return {
+                unsubscribe: (function(topic, handler){
+                    return function() {
+                        Graph.unsubscribe(topic, handler);
+                    };
+                }(topic, handler))
+            };
+        },
+
+        unsubscribe: function(topic, handler) {
+            var subs = Graph.topic.subscribers, 
+                lsnr = subs[topic] || [];
+
+            for (var i = lsnr.length - 1; i >= 0; i--) {
+                if (lsnr[i] === handler) {
+                    lsnr.splice(i, 1);
+                }
+            }
+        }
+    });
+
+    /**
      * Expand namespaces
      */
     Graph.ns('Graph.lang');
     Graph.ns('Graph.dom');
     Graph.ns('Graph.collection');
+    Graph.ns('Graph.manager');
+    Graph.ns('Graph.layout');
     Graph.ns('Graph.svg');
-    Graph.ns('Graph.svg.fn');
     Graph.ns('Graph.router');
+    Graph.ns('Graph.link');
     Graph.ns('Graph.util');
     Graph.ns('Graph.plugin');
     Graph.ns('Graph.shape');
     Graph.ns('Graph.shape.common');
     Graph.ns('Graph.shape.activity');
+    Graph.ns('Graph.data');
     
     /**
-     * Math
+     * Math helper
      */
     _.extend(Graph, {
         deg: function(rad) {
@@ -371,6 +543,12 @@
 
             return d;
         },
+        
+        taxicab: function(x1, y1, x2, y2) {
+            var dx = x1 - x2,
+                dy = y1 - y2;
+            return dx * dx + dy * dy;
+        },
 
         /**
          * Get hypotenuse (magnitude) of triangle
@@ -392,46 +570,9 @@
     });
 
     /**
-     * Lang
-     */
-    _.extend(Graph, {
-        extend: function(clazz, props) {
-            if (_.isPlainObject(clazz)) {
-                props = clazz;
-                clazz = Graph.lang.Class;
-            }
-            return clazz.extend(props);
-        },
-        point: function(x, y) {
-            return new Graph.lang.Point(x, y);
-        },
-        line: function() {
-            var args = _.toArray(arguments);
-            return Graph.factory(Graph.lang.Line, args);
-        },
-        bbox: function(bbox) {
-            return new Graph.lang.BBox(bbox);
-        },
-        path: function(command) {
-            return new Graph.lang.Path(command);
-        },
-        curve: function(command) {
-            return new Graph.lang.Curve(command);
-        },
-        matrix: function(a, b, c, d, e, f) {
-            return new Graph.lang.Matrix(a, b, c, d, e, f);
-        }
-    });
-
-
-    /**
      * Vector
      */
     _.extend(Graph, {
-        get: function(element) {
-            return Graph.$(element).data('vector');
-        },
-        
         paper: function() {
             var args = _.toArray(arguments);
             return Graph.factory(Graph.svg.Paper, args);

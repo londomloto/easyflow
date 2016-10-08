@@ -14,34 +14,41 @@
             width: 0,
             height: 0,
             offset: [0, 0],
-            suspended: true
+            suspended: true,
+            rendered: false
         },
 
-        canvas: null,
+        paper: null,
         collection: [],
 
         components: {
             rubber: null
         },
 
-        events: {
-            beforedrag: true,
-            afterdrag: true
-        },
+        constructor: function(paper) {
+            var me = this;
 
-        constructor: function() {
-            this.components.rubber = Graph.$('<div class="graph-rubberband">');
+            me.paper = paper;
+            me.components.rubber = Graph.$('<div class="graph-rubberband">');
+
+            if (me.paper.props.rendered) {
+                me.setup();
+            } else {
+                me.paper.on('render', function(){
+                    me.setup();
+                });
+            }
         },
 
         setup: function() {
-            var me = this, canvas = me.canvas;
+            var me = this, paper = me.paper;
 
             if (me.plugin) {
                 return;
             }
-            // me.container.on('scroll', function(){
-            //     var top = me.container.scrollTop(),
-            //         left = me.container.scrollLeft(),
+            // me.tree.container.on('scroll', function(){
+            //     var top = me.tree.container.scrollTop(),
+            //         left = me.tree.container.scrollLeft(),
             //         dy = top - me.props.top,
             //         dx = left - me.props.left;
 
@@ -52,14 +59,14 @@
             //     me.props.left = left;
             // });
 
-            me.plugin = interact(canvas.node()).draggable({
+            me.plugin = paper.interactable().draggable({
                 manualStart: true,
 
                 onstart: function(e) {
                     me.reset();
                     me.resize(0, 0);
 
-                    var offset = canvas.container.offset(),   
+                    var offset = paper.tree.container.offset(),   
                         x = e.pageX - offset.left,
                         y = e.pageY - offset.top;
 
@@ -138,9 +145,9 @@
 
                     bbox = me.bbox();
                     
-                    canvas.cascade(function(c){
-                        if (c !== canvas && c.selectable() && ! c.isGroup()) {
-                            if (bbox.contain(c)) {
+                    paper.cascade(function(c){
+                        if (c !== paper && c.selectable() && ! c.isGroup()) {
+                            if (bbox.contains(c)) {
                                 me.collect(c);
                             }
                         }
@@ -152,18 +159,18 @@
             })
             .on('down', function(e){
                 var single = ! (e.ctrlKey || e.shiftKey),
-                    vector = Graph.get(e.target);
-
-                if ( ! vector.selectable()) {
+                    vector = Graph.manager.vector.get(e.target);
+                
+                if (vector && ! vector.selectable()) {
                     single && me.clearCollection();    
                     return;
                 }
             })
             .on('tap', function(e){
-                var vector = Graph.get(e.target),
+                var vector = Graph.manager.vector.get(e.target),
                     single = ! (e.ctrlKey || e.shiftKey);
 
-                if (vector.selectable()) {
+                if (vector && vector.selectable()) {
                     single && me.clearCollection(vector);
                     me.collect(vector);
                     return;
@@ -173,7 +180,7 @@
             .on('move', function(e){
                 var action = e.interaction,
                     target = e.target;
-                if (action.pointerIsDown && action.interacting() === false && target === canvas.node()) {
+                if (action.pointerIsDown && action.interacting() === false && target === paper.node()) {
                     if (me.props.suspended) {
                         me.resume();
                     }
@@ -184,27 +191,21 @@
             me.plugin.styleCursor(false);
         },
 
-        render: function(canvas) {
+        render: function() {
             var me = this;
 
-            me.canvas = canvas;
-            me.canvas.container.append(me.components.rubber);
-
-            me.canvas.on({
-                render: function() {
-                    me.setup();
-                }
-            });
-            
-            if (me.canvas.rendered) {
-                me.setup();
+            if (me.props.rendered) {
+                return;
             }
+
+            me.paper.container().append(me.components.rubber);
+            me.props.rendered = true;
         },
 
         bbox: function() {
             var props = this.props;
             
-            return new Graph.lang.BBox({
+            return Graph.bbox({
                 x: props.x,
                 y: props.y,
                 x2: props.x2,
@@ -226,7 +227,7 @@
             if (offset === -1) {
                 this.collection.push(vector);
                 if ( ! silent) {
-                    vector.fire('collect', this, vector);
+                    vector.fire('collect');
                 }
             }
         },
@@ -241,32 +242,39 @@
 
             if (offset > -1) {
                 this.collection.splice(offset, 1);
-                vector.fire('decollect', this, vector);
+                vector.fire('decollect');
             }
         },
 
         clearCollection: function(vector) {
             var me = this;
-            me.canvas.cascade(function(c){
-                if (c !== me.canvas && c.props.selected) {
+            me.paper.cascade(function(c){
+                if (c !== me.paper && c.props.selected) {
                     me.decollect(c);
                 }
             });
         },
 
-        resume: function() {
-            this.components.rubber.addClass('visible');
-            this.props.suspended = false;
+        suspend: function() {
+            this.props.suspended = true;
+            this.components.rubber.detach();
+            // this.components.rubber.removeClass('visible');
         },
 
-        suspend: function() {
-            this.components.rubber.removeClass('visible');
-            this.props.suspended = true;
+        resume: function() {
+            this.props.suspended = false;
+
+            if ( ! this.props.rendered) {
+                this.render();
+            } else {
+                this.paper.container().append(this.components.rubber);
+                // this.components.rubber.addClass('visible');
+            }
         },
 
         reset: function() {
-            var top = this.canvas.container.scrollTop(),
-                left = this.canvas.container.scrollLeft();
+            var top = this.paper.container().scrollTop(),
+                left = this.paper.container().scrollLeft();
 
             this.props.x = 0;
             this.props.y = 0;
@@ -297,18 +305,19 @@
             var me = this;
 
             _.forEach(me.collection, function(v){
-                if (v.dragger && v.dragger.props.enabled && v !== origin) {
+                if (v.plugins.dragger && v.plugins.dragger.props.enabled && v !== origin) {
                     (function(){
-                        var mat = v.matrix.data(),
+                        var mat = v.graph.matrix.data(),
                             sin = mat.sin,
                             cos = mat.cos;
 
-                        if (v.resizer) {
-                            v.resizer.suspend();
+                        if (v.plugins.resizer) {
+                            v.plugins.resizer.redraw();
+                            v.plugins.resizer.suspend();
                         }
 
-                        if (v.dragger.components.helper) {
-                            v.dragger.resume();
+                        if (v.plugins.dragger.components.helper) {
+                            v.plugins.dragger.resume();
                         }
 
                         v.syncdrag = {
@@ -323,7 +332,7 @@
                         v.fire('dragstart', {
                             dx: e.dx *  cos + e.dy * sin,
                             dy: e.dx * -sin + e.dy * cos
-                        }, v);
+                        });
 
                     }());
                 }
@@ -336,13 +345,13 @@
             var me = this, dx, dy;
 
             _.forEach(me.collection, function(v){
-                if (v.dragger && v.dragger.props.enabled && v !== origin) {
+                if (v.plugins.dragger && v.plugins.dragger.props.enabled && v !== origin) {
                     (function(v, e){
                         var dx = e.ox *  v.syncdrag.cos + e.oy * v.syncdrag.sin,
                             dy = e.ox * -v.syncdrag.sin + e.oy * v.syncdrag.cos;
 
-                        if (v.dragger.components.helper) {
-                            v.dragger.components.helper.translate(e.ox, e.oy).apply();
+                        if (v.plugins.dragger.components.helper) {
+                            v.plugins.dragger.components.helper.translate(e.ox, e.oy).apply();
                         } else {
                             v.translate(dx, dy).apply();
                         }
@@ -353,7 +362,7 @@
                         v.fire('dragmove', {
                             dx: dx,
                             dy: dy
-                        }, v);
+                        });
 
                     }(v, e));    
                 }
@@ -365,35 +374,40 @@
             var me = this;
 
             _.forEach(me.collection, function(v){
-                if (v.dragger && v.dragger.props.enabled && v !== origin) {
+                if (v.plugins.dragger && v.plugins.dragger.props.enabled && v !== origin) {
                     (function(v, e){
                         
-                        if (v.dragger.components.helper) {
+                        if (v.plugins.dragger.components.helper) {
                             v.translate(v.syncdrag.tdx, v.syncdrag.tdy).apply();
-                            v.dragger.suspend();
+                            v.plugins.dragger.suspend();
                         }
 
-                        if (v.resizer) {
-                            v.resizer.resume();
-                            v.resizer.redraw();
+                        if (v.plugins.resizer) {
+                            v.plugins.resizer.resume();
                         }
 
                         v.fire('dragend', {
                             dx: v.syncdrag.tdx,
                             dy: v.syncdrag.tdy
-                        }, v);
+                        });
                         
                         v.removeClass('dragging');
 
                         delete v.syncdrag;
-                        v.dirty = true;
+                        v.dirty(true);
 
                     }(v, e));
                 }
             });
 
             e.origin = origin;
-            me.fire('afterdrag', e, me);
+            e.type = 'afterdrag';
+            
+            me.fire(e);
+        },
+
+        toString: function() {
+            return 'Graph.util.Collector';
         }
     });
 

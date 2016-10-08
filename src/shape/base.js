@@ -12,6 +12,7 @@
         components: {},
 
         tree: {
+            page: null,
             parent: null,
             children: null
         },
@@ -35,7 +36,7 @@
             if (me.components.group) {
                 me.components.group.on('render', function(){
                     me.rendered = true;
-                    me.fire('render', me);
+                    me.fire('render');
                 });
             } else {
                 console.warn("Component group is required!");
@@ -131,6 +132,10 @@
 
         isPage: function() {
             return false;
+        },
+
+        parse: function(json) {
+            
         }
 
     });

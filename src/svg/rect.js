@@ -1,7 +1,7 @@
 
 (function(){
 
-    Graph.svg.Rect = Graph.svg.Vector.extend({
+    Graph.svg.Rect = Graph.extend(Graph.svg.Vector, {
 
         attrs: {
             // 'stroke': '#333333',
@@ -9,14 +9,23 @@
             // 'fill': '#ffffff',
             'style': '',
             // 'shape-rendering': 'crispEdges',
-            'class': 'graph-elem graph-elem-rect'
+            'class': Graph.string.CLS_VECTOR_RECT
         },
 
         constructor: function(x, y, width, height, r) {
             var me = this;
-            r = _.defaultTo(r, 0);
+            r = _.defaultTo(r, 7);
 
-            me.$super('rect', {
+            // me.$super('rect', {
+            //     x: _.defaultTo(x, 0),
+            //     y: _.defaultTo(y, 0),
+            //     rx: r,
+            //     ry: r,
+            //     width: _.defaultTo(width, 0),
+            //     height: _.defaultTo(height, 0)
+            // });
+
+            me.superclass.prototype.constructor.call(me, 'rect', {
                 x: _.defaultTo(x, 0),
                 y: _.defaultTo(y, 0),
                 rx: r,
@@ -28,20 +37,21 @@
             me.origpath = me.pathinfo();
         },
 
-        attr: function() {
-            var args = _.toArray(arguments);
+        attr: function(name, value) {
+            var result = this.superclass.prototype.attr.apply(this, [name, value]);
 
-            this.$super.apply(this, args);
-            this.attrs.r = this.attrs.rx;
+            if (name == 'rx' && value !== undefined) {
+                this.attrs.r = this.attrs.rx;    
+            }
 
-            return this;
+            return result;
         },
 
         pathinfo: function() {
-            var a = this.attrs;
+            var a = this.attrs, p;
 
             if (a.r) {
-                return Graph.path([
+                p = Graph.path([
                     ['M', a.x + a.r, a.y], 
                     ['l', a.width - a.r * 2, 0], 
                     ['a', a.r, a.r, 0, 0, 1, a.r, a.r], 
@@ -54,7 +64,7 @@
                     ['z']
                 ]);
             } else {
-                return Graph.path([
+                p = Graph.path([
                     ['M', a.x, a.y], 
                     ['l', a.width, 0], 
                     ['l', 0, a.height], 
@@ -62,11 +72,13 @@
                     ['z']
                 ]);
             }
+
+            return p;
         },
         
         resize: function(sx, sy, cx, cy, dx, dy) {
-            var matrix = this.matrix.clone(),
-                rotate = this.props.rotate;
+            var matrix = this.matrix().clone(),
+                rotate = matrix.rotate().deg;
 
             var x, y, w, h;
 
@@ -108,7 +120,17 @@
                     cy: y
                 }
             };
+        },
+
+        toString: function() {
+            return 'Graph.svg.Rect';
         }
     });
+
+    ///////// STATIC /////////
+    
+    Graph.svg.Rect.toString = function() {
+        return 'function(x, y, width, height, r)';
+    };
 
 }());

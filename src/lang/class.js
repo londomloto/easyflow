@@ -2,37 +2,44 @@
 (function(){
     
     var initializing = false;
-    var tokenizer = /xyz/.test(function(){ xyz; }) ? /\$super/ : /.*/;
+    // var inherit = /xyz/.test(function(){ xyz; }) ? /\$super/ : /.*/;
     var Class = Graph.lang.Class = function() {};
-    
-    Class.extend = function extend(config) {
+
+    Class.extend = function (config) {
         var $super, proto, name, value, defs;
         
         $super = this.prototype;
         defs = {};
         
         initializing = true;
-        proto = new this();
+        
+        // proto = new this();
+        proto = Object.create($super);
+
         initializing = false;
         
+        var name;
 
-        for (var name in config) {
+        for (name in config) {
             value = config[name];
             if ( ! _.isFunction(value)) {
                 proto[name] = defs[name] = value;
             } else {
-                proto[name] = _.isFunction($super[name]) && tokenizer.test(value)
-                    ? (function(name, value){
-                        return function() {
-                            var tmp, ret;
-                            tmp = this.$super;
-                            this.$super = $super[name];
-                            ret = value.apply(this, _.toArray(arguments));
-                            this.$super = tmp;
-                        
-                            return ret;
-                        };
-                    }(name, value)) : value;
+                proto[name] = value;
+
+                // NOTE: perfomance penalty!!!
+                // ---------------------------
+                // proto[name] = _.isFunction($super[name])  && inherit.test(value) 
+                //     ? (function(name, func){
+                //         return function() {
+                //             var tmp, ret;
+                //             tmp = this.$super;
+                //             this.$super = $super[name];
+                //             ret = func.apply(this, arguments);
+                //             this.$super = tmp;
+                //             return ret;
+                //         };
+                //     }(name, value)) : value;
             }
         }
 
@@ -42,59 +49,88 @@
             init = proto.constructor;
             delete proto.constructor;
         }
-
-        clazz = function () {
-            var me = this,
-                ct = me.constructor;
+        
+        clazz = function() {
+            var me = this, ct = me.constructor;
             
             me.listeners = {};
 
-            if (me.superclass.defs) {
-                _.forOwn(me.superclass.defs, function(v, k){
+            if (me.superclass.defaults) {
+                _.forOwn(me.superclass.defaults, function(v, k){
                     me[k] = _.cloneDeep(v);
                 });
             }
 
-            _.forOwn(ct.defs, function(v, k){
+            _.forOwn(ct.defaults, function(v, k){
                 me[k] = _.cloneDeep(v);
             });
             
             if ( ! initializing) {
                 init && init.apply(me, _.toArray(arguments));
             }
-        }
+        };
 
         // statics
-        clazz.extend = extend;
-        clazz.defs = defs;
-        clazz.version = '1.0.0';
-        clazz.author = 'londomloto';
+        clazz.init = init;
+        clazz.extend = Class.extend;
+        clazz.defaults = defs;
 
         // instance
         clazz.prototype = proto;
         clazz.prototype.constructor = clazz;
         clazz.prototype.superclass = $super.constructor;
 
+        // `$super()` implementation, replace John Resigh implementation
+        clazz.prototype.$super = function () {
+            var func = clazz.prototype.$super,
+                ctor = this.constructor;
+                
+            var fcal, fsup, near;
+            
+            fcal = (func && func.caller) ? func.caller : arguments.callee.caller;
+
+            if ( ! fcal) {
+                return undefined;
+            }
+
+            fsup = fcal.$super;
+
+            if ( ! fsup) {
+                near = Class.closest(fcal, ctor);
+                    
+                if (near) {
+                    var pro = near.proto, 
+                        key = near.key;
+
+                    fsup = pro.superclass.prototype[key];
+                    fcal.$super = fsup;
+                }
+            }
+
+            return fsup ? fsup.apply(this, arguments) : undefined;
+        };
+
         /**
-         * Register event handler
+         * Enable eventbus
          */
-        clazz.prototype.on = function(name, handler) {
+        
+        clazz.prototype.on = function(type, handler) {
             var me = this, data;
 
-            if (_.isPlainObject(name)) {
-                _.forOwn(name, function(v, k){
+            if (_.isPlainObject(type)) {
+                _.forOwn(type, function(v, k){
                     me.on(k, v);
                 });
                 return me;
             }
 
-            var part = _.split(name, '.'),
+            var part = _.split(type, '.'),
                 fire = part.shift();
 
             me.listeners[fire] = me.listeners[fire] || [];
             
             data = {
-                name: name,
+                type: type,
                 orig: handler,
                 func: _.bind(handler, this)
             };
@@ -106,22 +142,30 @@
         /**
          * Unregister event handler
          */
-        clazz.prototype.off = function(name, handler) {
+        clazz.prototype.off = function(type, handler) {
             var part, fire, lsnr, rgex;
 
-            part = _.split(name, '.');
-            rgex = new RegExp(_.escapeRegExp(name), 'gi');
+            part = _.split(type, '.');
             fire = part.shift();
             lsnr = fire ? (this.listeners[fire] || []) : [];
+
+            var cached = Graph.lookup('Regex.event', type);
+
+            if (cached.rgex) {
+                rgex = cached.rgex;
+            } else {
+                rgex = new RegExp(_.escapeRegExp(type), 'gi');
+                cached.rgex = rgex;
+            }
 
             if (lsnr.length) {
                 for (var i = lsnr.length - 1; i >= 0; i--) {
                     if (handler) {
-                        if (rgex.test(lsnr[i].name) && lsnr[i].orig === handler) {
+                        if (rgex.test(lsnr[i].type) && lsnr[i].orig === handler) {
                             this.listeners[fire].splice(i, 1);
                         }
                     } else {
-                        if (rgex.test(lsnr[i].name)) {
+                        if (rgex.test(lsnr[i].type)) {
                             this.listeners[fire].splice(i, 1);
                         }
                     }
@@ -132,11 +176,11 @@
                     (function(lsnr){
                         for (var i = lsnr.length - 1; i >= 0; i--) {
                             if (handler) {
-                                if (rgex.test(lsnr[i].name) && lsnr[i].orig === handler) {
+                                if (rgex.test(lsnr[i].type) && lsnr[i].orig === handler) {
                                     lsnr.splice(i, 1);
                                 }
                             } else {
-                                if (rgex.test(lsnr[i].name)) {
+                                if (rgex.test(lsnr[i].type)) {
                                     lsnr.splice(i, 1);
                                 }
                             }
@@ -152,38 +196,81 @@
         /**
          * Execute event handler
          */
-        clazz.prototype.fire = function(/* name, param1, param2, ...paramN */) {
-            var args = _.toArray(arguments),
-                name = args.shift(),
-                part = _.split(name, '.'),
-                fire = part.shift(),
-                lsnr = this.listeners[fire] || [],
-                rgex = new RegExp(_.escapeRegExp(name), 'gi');
-            
+        clazz.prototype.fire = function(type, data) {
+            var func = clazz.prototype.fire;
+            var args = [];
+            var event, part, fire, lsnr, rgex;
+
+            if (_.isString(type)) {
+                event = new Graph.lang.Event(type, data);
+            } else {
+                event = type;
+                type  = event.type;
+            }
+
+            // add default publisher props for later use
+            event.publisher = this;
+
+            args.push(event);
+
+            part = _.split(type, '.');
+            fire = part.shift();
+            lsnr = this.listeners[fire] || [];
+
+            var cached = Graph.lookup('Regex.event', type);
+
+            if (cached.rgex) {
+                rgex = cached.rgex;
+            } else {
+                rgex = new RegExp(_.escapeRegExp(type), 'gi');
+                cached.rgex = rgex;
+            }
+
             if (lsnr.length) {
-                _.forEach(lsnr, function(data){
-                    if (fire != name) {
-                        if (rgex.test(data.name)){
-                            data.func.apply(data.func, args);    
+                for (var i = 0, ii = lsnr.length; i < ii; i++) {
+                    if (fire != type) {
+                        if (rgex.test(lsnr[i].type)) {
+                            lsnr[i].func.apply(lsnr[i].func, args);
                         }
                     } else {
-                        data.func.apply(data.func, args);
+                        lsnr[i].func.apply(lsnr[i].func, args);
                     }
-                });
+                }
             }
 
             rgex = null;
         };
 
-        /**
-         * Get default properties (attached on class)
-         */
-        clazz.prototype.defprop = function(prop) {
-            var defs = this.constructor.defs || {};
-            return defs[prop];
-        };
-
         return clazz;
+    };
+
+    Class.closest = function(method, clazz) {
+        var proto = clazz.prototype, inherited;
+
+        if (method === clazz.init) {
+            inherited = proto.superclass ? method === proto.superclass.init : false;
+
+            if ( ! inherited) {
+                return { proto: proto, key: 'constructor' };
+            }
+        } else {
+            for (var key in proto) {
+                if (proto[key] === method) {
+
+                    inherited = proto.superclass ? proto[key] === proto.superclass.prototype[key]  : false;
+
+                    if ( ! inherited) {
+                        return { proto: proto, key: key };
+                    }
+                }
+            }
+        }
+
+        if (proto.superclass) {
+            return Class.closest(method, proto.superclass);
+        } else {
+            return null;
+        }
     };
 
 }());

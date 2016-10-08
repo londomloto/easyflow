@@ -3,7 +3,8 @@
 
     Graph.util.Spotlight = Graph.extend({
         props: {
-            suspended: true
+            suspended: true,
+            rendered: false
         },
         
         components: {
@@ -14,64 +15,82 @@
             W: null
         },
 
-        canvas: null,
+        paper: null,
         
-        constructor: function() {
-            var me = this,
-                comp = me.components;
+        constructor: function(paper) {
+            var me = this, comp = me.components;
 
-            comp.G = new Graph.svg.Group();
-            comp.G.collectable(false);
-            comp.G.selectable(false);
-            comp.G.addClass('graph-util-spotlight');
-            comp.G.removeClass('graph-elem graph-elem-group');
+            me.paper = paper;
+
+            comp.G = (new Graph.svg.Group())
+                .traversable(false)
+                .selectable(false)
+                .addClass('graph-util-spotlight')
+                .removeClass(Graph.string.CLS_VECTOR_GROUP);
 
             _.forEach(['N', 'E', 'S', 'W'], function(name){
-                comp[name] = new Graph.svg.Line(0, 0, 0, 0);
-                comp[name].removeClass('graph-elem graph-elem-line');
-                comp[name].collectable(false);
-                comp[name].selectable(false);
-                comp[name].attr('shape-rendering', 'crispEdges');
-                comp[name].render(comp.G);
+                comp[name] = (new Graph.svg.Line(0, 0, 0, 0))
+                    .removeClass(Graph.string.CLS_VECTOR_LINE)
+                    .traversable(false)
+                    .selectable(false)
+                    .render(comp.G);
             });
+
+            // paper.on('pointerdown', function(e){
+            //     var vector = Graph.manager.vector.get(e.target);
+            //     me.focus(vector);
+            // })
         },
         
         component: function() {
             return this.components.G;
         },
+        
+        render: function() {
+            if (this.props.rendered) {
+                return;
+            }
 
-        render: function(canvas) {
-            this.canvas = canvas;
-            this.canvas.append(this.components.G);
+            this.components.G.render(this.paper);
+            this.props.rendered = true;
         },
 
         suspend: function() {
             this.props.suspended = true;
-            this.components.G.removeClass('visible');
+            this.components.G.elem.detach();
+            // this.components.G.removeClass('visible');
         },
 
         resume: function() {
             this.props.suspended = false;
-            this.components.G.addClass('visible');
+
+            if ( ! this.props.rendered) {
+                this.render();
+            } else {
+                this.paper.viewport().elem.append(this.components.G.elem);
+                // this.components.G.addClass('visible');    
+            }
         },
 
         focus: function(target, state) {
+            state = _.defaultTo(state, true);
+
             if ( ! state) {
                 this.suspend();
                 return;
             }
 
-            var tbox = target.bbox(false, false).data(),
+            var tbox = target.bbox().data(),
                 dots = target.dots(true),
-                tsvg = target.canvas,
-                comp = this.components;
+                comp = this.components,
+                root = this.paper;
 
             var x, y, h, w;
 
-            x = dots[0][0];
-            y = dots[0][1];
-            h = tsvg.attrs.height;
-            w = tsvg.attrs.width;
+            x = tbox.x,
+            y = tbox.y,
+            h = root.attrs.height || 0;
+            w = root.attrs.width  || 0;
 
             this.resume();
 
@@ -102,6 +121,9 @@
                 x2: w,
                 y2: y + tbox.height
             });
+        },
+        toString: function() {
+            return 'Graph.util.Spotlight';
         }
     });
 

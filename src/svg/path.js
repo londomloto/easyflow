@@ -1,36 +1,39 @@
 
 (function(){
 
-    Graph.svg.Path = Graph.svg.Vector.extend({
+    Graph.svg.Path = Graph.extend(Graph.svg.Vector, {
 
         attrs: {
             // 'stroke': '#696B8A',
             // 'stroke-width': 1,
             // 'fill': 'none',
             'style': '',
-            'class': 'graph-elem graph-elem-path'
+            'class': Graph.string.CLS_VECTOR_PATH
         },
 
         constructor: function(d) {
-            if (_.isArray(d)) {
-                d = Graph.seg2cmd(d);
-            }
+            var s;
 
-            this.$super('path', {
-                d: Graph.path(d).absolute() + ''
+            d = _.defaultTo(d, 'M 0 0');
+            s = _.isArray(d) ? Graph.seg2cmd(d) : d;
+            
+            // this.$super('path', {
+            //     d: Graph.path(s).absolute().toString()
+            // });
+
+            this.superclass.prototype.constructor.call(this, 'path', {
+                d: Graph.path(s).absolute().toString()
             });
 
-            this.cached = {
-                segments: null
-            };
+            this.cached.segments = null;
         },
-        
+
         pathinfo: function() {
             return new Graph.lang.Path(this.attrs.d);
         },
 
         segments: function() {
-            if (this.dirty || _.isNull(this.cached.segments)) {
+            if ( ! this.cached.segments) {
                 this.cached.segments = this.pathinfo().segments;
             }
             return this.cached.segments;
@@ -82,97 +85,9 @@
             return this;
         },
         
-        startAt: function(x, y) {
-            var segments = this.segments(), command;
-            segments[0][1] = x;
-            segments[0][2] = y;
-            command = Graph.seg2cmd(segments);
-            
-            this.attr('d', command);
-            this.dirty = true;
-
-            return this;
-        },
-
-        stopAt: function(x, y) {
-            var segments = this.segments(),
-                count = segments.length,
-                max = count - 1;
-
-            var command;
-
-            if (count === 1) {
-                segments.push(['L', x, y]);
-            } else {
-                if (segments[max][0] == 'Z') {
-                    segments[max - 1][1] = x;
-                    segments[max - 1][2] = y;
-                } else {
-                    segments[max][1] = x;
-                    segments[max][2] = y;
-                }
-            }
-
-            this.attr('d', Graph.seg2cmd(segments));
-            return this;
-        },
-
-        lineTo: function(x, y) {
-            var segments = this.segments(), command;
-            segments.push(['L', x, y]);
-            command = Graph.seg2cmd(segments);
-            
-            this.attr('d', command);
-            this.dirty = true;
-
-            return this;
-        },
-
-        close: function() {
-            var segments = this.segments,
-                max = segments.length - 1;
-
-            var command;
-
-            if (segments[max][0] != 'Z') {
-                segments.push(['Z']);
-            }
-
-            this.attr('d', Graph.seg2cmd(segments));
-            return this;
-        },
-
-        expandBy: function(dx, dy) {
-            var segments = this.segments(),
-                count = segments.length,
-                max = count - 1;
-
-            var command, x, y;
-
-            if (count === 1) {
-                x = segments[0][1] + dx;
-                y = segments[0][2] + dy;
-                segments.push(['L', x, y]);
-            } else {
-                if (segments[max][0] == 'Z') {
-                    segments[max - 1][1] += dx;
-                    segments[max - 1][2] += dy;
-                } else {
-                    segments[max][1] += dx;
-                    segments[max][2] += dy;
-                }
-            }
-
-            command = Graph.seg2cmd(segments);
-            this.attr('d', command);
-            this.dirty = true;
-
-            return this;
-        },
-
         resize: function(sx, sy, cx, cy, dx, dy) {
-            var ms = this.matrix.clone(),
-                ro = this.matrix.data().rotate,
+            var ms = this.graph.matrix.clone(),
+                ro = this.graph.matrix.data().rotate,
                 rd = Graph.rad(ro),
                 si = Math.sin(rd),
                 co = Math.cos(rd),
@@ -217,7 +132,17 @@
                 x: rx,
                 y: ry
             };
+        },
+
+        toString: function() {
+            return 'Graph.svg.Path';
         }
     });
+
+    ///////// STATIC /////////
+    
+    Graph.svg.Path.toString = function() {
+        return 'function(d)';
+    };
 
 }());

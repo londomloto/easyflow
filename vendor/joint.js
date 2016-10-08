@@ -9869,7 +9869,7 @@ joint.routers.orthogonal = (function() {
         }
 
         p2 = freeJoin(p1, end, bndry);
-
+        
         if (p1.round().equals(p2.round())) {
             p2 = g.point.fromPolar(bndry.width + bndry.height, g.toRad(p1.theta(start)) + Math.PI / 2, end);
             p2 = bndry.pointNearestToPoint(p2).move(end, 1).round();

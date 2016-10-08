@@ -1,40 +1,51 @@
 
 (function(){
 
-    Graph.svg.Paper = Graph.svg.Vector.extend({
+    /**
+     * Paper - root viewport
+     */
+
+    var Paper = Graph.svg.Paper = Graph.extend(Graph.svg.Vector, {
 
         attrs: {
-            'class': 'graph-paper'
+            'class': Graph.string.CLS_VECTOR_SVG
         },
 
         props: {
-            text: '',
-            angle: 0,
-            collectable: false,
+            id: null,
+            guid: null,
+            type: 'paper',
+            text: null,
+            rotate: 0,
+            traversable: false,
             selectable: false,
             selected: false,
-            focusable: false
+            focusable: false,
+            implicitRender: false,
+            rendered: false
         },
 
-        canvas: null,
-        hinter: null,
-        definer: null,
-        collector: null,
-        container: null,
-        scroller: null,
-        pointer: null,
-        linker: null,
-        linkman: null,
+        components: {
+            viewport: null
+        },
 
         constructor: function(width, height) {
             var me = this;
 
-            me.$super('svg', {
+            // me.$super('svg', {
+            //     'xmlns': Graph.config.xmlns.svg,
+            //     'xmlns:link': Graph.config.xmlns.xlink,
+            //     'version': Graph.config.svg.version,
+            //     'width': _.defaultTo(width, 200),
+            //     'height': _.defaultTo(height, 200)
+            // });
+
+            me.superclass.prototype.constructor.call(me, 'svg', {
                 'xmlns': Graph.config.xmlns.svg,
                 'xmlns:link': Graph.config.xmlns.xlink,
-                'version': Graph.config.svg.version,
-                'width': _.defaultTo(width, 200),
-                'height': _.defaultTo(height, 200)
+                'version': Graph.config.svg.version
+                // 'width': _.defaultTo(width, 200),
+                // 'height': _.defaultTo(height, 200)
             });
 
             me.style({
@@ -42,89 +53,250 @@
                 position: 'relative'
             });
 
-            me.collector = new Graph.util.Collector();
-            me.definer = new Graph.util.Definer();
-            me.linker = new Graph.util.Linker();
-            me.router = new Graph.util.Router();
-            me.spotlight = new Graph.util.Spotlight();
-            me.hinter = null; // new Graph.util.Hinter();
-            me.linkman = new Graph.util.LinkManager();
+            me.interactable();
+            me.initLayout();
 
-            me.definer.defineArrowMarker('marker-arrow');
+            me.utils.collector = new Graph.util.Collector(me);
+            me.utils.definer = new Graph.util.Definer(me);
+            me.utils.spotlight = new Graph.util.Spotlight(me);
+            me.utils.hinter = null; // new Graph.util.Hinter(me);
+            me.utils.toolpad = new Graph.util.Toolpad(me);
+            
+            me.on('pointerdown', _.bind(me.onPointerDown, me));
 
-            me.elem.on({
-                click: function(e) {
-                    me.fire('click', e, me);
-                }
+            Graph.subscribe('vector/dragend', _.bind(me.listenVectorDragend, me));
+            Graph.subscribe('vector/resize', _.bind(me.listenVectorResize, me));
+        },
+
+        initLayout: function() {
+            // create viewport
+            var viewport = this.components.viewport = (new Graph.svg.Group())
+                .removeClass(Graph.string.CLS_VECTOR_GROUP)
+                .addClass(Graph.string.CLS_VECTOR_VIEWPORT)
+                .selectable(false);
+
+            // viewport.scale(2).apply();
+            viewport.zoomable();
+            // viewport.rotate(45).apply();
+            
+            // test zoom
+            // var vp = this.components.viewport,
+            //     sx = vp.matrix().scale().x;
+            // sx += .1;
+            // this.components.viewport.scale(sx).apply();
+
+            // render viewport
+            viewport.tree.paper = viewport.tree.parent = this.guid();
+            viewport.translate(0.5, 0.5).apply();
+
+            this.elem.append(viewport.elem);
+            this.children().push(viewport);
+
+            viewport.on('render', function(){
+                viewport.cascade(function(c){
+                    if (c !== viewport && ! c.props.rendered) {
+                        c.props.rendered = true;
+                        c.tree.paper = viewport.tree.paper;
+                        c.fire('render');
+                    }
+                });
             });
-        },
-        
-        shape: function(name, config) {
-            var clazz, shape;
 
-            clazz = _.capitalize(name);
-            shape = new Graph.shape[clazz](config);
-            shape.render(this.elem);
-
-            return shape;
+            this.layout('default');
         },
 
-        render: function(target) {
-            var me = this;
+        layout: function(options) {
+            var viewport = this.components.viewport;
 
-            if (me.rendered) {
+            if (options === undefined) {
+                return viewport.graph.layout;
+            }
+            
+            viewport.layout(options);
+            viewport.graph.layout.on('refresh', _.bind(this.onLayoutRefresh, this));
+
+            return this;
+        },
+
+        render: function(container) {
+            var me = this, 
+                vp = me.components.viewport,
+                id = me.guid();
+
+            if (me.props.rendered) {
                 return;
             }
 
-            target = Graph.$(target);
-            target.append(me.elem);
+            container = Graph.$(container);
+            container.append(me.elem);
+
+            me.tree.container = container;
             
-            me.container = target;
-
-            me.definer.render(me);
-            me.collector.render(me);
-            me.linker.render(me);
-            me.router.render(me);
-            me.spotlight.render(me);
-            // me.hinter.render(me);
-
+            // make fit
             me.attr({
-                width: target.width(),
-                height: target.height()
+                width: container.width(),
+                height: container.height()
             });
-
-            me.rendered = true;
+            
+            me.props.rendered = true;
             me.fire('render');
 
-            me.cascade(function(c){
-                if (c !== me && ! c.rendered) {
-                    c.canvas = me;
-                    c.fire('render', c);
+            vp.props.rendered = true;
+            vp.fire('render');
+
+            // me.cascade(function(c){
+            //     if (c !== me && ! c.props.rendered) {
+            //         c.props.rendered = true;
+            //         c.tree.paper = id;
+            //         c.fire('render');
+            //     }
+            // });
+
+            var scroller = container;
+
+            while(scroller.length()) {
+                if (scroller.node().tagName === 'BODY') {
+                    break;
+                }
+                if ( scroller.css('overflow') != 'hidden' || 
+                     scroller.css('overflow-x') != 'hidden' || 
+                     scroller.css('overflow-y') != 'hidden' ) {
+                    break;
+                }
+                scroller = scroller.parent();
+            }
+
+            me.utils.scroller = scroller;
+        },
+
+        container: function() {
+            return this.tree.container;
+        },
+
+        viewport: function() {
+            return this.components.viewport;
+        },
+
+        scrollable: function(target) {
+            this.utils.scroller = Graph.$(target);
+        },
+
+        scrollLeft: function() {
+            return this.utils.scroller ? this.utils.scroller.scrollLeft() : 0;
+        },
+
+        scrollTop: function() {
+            return this.utils.scroller ? this.utils.scroller.scrollTop() : 0;
+        },
+
+        // link: function(port1, port2, options) {
+        //     var link = new Graph.util.Link(this, port1, port2, options);
+        //     return link;
+        // },
+
+        /**
+         * Create router based on current layout
+         */
+        router: function(source, target, options) {
+            return this.layout().router(source, target, options);
+        },
+
+        /**
+         * Create link based on selected router
+         */
+        link: function(router, options) {
+            return this.layout().link(router, options);
+        },
+
+        selectLinks: function(except) {
+            
+        },
+
+        deselectLinks: function(except) {
+
+        },
+
+        synchronizeLinks: function(ref) {
+
+        },
+
+        connect: function(source, target, start, end, options) {
+            var router, link;
+
+            if (start) {
+                if ( ! Graph.isPoint(start)) {
+                    options = start;
+                    start = null;
+                    end = null;    
+                }
+            }
+
+            router = this.layout().router(source, target, options);
+            
+            link = this.link(router);
+            link.connect(start, end);
+
+            link.render(this);
+        },
+
+        toString: function() {
+            return 'Graph.svg.Paper';
+        },
+
+        ///////// OBSERVERS /////////
+        
+        onLayoutRefresh: function(e) {
+            var me = this,
+                viewport = this.viewport(),
+                snapping = this.layout().snapping();
+            
+            viewport.cascade(function(v){
+                if (v !== viewport) {
+                    if (v.isDraggable()) {
+                        v.draggable().snap(snapping);    
+                    }
+
+                    if (v.isResizable()) {
+                        v.resizable().snap(snapping);
+                    }
                 }
             });
+
         },
 
-        autoScroll: function(target) {
-            this.scroller = Graph.$(target);
+        onPointerDown: function(e) {
+            var link = Graph.manager.link.get(e.target);
+            this.deselectLinks(link);
         },
 
-        link: function(port1, port2) {
-            var link = new Graph.util.Link(this, port1, port2);
-            this.linkman.add(link);
-            return link;
+        listenVectorDragend: function(message) {
+            var vector = message.publisher;
+            if (vector.isLinkable()) {
+                this.synchronizeLinks(vector);
+            }
         },
 
-        removeLink: function(link) {
-            this.linkman.remove(link);
+        listenVectorResize: function(message) {
+            var vector = message.publisher;
+            this.synchronizeLinks(vector);
         }
 
     });
+
+    ///////// STATICS /////////
+    
+    Paper.toString = function() {
+        return 'function( width, height )';
+    };
+
+    ///////// EXTENSIONS /////////
 
     var vectors = {
         ellipse: 'Ellipse',
         circle: 'Circle',
         rect: 'Rect',
         path: 'Path',
+        polyline: 'Polyline',
         polygon: 'Polygon',
         group: 'Group',
         text: 'Text',
@@ -135,14 +307,13 @@
 
     _.forOwn(vectors, function(name, method){
         (function(name, method){
-            Graph.svg.Paper.prototype[method] = function() {
+            Paper.prototype[method] = function() {
                 var args, clazz, vector;
 
                 args   = _.toArray(arguments);
                 clazz  = Graph.svg[name];
                 vector = Graph.factory(clazz, args);
-                vector.canvas = this;
-
+                vector.tree.paper = this.guid();
                 return vector;
             };
         }(name, method));

@@ -1,17 +1,25 @@
 
 (function(){
 
-    Graph.svg.Image = Graph.svg.Vector.extend({
+    Graph.svg.Image = Graph.extend(Graph.svg.Vector, {
 
         attrs: {
             preserveAspectRatio: 'none',
-            class: 'graph-elem graph-elem-image'
+            class: Graph.string.CLS_VECTOR_IMAGE
         },
 
         constructor: function(src, x, y, width, height) {
             var me = this;
 
-            me.$super('image', {
+            // me.$super('image', {
+            //     'xlink:href': src,
+            //     'x': _.defaultTo(x, 0),
+            //     'y': _.defaultTo(y, 0),
+            //     'width': _.defaultTo(width, 0),
+            //     'height': _.defaultTo(height, 0)
+            // });
+            
+            me.superclass.prototype.constructor.call(me, 'image', {
                 'xlink:href': src,
                 'x': _.defaultTo(x, 0),
                 'y': _.defaultTo(y, 0),
@@ -93,8 +101,8 @@
         },
         
         resize: function(sx, sy, cx, cy, dx, dy) {
-            var ms = this.matrix.clone().scale(sx, sy, cx, cy),
-                ro = this.matrix.data().rotate;
+            var ms = this.graph.matrix.clone().scale(sx, sy, cx, cy),
+                ro = this.graph.matrix.data().rotate;
 
             this.reset();
 
@@ -119,5 +127,11 @@
             };
         }
     });
+
+    ///////// STATIC /////////
+    
+    Graph.svg.Image.toString = function() {
+        return 'function(src, x, y, width, height)';
+    };
 
 }());
