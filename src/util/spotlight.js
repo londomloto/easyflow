@@ -89,8 +89,8 @@
 
             x = tbox.x,
             y = tbox.y,
-            h = root.attrs.height || 0;
-            w = root.attrs.width  || 0;
+            h = root.elem.height() || 0;
+            w = root.elem.width() || 0;
 
             this.resume();
 

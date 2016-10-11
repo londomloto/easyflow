@@ -1,6 +1,6 @@
 
 (function(){
-
+    
     var Matrix = Graph.lang.Matrix = Graph.extend({
 
         props: {
@@ -28,7 +28,7 @@
         y: function(x, y) {
             return x * this.props.b + y * this.props.d + this.props.f;
         },
-
+        
         get: function(chr) {
             return +this.props[chr].toFixed(4);
         },
@@ -118,7 +118,7 @@
                 var px = this.delta(0, 1),
                     py = this.delta(1, 0),
                     deg = 180 / Math.PI * Math.atan2(px.y, px.x) - 90,
-                    rad = Graph.rad(deg);
+                    rad = Graph.math.rad(deg);
 
                 return {
                     deg: deg,
@@ -126,7 +126,7 @@
                 };
             }
 
-            angle = Graph.rad(angle);
+            angle = Graph.math.rad(angle);
             cx = _.defaultTo(cx, 0);
             cy = _.defaultTo(cy, 0);
 
@@ -142,8 +142,8 @@
         scale: function(sx, sy, cx, cy) {
             if (sx === undefined) {
                 var prop = this.props,
-                    sx = Graph.magnitude(prop.a, prop.b),
-                    sy = Graph.magnitude(prop.c, prop.d);
+                    sx = Graph.math.hypo(prop.a, prop.b),
+                    sy = Graph.math.hypo(prop.c, prop.d);
 
                 if (this.determinant() < 0) {
                     sx = -sx;
@@ -184,12 +184,12 @@
             var px = this.delta(0, 1),
                 py = this.delta(1, 0),
                 skewX = 180 / Math.PI * Math.atan2(px.y, px.x) - 90,
-                radSkewX = Graph.rad(skewX),
+                radSkewX = Graph.math.rad(skewX),
                 cosSkewX = Math.cos(radSkewX),
                 sinSkewX = Math.sin(radSkewX),
-                scaleX = Graph.magnitude(this.props.a, this.props.b),
-                scaleY = Graph.magnitude(this.props.c, this.props.d),
-                radian = Graph.rad(skewX);
+                scaleX = Graph.math.hypo(this.props.a, this.props.b),
+                scaleY = Graph.math.hypo(this.props.c, this.props.d),
+                radian = Graph.math.rad(skewX);
 
             if (this.determinant() < 0) {
                 scaleX = -scaleX;
@@ -272,15 +272,14 @@
         return "function(a, b, c, d, e, f)";
     };  
 
-    ///////// SHORTCUT /////////
+    ///////// EXTENSION /////////
     
-    Graph.matrix = function(a, b, c, d, e, f) {
-        return new Graph.lang.Matrix(a, b, c, d, e, f);
-    };
-
-    ///////// LANGUAGE CHECK /////////
     Graph.isMatrix = function(obj) {
         return obj instanceof Graph.lang.Matrix;
+    };
+
+    Graph.matrix = function(a, b, c, d, e, f) {
+        return new Graph.lang.Matrix(a, b, c, d, e, f);
     };
     
 }());

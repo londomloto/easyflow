@@ -17,7 +17,7 @@
 
             // router config
             router: {
-                type: 'ortho'
+                type: 'directed'
             },
 
             // link config

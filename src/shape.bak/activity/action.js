@@ -49,7 +49,7 @@
 
         onGroupRender: function() {
             var comp = this.components;
-            comp.group.translate(this.props.x, this.props.y).apply();
+            comp.group.translate(this.props.x, this.props.y).commit();
         },
 
         onBlockResize: function() {

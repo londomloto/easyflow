@@ -9,10 +9,14 @@
                 
             }
         },
+
+        links: [],
         
         constructor: function(vector, options) {
             _.assign(this.props, options || {});
             this.props.vector = vector.guid();
+            
+            vector.addClass('graph-linkable');
         },
 
         vector: function() {

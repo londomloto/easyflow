@@ -28,10 +28,34 @@ text, tspan {
 }
 
 .graph-elem:not(.graph-paper) {
-    cursor: pointer;
+    
 }
 
 /** ================= VECTOR ================= **/
+
+.graph-paper {}
+.graph-axis .x,
+.graph-axis .y {
+    fill: #cccccc;
+    stroke-width: 0;
+    pointer-events: none;
+}
+
+.graph-axis .t {
+    fill: #cccccc;
+    stroke-width: 0;
+    pointer-events: none;
+}
+
+.graph-axis .x {
+    height: 2;
+    width: 30
+}
+
+.graph-axis .y {
+    height: 30;
+    width: 2
+}
 
 .graph-elem-line,
 .graph-elem-path {
@@ -95,7 +119,7 @@ text, tspan {
 
 .graph-resizer .handle-s,
 .graph-resizer .handle-n { 
-    cursor: n-resize;
+    cursor: ns-resize;
 }
 
 .graph-resizer .handle-ne,
@@ -111,7 +135,7 @@ text, tspan {
 
 .graph-dragger {
     /*visibility: hidden;*/
-    cursor: move;
+    /*cursor: move;*/
 }
 
 .graph-dragger .graph-dragger-helper {
@@ -186,6 +210,14 @@ text, tspan {
     /*opacity: 1;*/
 }
 
+.graph-linkable.disallowed:hover {
+    cursor: not-allowed;
+    fill: #FFDDE8;
+}
+
+.graph-linkable.allowed:hover {
+    fill: #DEFFC9;
+}
 
 /** link */
 .graph-link {
@@ -327,24 +359,11 @@ text, tspan {
 }
 
 /** linker */
-.graph-util-linker {
-    display: none;
-}
-
-.graph-util-linker.visible {
-    display: inline;
-}
-
-.graph-util-linker-point {
-    fill: #434665;
-    fill: rgba(255,255,255,0);
-    cursor: crosshair;
-}
-
-.graph-util-linker-link {
-    stroke: #333;
-    stroke-width: 1;
-    stroke-linecap: butt;
+.graph-linker {}
+.graph-linker-path {
+    stroke-width: 2;
+    stroke: #000000;
+    stroke-dasharray: 5 3;
 }
 
 /** toolpad */

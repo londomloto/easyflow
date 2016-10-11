@@ -60,7 +60,7 @@
             });
 
             if (rotate) {
-                this.rotate(rotate, mx, my).apply();    
+                this.rotate(rotate, mx, my).commit();    
             }
 
             var bb = this.bbox().data();

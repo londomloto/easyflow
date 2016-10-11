@@ -276,10 +276,10 @@
 
             switch(pole) {
                 case 'head':
-                    comp.head.translate(dx, dy).apply();
+                    comp.head.translate(dx, dy).commit();
                     break;
                 case 'tail':
-                    comp.tail.translate(dx, dy).apply();
+                    comp.tail.translate(dx, dy).commit();
                     break;
             }
 

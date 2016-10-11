@@ -307,7 +307,7 @@
             var rad, sin, cos, dx, dy;
 
             if (ro) {
-                rad = Graph.rad(-ro),
+                rad = Graph.math.rad(-ro),
                 sin = Math.sin(rad),
                 cos = Math.cos(rad);
                 dx = e.dx *  cos + e.dy * sin;

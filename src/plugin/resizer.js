@@ -4,6 +4,7 @@
     Graph.plugin.Resizer = Graph.extend({
         
         props: {
+            enabled: true,
             suspended: true,
             handleImage: Graph.config.base + 'img/resize-control.png',
             handleSize: 17,
@@ -74,14 +75,14 @@
             me.handle = {};
 
             var handle = {
-                ne: {},
-                se: {},
-                sw: {},
-                nw: {},
-                 n: {axis: 'y'},
-                 e: {axis: 'x'},
-                 s: {axis: 'y'},
-                 w: {axis: 'x'}
+                ne: {cursor: 'nesw-resize'},
+                se: {cursor: 'nwse-resize'},
+                sw: {cursor: 'nesw-resize'},
+                nw: {cursor: 'nwse-resize'},
+                 n: {cursor: 'ns-resize', axis: 'y'},
+                 e: {cursor: 'ew-resize', axis: 'x'},
+                 s: {cursor: 'ns-resize', axis: 'y'},
+                 w: {cursor: 'ew-resize', axis: 'x'}
             };
 
             _.forOwn(handle, function(c, dir){
@@ -101,9 +102,6 @@
                     comp.handle[dir].elem.group('graph-resizer');
                     comp.handle[dir].props.dir = dir;
                     comp.handle[dir].draggable(c);
-                    comp.handle[dir].on('pointerdown', function(e){
-                        e.stopPropagation();
-                    });
                     
                     comp.handle[dir].on('dragstart', _.bind(me.onHandleMoveStart, me));
                     comp.handle[dir].on('dragmove', _.bind(me.onHandleMove, me));
@@ -258,14 +256,14 @@
                 height: vx.box.height
             });
             
-            comp.helper.rotate(vx.rotate.deg, vx.rotate.cx, vx.rotate.cy).apply();
+            comp.helper.rotate(vx.rotate.deg, vx.rotate.cx, vx.rotate.cy).commit();
 
             _.forOwn(comp.handle, function(h, d){
                 (function(h, d){
                     h.show();
                     h.reset();
                     h.attr(vx[d]);
-                    h.rotate(vx.rotate.deg, vx.rotate.cx, vx.rotate.cy).apply();
+                    h.rotate(vx.rotate.deg, vx.rotate.cx, vx.rotate.cy).commit();
                 }(h, d));
             });
 
@@ -286,6 +284,10 @@
         },
 
         resume: function() {
+            if ( ! this.props.enabled) {
+                return;
+            }
+
             this.props.suspended = false;
 
             if (this.components.holder) {
@@ -311,8 +313,10 @@
                 }
             });
 
-            if (handle.draggable().snap() !== this.cached.snapping) {
-                handle.draggable().snap(this.cached.snapping);    
+            var snapping = this.cached.snapping;
+
+            if (snapping && handle.draggable().snap() !== snapping) {
+                handle.draggable().snap(snapping);    
             }
             
             handle.show();
@@ -332,7 +336,7 @@
                     tr.ch -= dy;
 
                     me.trans.dy += dy;
-                    me.components.helper.translate(0, dy).apply();
+                    me.components.helper.translate(0, dy).commit();
                     break;
 
                 case 'se':
@@ -346,7 +350,7 @@
                     tr.ch += dy;
 
                     me.trans.dx += dx;
-                    me.components.helper.translate(dx, 0).apply();
+                    me.components.helper.translate(dx, 0).commit();
                     break;
 
                 case 'nw':
@@ -355,7 +359,7 @@
 
                     me.trans.dx += dx;
                     me.trans.dy += dy;
-                    me.components.helper.translate(dx, dy).apply();
+                    me.components.helper.translate(dx, dy).commit();
                     break;
 
                 case 'n':
@@ -363,7 +367,7 @@
                     tr.ch -= dy;
 
                     me.trans.dy += dy;
-                    me.components.helper.translate(0, dy).apply();
+                    me.components.helper.translate(0, dy).commit();
                     break;
 
                 case 'e':
@@ -382,7 +386,7 @@
                     tr.ch += 0;
 
                     me.trans.dx += dx;
-                    me.components.helper.translate(dx, 0).apply();
+                    me.components.helper.translate(dx, 0).commit();
                     break;
             }
 

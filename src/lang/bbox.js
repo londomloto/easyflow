@@ -52,11 +52,11 @@
             return Graph.point(x, y);
         },
 
-        center: function() {
+        center: function(dots) {
             var x = this.props.x + this.props.width / 2,
                 y = this.props.y + this.props.height / 2;
 
-            return Graph.point(x, y);
+            return dots ? {x: x, y: y} : Graph.point(x, y);
         },
 
         corner: function() {
@@ -217,16 +217,14 @@
         return 'function(bounds)';
     };
 
-    ///////// SHORTCUT /////////
-    
-    Graph.bbox = function(bbox) {
-        return new Graph.lang.BBox(bbox);
-    };
-
-    ///////// LANGUAGE CHECK /////////
+    ///////// EXTENSION /////////
     
     Graph.isBBox = function(obj) {
         return obj instanceof Graph.lang.BBox;
     };
 
+    Graph.bbox = function(bbox) {
+        return new Graph.lang.BBox(bbox);
+    };
+    
 }());

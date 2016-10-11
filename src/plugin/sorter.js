@@ -232,7 +232,7 @@
                     var sbox = s.bbox().data(),
                         dy = me.props.height- sbox.y + me.props.offsetTop;
 
-                    s.translate(0, dy).apply();
+                    s.translate(0, dy).commit();
                     me.props.height += sbox.height;
 
                     if (sbox.width > me.props.width) {

@@ -24,7 +24,7 @@
             comp.group.sortable();
             
             comp.group.addClass('graph-shape graph-shape-activity-pool');
-            comp.group.translate(prop.x, prop.y).apply();
+            comp.group.translate(prop.x, prop.y).commit();
             comp.group.data('selectable', false);
             comp.group.on('render', _.bind(this.onGroupRender, this));
         },

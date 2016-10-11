@@ -11,10 +11,10 @@
             me.vector = vector;
             me.plugin = interact(vector.node());
 
+            // standard event
             me.plugin.on('down', function(e){
-                e.type = 'pointerdown';
+                e.originalType = 'pointerdown';
                 vector.fire(e);
-                e.type = 'down';
                 
                 if ( ! e.propagationStopped) {
                     // bubbling up
@@ -28,7 +28,7 @@
                 }
 
             }, true);
-
+            
             me.vector.elem.on({
                 mouseenter: function(e) {
                     e.type = 'pointerin'
@@ -39,7 +39,18 @@
                     vector.fire(e);
                 }
             });
+
+            if (me.vector.isPaper()) {
+                Graph.$(document).on('keydown', function(e){
+                    e.originalType = 'keynav';
+                    me.vector.fire(e);
+                });
+            }
             
+        },
+        
+        vendor: function() {
+            return this.plugin;
         },
 
         draggable: function(options) {

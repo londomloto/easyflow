@@ -177,9 +177,9 @@
                 cy = textBox.y + textBox.height / 2;
 
                 if (matrix.rotate) {
-                    this.translate(dx, dy).rotate(matrix.rotate).apply();
+                    this.translate(dx, dy).rotate(matrix.rotate).commit();
                 } else {
-                    this.translate(dx, dy).apply();
+                    this.translate(dx, dy).commit();
                 }
 
             }

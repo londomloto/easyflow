@@ -12,22 +12,16 @@
         },
 
         direction: {
-            orientation: null,
-            verifyStart: false,
-            centerStart: false,
-            verifyEnd: false,
-            centerEnd: false,
-            found: false,
+            orientation: null
+        },
+
+        ports: {
             start: null,
-            type: null,
-            init: true,
             end: null
         },
 
         docks: {
-            lastStart: null,
             start: null,
-            lastEnd: null,
             end: null
         },
 
@@ -64,274 +58,61 @@
             return this;
         },
 
-        directing: function(start, end, sbox, tbox) {
+        directing: function(start, end) {
             var orient = this.direction.orientation,
-                sdat = sbox.data(), 
-                tdat = tbox.data();
+                source = this.source(),
+                target = this.target();
 
-            var result, spoint, epoint, dirs, sdot, edot;
+            var spath, tpath, lpath, cpath, dirs, sdot, edot;
+            var inter, imaxs, found;
 
-            switch(orient) {
-                case 'intersect':
-                    dirs = null;
-                    break;
-                case 'top':
-                case 'bottom':
-                    dirs = 'v:v';
-                    break;
-                case 'left':
-                case 'right':
-                    dirs = 'h:h';
-                    break;
-                default:
-                    dirs = 'h:h';
-                    break;
+            // validate
+            spath = source.pathinfo().transform(source.matrix());
+            tpath = target.pathinfo().transform(target.matrix());
+            
+            lpath = Graph.path([
+                ['M', start.props.x, start.props.y],
+                ['L', end.props.x, end.props.y]
+            ]);
+
+            inter = spath.intersection(lpath, true);
+
+            if (inter.length) {
+                imaxs = inter.length - 1;
+                this.docks.start = Graph.point(inter[imaxs].x, inter[imaxs].y);
             }
+            
+            inter = tpath.intersection(lpath, true);
 
-            this.direction.type = dirs;
-
-            if (dirs) {
-                if (dirs == 'h:h') {
-                    switch (orient) {
-                        case 'top-right':
-                        case 'right':
-                        case 'bottom-right':
-                            sdot = { 
-                                x: sdat.x, 
-                                y: start.props.y 
-                            };
-                            
-                            edot = { 
-                                x: tdat.x + tdat.width, 
-                                y: end.props.y 
-                            };
-
-                            break;
-                        case 'top-left':
-                        case 'left':
-                        case 'bottom-left':
-                            sdot = { 
-                                x: sdat.x + sdat.width, 
-                                y: start.props.y 
-                            };
-
-                            edot = { 
-                                x: tdat.x, 
-                                y: end.props.y 
-                            };
-
-                            break;
-                    }
-                }
-
-                if (dirs == 'v:v') {
-                    switch (orient) {
-                        case 'top-left':
-                        case 'top':
-                        case 'top-right':
-                            sdot = { 
-                                x: start.props.x, 
-                                y: sdat.y + sdat.height 
-                            };
-
-                            edot = { 
-                                x: end.props.x, 
-                                y: tdat.y 
-                            };
-                            break;
-                        case 'bottom-left':
-                        case 'bottom':
-                        case 'bottom-right':
-                            sdot = { 
-                                x: start.props.x, 
-                                y: sdat.y 
-                            };
-
-                            edot = { 
-                                x: end.props.x, 
-                                y: tdat.y + tdat.height 
-                            };
-                            break;
-                    }
-                }
-
-                spoint = Graph.point(sdot.x, sdot.y);
-                epoint = Graph.point(edot.x, edot.y);
-
-                this.direction.found = true;
-                this.direction.verifyStart = this.requestVerify(this.direction.start, spoint);
-                this.direction.verifyEnd = this.requestVerify(this.direction.end, epoint);
-                this.direction.start = spoint;
-                this.direction.end   = epoint;
-
-                sdot = spoint = null;
-                edot = epoint = null;
-
-            } else {
-                _.assign(this.direction, {
-                    verifyStart: true,
-                    verifyEnd: true
-                });
+            if (inter.length) {
+                imaxs = inter.length - 1;
+                this.docks.end = Graph.point(inter[imaxs].x, inter[imaxs].y);
             }
-
+            
             return this;
-        },
-
-        requestVerify: function(p1, p2, old) {
-            if ( ! p1 || ! p2) {
-                return this.direction.init ? false : true;
-            }
-
-            var rv = false;
-
-            if ( ! p1.equals(p2)) {
-                rv = true;
-            }
-
-            return rv;
-        },
-
-        snapping: function(dock, vertex, vector) {
-            var box = vector.bbox(),
-                seg = vector.pathinfo().transform(vector.matrix()).curve().segments,
-                max = seg.length,
-                L1 = Graph.line(vertex, box.center()),
-                L2 = null;
-
-            var inter, x, y, s, i;
-
-            // for (i = 0; i < max; i++) {
-            //     s = seg[i];
-            //     if (s[0] == 'M') {
-            //         x = s[1];
-            //         y = s[2];
-            //     } else {
-            //         if (s[0] == 'C') {
-            //             L2 = Graph.line(x, y, s[5], s[6]);
-            //             x = s[5];
-            //             y = s[6];
-            //         }
-                    
-            //         inter = L1.intersection(L2);
-
-            //         if (inter) {
-            //             vertex.props.x = inter.props.x;
-            //             vertex.props.y = inter.props.y;
-            //             inter = null;
-            //             break;
-            //         }
-            //     }
-            // }
-            
-            L1 = null;
-            L2 = null;
-            
-            if (dock == 'start') {
-                this.docks.start = this.docks.lastStart = vertex;
-            } else {
-                this.docks.end = this.docks.lastEnd = vertex;
-            }
-
-            return vertex;
-        },
-
-        docking: function(source, target) {
-            var verify = false,
-                start = this.direction.start.clone(),
-                end = this.direction.end.clone();
-
-            var result, inter, box, seg, ln1, ln2, ii, s, x, y, i, j;
-
-            if (this.direction.verifyStart) {
-                verify = true;
-                this.direction.verifyStart = false;
-            }
-            
-            if (verify) {
-                this.snapping('start', start, source);
-            }
-
-            verify = false;
-
-            if (this.direction.verifyEnd) {
-                verify = true;
-                this.direction.verifyEnd = false;
-            }
-
-            if (verify) {
-                this.snapping('end', end, target);
-            }
-
-            this.docks.start = start;
-            this.docks.end = end;
-
-            start = null;
-            end = null;
-
-            return result;
         },
 
         route: function(start, end) {
             var source = this.source(),
-                sbox = source.bbox(),
-                target = this.target(),
+                target = this.target();
+
+            var sbox = source.bbox(),
                 tbox = target.bbox();
 
-            var segments, vstart, vend;
-
-            if (this.direction.init) {
-                this.direction.centerStart = ! start;
-                this.direction.centerEnd = ! end;
+            if (start) {
+                this.ports.start = start;
             }
 
-            start = _.defaultTo(start, sbox.center());
-            end = _.defaultTo(end, tbox.center());
-            vstart = this.direction.verifyStart;
-            vend = this.direction.verifyEnd;
+            if (end) {
+                this.ports.end = end;
+            }
+
+            start = sbox.center();
+            end   = tbox.center();
 
             this.orienting(sbox, tbox);
-            this.directing(start, end, sbox, tbox);
+            this.directing(start, end);
 
-            if ( ! this.direction.found) {
-                return this;
-            }
-
-            this.docking(source, target);
-
-            start = this.docks.start;
-            end = this.docks.end;
-
-            if (this.direction.init) {
-                var snap = false;
-
-                if (source.props.rotate || ( ! vstart && ! this.direction.centerStart)) {
-                    snap = true;
-                }
-
-                if (snap) {
-                    this.snapping('start', start, source);
-                }
-
-                snap = false;
-
-                if (target.props.rotate || ( ! vend && ! this.direction.centerEnd)) {
-                    snap = true;
-                }
-
-                if (snap) {
-                    this.snapping('end', end, target);
-                }
-            } else {
-                if (source.props.rotate && ! vstart) {
-                    this.snapping('start', start, source);
-                }
-
-                if (target.props.rotate && ! vend) {
-                    this.snapping('end', end, target);
-                }
-            }
-
-            this.direction.init = false;
             this.build();
 
             this.fire('route', {
@@ -342,17 +123,7 @@
         },
 
         reroute: function() {
-            var start, end;
-
-            if ( ! this.direction.centerStart) {
-                start = this.docks.start;
-            }
-
-            if ( ! this.direction.centerEnd) {
-                end = this.docks.end;
-            }
-
-            this.route(start, end);
+            this.route();
         },
 
         build: function() {
@@ -379,32 +150,26 @@
         ///////// OBSERVERS /////////
         
         onSourceDrag: function(e) {
-            this.direction.verifyStart = true;
             this.reroute();
         },
 
         onSourceDragEnd: function() {
-            this.direction.verifyStart = true;
             this.reroute();
         },
 
         onSourceResize: function() {
-            this.direction.verifyStart = true;
             this.reroute();
         },
 
         onTargetDrag: function() {
-            this.direction.verifyEnd = true;
             this.reroute();
         },
 
         onTargetDragEnd: function() {
-            this.direction.verifyEnd = true;
             this.reroute();
         },
 
         onTargetResize: function() {
-            this.direction.verifyEnd = true;
             this.reroute();
         }
     });

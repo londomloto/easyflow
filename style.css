@@ -10,18 +10,21 @@ html, body {
 }
 
 body {
-    background-color: #4B4F6C;
+    /*background-color: #4B4F6C;*/
     color: #fff;
     font-family: "Segoe UI";
     overflow: hidden;
 }
 
 .e-page {
-    width: 2000px;
-    height: 1000px;
+    /*width: 2000px;
+    height: 1000px;*/
+    width: 100%;
+    height: 100%;
     position: relative;
     border-bottom: solid 1px #4A4D6E;
-    background-image: url(grid.png);
+    background-color: #fafafa;
+    /*background-image: url(grid.png);*/
     overflow: hidden;
 }
 
@@ -29,7 +32,7 @@ body {
     border-bottom: none;
 }
 
-.e-page:before,
+/*.e-page:before,
 .e-page:after {
     content: '';
     display: block;
@@ -62,7 +65,7 @@ body {
     background-position: bottom;
     background-size: 3px 1px;
     background-repeat: repeat-x;
-}
+}*/
 
 .e-bg-cyan {
     background-color: #30D0C6;
@@ -140,7 +143,7 @@ body {
 }
 
 .e-workspace {
-    background-color: #f0f0f0;
+    /*background-color: #f0f0f0;*/
 }
 
 .e-workspace h1,
@@ -150,11 +153,12 @@ body {
 }
 
 .e-header {
-    background-color: #fff;
-    box-shadow: 0 2px 2px rgba(0,0,0,.4);
+    /*background-color: #fff;*/
+    /*box-shadow: 0 2px 2px rgba(0,0,0,.4);*/
     height: 70px;
     position: relative;
     z-index: 2;
+    border-bottom: solid 1px #434665;
 }
 .e-logo {}
 .e-logo-text {
@@ -218,7 +222,7 @@ body {
 
 /** stencil */
 .e-stencil {
-    
+    height: 600px;
 }
 
 .e-stencil-item .graph-elem-line {
@@ -226,8 +230,8 @@ body {
     stroke: #30D0C6;
 }
 
-.e-stencil-item .graph-elem-rect,
-.e-stencil-item .graph-elem-polygon {
+.e-stencil-item rect,
+.e-stencil-item polygon {
     stroke-width: 2;
     stroke: #30D0C6;
     fill: rgba(255, 255, 255, 0);
@@ -238,7 +242,7 @@ body {
     stroke-width: 0;
 }
 
-.e-stencil-item .graph-elem-circle {
+.e-stencil-item circle {
     stroke-width: 2;
     stroke: #30D0C6;
     fill: rgba(255, 255, 255, 0);
@@ -249,11 +253,12 @@ body {
     fill: #FF4081;
 }
 
-.e-stencil-item .graph-elem-text tspan {
+.e-stencil-item text tspan {
     stroke: #fff;
     stroke-width: 0;
     fill: #fff;
     font-family: 'Segoe UI';
+    text-anchor: middle;
 }
 
 .e-stencil-item:hover .graph-elem,
@@ -292,9 +297,14 @@ body {
     color: #fff;
     background-color: #555;
 }
-.e-toolbar a:active {
-    
+
+
+.e-toolbar a.active,
+.e-toolbar a.active:hover {
+    color: #fff;
+    background-color: orange;
 }
+
 .e-title {
     display: block;
     text-align: center;

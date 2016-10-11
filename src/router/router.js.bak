@@ -100,7 +100,7 @@
 
         supply: function(command) {
             this.props.command  = command;
-            this.props.segments = Graph.cmd2seg(command);
+            this.props.segments = Graph.util.path2segments(command);
             return this;
         },
 
@@ -121,7 +121,7 @@
         },
 
         commit: function() {
-            this.props.command = Graph.seg2cmd(this.props.segments);
+            this.props.command = Graph.util.segments2path(this.props.segments);
             return this;
         },
 
@@ -143,7 +143,7 @@
             return Math.floor((x1.theta(y1) + sectors / 2) / sectors) * sectors;
         } else {
             sectors = 360 / dirs;
-            return Math.floor((Graph.theta(x1, y1, x2, y2) + sectors / 2) / sectors) * sectors;
+            return Math.floor((Graph.math.theta(x1, y1, x2, y2) + sectors / 2) / sectors) * sectors;
         }
     };
 

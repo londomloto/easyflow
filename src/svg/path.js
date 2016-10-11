@@ -12,35 +12,33 @@
         },
 
         constructor: function(d) {
-            var s;
+            if ( ! d) {
+                d = [['M', 0, 0]];
+            }
 
-            d = _.defaultTo(d, 'M 0 0');
-            s = _.isArray(d) ? Graph.seg2cmd(d) : d;
-            
-            // this.$super('path', {
-            //     d: Graph.path(s).absolute().toString()
-            // });
+            if (_.isArray(d)) {
+                d = Graph.path(Graph.util.segments2path(d)).absolute().toString();
+            } else if (Graph.isPath(d)) {
+                d = d.toString();
+            } else {
+                d = Graph.path(d).absolute().toString();
+            }
 
             this.superclass.prototype.constructor.call(this, 'path', {
-                d: Graph.path(s).absolute().toString()
+                d: d
             });
-
-            this.cached.segments = null;
         },
 
         pathinfo: function() {
-            return new Graph.lang.Path(this.attrs.d);
+            return Graph.path(this.attrs.d)
         },
 
         segments: function() {
-            if ( ! this.cached.segments) {
-                this.cached.segments = this.pathinfo().segments;
-            }
-            return this.cached.segments;
+            return this.pathinfo().segments;
         },
 
-        intersection: function(path) {
-            return this.pathinfo().intersection(path.pathinfo());
+        intersection: function(path, dots) {
+            return this.pathinfo().intersection(path.pathinfo(), dots);
         },
 
         intersectnum: function(path) {
@@ -80,15 +78,19 @@
         },
 
         addVertext: function(vertext) {
-            var command = this.pathinfo().addVertext(vertext).toString();
-            this.attr('d', command);
+            var path = this.pathinfo();
+
+            path.addVertext(vertext);
+            this.attr('d', path.command());
+
             return this;
         },
         
         resize: function(sx, sy, cx, cy, dx, dy) {
-            var ms = this.graph.matrix.clone(),
-                ro = this.graph.matrix.data().rotate,
-                rd = Graph.rad(ro),
+            var ms = this.matrix().clone(),
+                mr = matrix.rotate(),
+                ro = mr.deg,
+                rd = mr.rad,
                 si = Math.sin(rd),
                 co = Math.cos(rd),
                 pa = this.pathinfo(),
@@ -120,11 +122,10 @@
             });
 
             this.reset();
-            
-            this.attr('d', _.toString(pa));
+            this.attr('d', pa.command());
 
             if (ro) {
-                this.rotate(ro, rx, ry).apply(true);    
+                this.rotate(ro, rx, ry).commit(true);    
             }
 
             return {
@@ -132,6 +133,41 @@
                 x: rx,
                 y: ry
             };
+        },
+
+        moveTo: function(x, y) {
+            var path = this.pathinfo();
+            
+            path.moveTo(x, y);
+            this.attr('d', path.command());
+
+            return this;
+        },
+
+        lineTo: function(x, y, append) {
+            var path = this.pathinfo();
+            
+            path.lineTo(x, y, append);
+            this.attr('d', path.command());
+
+            return this;
+        },
+
+        tail: function() {
+            var segments = this.segments();
+            if (segments.length) {
+                return Graph.point(segments[0][1], segments[0][2]);
+            }
+            return null;
+        },
+
+        head: function() {
+            var segments = this.segments(), maxs;
+            if (segments.length) {
+                maxs = segments.length - 1;
+                return Graph.point(segments[maxs][1], segments[maxs][2]);
+            }
+            return null;
         },
 
         toString: function() {

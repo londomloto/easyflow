@@ -111,6 +111,10 @@
 
         },
 
+        pathinfo: function() {
+            return this.router.pathinfo();
+        },
+
         toString: function() {
             return 'Graph.link.Link';
         },

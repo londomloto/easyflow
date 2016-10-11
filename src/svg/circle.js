@@ -77,7 +77,7 @@
             });
             
             if (rotate) {
-                this.rotate(rotate, x, y).apply();    
+                this.rotate(rotate, x, y).commit();    
             }
 
             return {

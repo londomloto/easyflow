@@ -4,6 +4,7 @@
     Graph.plugin.Dragger = Graph.extend({
         
         props: {
+            manual: true,
             vector: null,
             enabled: true,
             rendered: false,
@@ -13,7 +14,8 @@
             bound: false,
             grid: [10, 10],
             axis: false,
-            hint: false
+            hint: false,
+            cursor: 'move'
         },
 
         rotation: {
@@ -51,8 +53,8 @@
             me.props.vector = vector.guid();
 
             options = _.extend({
-                enabled: true,
-                inertia: false
+                inertia: false,
+                manual: true
             }, options || {});
 
             _.forEach(['axis', 'grid', 'bbox', 'ghost', 'hint'], function(name){
@@ -72,6 +74,7 @@
             if (vector.props.rendered) {
                 me.setup();
             }
+
         },
 
         vector: function() {
@@ -93,6 +96,7 @@
                     .removeClass('graph-elem graph-elem-rect')
                     .traversable(false)
                     .selectable(false)
+                    .clickable(false)
                     .render(comp.holder);
             }
         },
@@ -118,7 +122,7 @@
             }
 
             _.extend(options, {
-                manualStart: me.props.ghost ? true : false,
+                manualStart: me.props.manual,
                 onstart: _.bind(me.onDragStart, me),
                 onmove: _.bind(me.onDragMove, me),
                 onend: _.bind(me.onDragEnd, me)
@@ -126,7 +130,7 @@
 
             me.plugin = vector.interactable().draggable(options);
             me.plugin.styleCursor(false);
-            me.plugin.on('move', _.bind(me.onPointerMove, me));
+            me.plugin.on('move', _.bind(me.onPointerMove, me, _, vector));
 
             var matrix = vector.matrix(true),
                 rotate = matrix.rotate(),
@@ -140,22 +144,14 @@
                 x: me.props.grid[0],
                 y: me.props.grid[1]
             });
-
-            me.plugin.draggable(me.props.enabled);
         },
 
         enable: function() {
             this.props.enabled = true;
-            if (this.plugin) {
-                this.plugin.draggable(true);
-            }
         },
 
         disable: function() {
             this.props.enabled = false;
-            if (this.plugin) {
-                this.plugin.draggable(false);
-            }
         },
 
         ghost: function(ghost) {
@@ -186,7 +182,6 @@
             this.props.suspended = true;
             if (this.components.holder) {
                 this.components.holder.elem.detach();
-                // this.components.holder.removeClass('visible');
             }
         },
 
@@ -213,7 +208,7 @@
                 var dx = vbox.x - hbox.x,
                     dy = vbox.y - hbox.y;
 
-                comp.helper.translate(dx, dy).apply();
+                comp.helper.translate(dx, dy).commit();
 
                 comp.helper.attr({
                     width: vbox.width,
@@ -223,7 +218,7 @@
         },
 
         rotate: function(deg) {
-            var rad = Graph.rad(deg);
+            var rad = Graph.math.rad(deg);
             this.rotation.deg = deg;
             this.rotation.rad = rad;
             this.rotation.sin = Math.sin(rad);
@@ -327,25 +322,49 @@
             this.setup();
         },
 
-        onPointerMove: function(e) {
+        onPointerMove: function(e, vector) {
             var i = e.interaction;
-            if (this.props.ghost) {
+
+            if (this.props.enabled) {
                 if (i.pointerIsDown && ! i.interacting()) {
-                    if (e.currentTarget === this.vector().node()) {
-                        if (this.props.suspended) {
-                            this.resume();
+                    var paper = vector.paper(),
+                        node = vector.node();
+
+                    if (e.currentTarget === node) {
+                        if (paper) {
+                            var state = paper.state();
+                            
+                            if (state == 'collecting') {
+                                if (vector.elem.belong('graph-resizer')) {
+                                    paper.tool().activate('panzoom');    
+                                } else {
+                                    return;
+                                }
+                            } else if (state == 'linking') {
+                                return;
+                            }
                         }
-                        i.start({name: 'drag'}, e.interactable, this.components.helper.node());        
+                        
+                        if (this.props.ghost) {
+                            if (this.props.suspended) {
+                                this.resume();
+                            }
+                            i.start({name: 'drag'}, e.interactable, this.components.helper.node());
+                        } else {
+                            i.start({name: 'drag'}, e.interactable, node);
+                        }
+
                     }
-                }
+                }    
             }
+
         },
 
         onDragStart: function(e) {
-            var vector = this.vector(),
-                paper = vector.paper();
+            var vector = this.vector(), paper = vector.paper();
 
             vector.addClass('dragging');
+            paper.cursor(this.props.cursor);
 
             this.trans.vector = vector;
             this.trans.paper = paper;
@@ -366,6 +385,7 @@
         },
 
         onDragMove: function(e) {
+
             var trans = this.trans,
                 paper = trans.paper,
                 vector = trans.vector,
@@ -376,6 +396,15 @@
                 cos = this.rotation.cos,
                 scaleX = this.scaling.x,
                 scaleY = this.scaling.y;
+
+            // check current scaling
+            var scaling = vector.matrix(true).scale();
+            
+            if (scaling.x !== scaleX || scaling.y !== scaleY) {
+                this.scale(scaling.x, scaling.y);
+                scaleX = scaling.x;
+                scaleY = scaling.y;
+            }
 
             var edx = _.defaultTo(e.dx, 0),
                 edy = _.defaultTo(e.dy, 0);
@@ -415,9 +444,9 @@
             }
 
             if (helper) {
-                helper.translate(hx, hy).apply();
+                helper.translate(hx, hy).commit();
             } else {
-                vector.translate(dx, dy).apply(); 
+                vector.translate(dx, dy).commit(); 
             }
 
             var pgx = _.defaultTo(e.pageX, e.x0),
@@ -455,12 +484,13 @@
             }
 
             if (helper) {
-                vector.translate(dx, dy).apply();
+                vector.translate(dx, dy).commit();
                 this.redraw();
                 this.suspend();
             }
 
             vector.removeClass('dragging');
+            paper.cursor('default');
 
             var edata = {
                 dx: dx,

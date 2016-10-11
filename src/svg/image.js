@@ -118,7 +118,7 @@
                 height: h
             });
             
-            this.rotate(ro, x, y).apply();
+            this.rotate(ro, x, y).commit();
 
             return {
                 matrix: ms,

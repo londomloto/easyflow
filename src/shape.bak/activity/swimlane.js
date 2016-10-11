@@ -68,7 +68,7 @@
         translate: function(dx, dy) {
             this.props.x += dx;
             this.props.y += dy;
-            this.components.group.translate(dx, dy).apply();
+            this.components.group.translate(dx, dy).commit();
         },
 
         rotate: function(deg, cx, cy) {
@@ -94,7 +94,7 @@
         centerText: function() {
             this.components.text.reset();
             this.components.text.center(this.components.head);
-            this.components.text.rotate(this.props.textRotate).apply();
+            this.components.text.rotate(this.props.textRotate).commit();
         },
 
         onPageScroll: function(e) {
@@ -104,14 +104,14 @@
             if (e.dir == 'right' || e.dir == 'left') {
                 comp.headGroup.reset();
                 if (e.currX >= prop.offsetLeft) {
-                    comp.headGroup.translate((e.currX - prop.offsetLeft - e.origX), 0).apply();    
+                    comp.headGroup.translate((e.currX - prop.offsetLeft - e.origX), 0).commit();    
                 }
             }
         },
 
         onGroupRender: function() {
             var comp = this.components;
-            comp.group.translate(this.props.x, this.props.y).apply();
+            comp.group.translate(this.props.x, this.props.y).commit();
         },
 
         onGroupResize: function(e, group) {

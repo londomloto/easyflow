@@ -24,8 +24,8 @@
             this.paper = paper;
             this.initComponent();
 
-            Graph.subscribe('vector/select', _.bind(this.onVectorSelect, this));
-            Graph.subscribe('vector/deselect', _.bind(this.onVectorDeselect, this));
+            Graph.topic.subscribe('vector/select', _.bind(this.onVectorSelect, this));
+            Graph.topic.subscribe('vector/deselect', _.bind(this.onVectorDeselect, this));
         },
 
         initComponent: function() {

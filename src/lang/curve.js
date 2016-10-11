@@ -41,7 +41,7 @@
         segments: [],
         
         constructor: function(command) {
-            this.segments = _.isString(command) ? Graph.cmd2seg(command) : _.cloneDeep(command);
+            this.segments = _.isString(command) ? Graph.util.path2segments(command) : _.cloneDeep(command);
             
             if (this.segments[0][0] != 'M') {
                 this.segments.unshift(
@@ -116,7 +116,7 @@
             return t2;
         },
 
-        pointAt: function(t) {
+        pointAt: function(t, dots) {
             var arr = this.segments,
                 p1x = arr[0][1],
                 p1y = arr[0][2],
@@ -144,27 +144,34 @@
                 cy = t1 * c2y + t * p2y,
                 alpha = (90 - Math.atan2(mx - nx, my - ny) * 180 / Math.PI);
             
-            (mx > nx || my < ny) && (alpha += 180);
+            // (mx > nx || my < ny) && (alpha += 180);
 
-            if (isNaN(x) || isNaN(y)) {
-                return null;
-            }
+            // if (isNaN(x) || isNaN(y)) {
+            //     return null;
+            // }
 
-            var point = Graph.point(x, y);
-            
-            _.extend(point, {
+            var info = {
                 m: {x: mx, y: my},
                 n: {x: nx, y: ny},
                 start: {x: ax, y: ay},
-                end: {x: cx, y: cy},
+                end:   {x: cx, y: cy},
                 alpha: alpha
-            });
+            };
 
-            return point;
+            if (dots) {
+                return _.extend({x: x, y: y}, info);
+            } else {
+                var point = Graph.point(x, y);
+                _.extend(point, info);
+                return point;
+            }
         },
 
-        intersection: function(curve) {
-            return intersection(this, curve);
+        intersection: function(curve, dots) {
+            var result = intersection(this, curve, false);
+            return dots ? result : _.map(result, function(d){
+                return Graph.point(d.x, d.y);
+            });
         },
 
         intersectnum: function(curve) {
@@ -172,8 +179,8 @@
         },
 
         bbox: function() {
-            var args = this.segments[0].slice(1).concat(this.segments[1].slice(1)),
-                bbox = Graph.curvebox.apply(null, args);
+            var args = [this.segments[0][1], this.segments[0][2]].concat(this.segments[1].slice(1)),
+                bbox = Graph.util.curvebox.apply(null, args);
             return Graph.bbox({
                 x: bbox.min.x,
                 y: bbox.min.y,
@@ -190,7 +197,7 @@
         },
 
         toString: function() {
-            return Graph.seg2cmd(this.segments);
+            return Graph.util.segments2path(this.segments);
         }
     });
 
@@ -203,34 +210,26 @@
     }
 
     function intersection(curve1, curve2, number) {
-
-        var cached = Graph.lookup('Graph.lang.Curve', 'intersection', curve1.toString(), curve2.toString());
-
-        if (number) {
-            if (cached.intersectnum) {
-                return cached.intersectnum;
-            }
-        } else {
-            if (cached.intersection) {
-                return cached.intersection;
-            }
-        }
-
         var box1 = curve1.bbox(),
             box2 = curve2.bbox(),
             nres = 0,
             ares = [];
 
         if ( ! box1.intersect(box2)) {
-            cached.intersectnum = 0;
-            cached.intersection = [];
+            box1 = null;
+            box2 = null;
             return number ? 0 : [];
         }
 
+        var sampling = 10;
+
         var l1 = curve1.length(),
-            l2 = curve2.length(),
-            n1 = Math.max(~~(l1 / 5), 1),
-            n2 = Math.max(~~(l2 / 5), 1),
+            l2 = curve2.length();
+        
+        var // n1 = ~~(l1 / 8),
+            // n2 = ~~(l2 / 8),
+            n1 = ~~(l1 / 10),
+            n2 = ~~(l2 / 10),
             dots1 = [],
             dots2 = [],
             xy = {};
@@ -239,44 +238,46 @@
 
         for (i = 0; i < n1 + 1; i++) {
             t = i / n1;
-            p = curve1.pointAt(t);
-            dots1.push({x: p.props.x, y: p.props.y, t: t});
+            p = curve1.pointAt(t, true);
+            dots1.push({x: p.x, y: p.y, t: t});
         }
 
         for (i = 0; i < n2 + 1; i++) {
             t = i / n2;
-            p = curve2.pointAt(t);
-            dots2.push({x: p.props.x, y: p.props.y, t: t});
+            p = curve2.pointAt(t, true);
+            dots2.push({x: p.x, y: p.y, t: t});
         }
 
+        box1 = null;
+        box2 = null;
+
+        curve1 = null;
+        curve2 = null;
+
         for (i = 0; i < n1; i++) {
+            
             for (j = 0; j < n2; j++) {
+
                 var di  = dots1[i],
                     di1 = dots1[i + 1],
                     dj  = dots2[j],
                     dj1 = dots2[j + 1],
                     ci  = Math.abs(di1.x - di.x) < .001 ? 'y' : 'x',
                     cj  = Math.abs(dj1.x - dj.x) < .001 ? 'y' : 'x',
-                    li  = Graph.line(di.x, di.y, di1.x, di1.y),
-                    lj  = Graph.line(dj.x, dj.y, dj1.x, dj1.y),
-                    is  = li.intersection(lj);
-                    // is  = intersect(di.x, di.y, di1.x, di1.y, dj.x, dj.y, dj1.x, dj1.y);
+                    is  = Graph.util.lineIntersection(di.x, di.y, di1.x, di1.y, dj.x, dj.y, dj1.x, dj1.y);
 
                 if (is) {
                     
-                    if (xy[is.props.x.toFixed(4)] == is.props.y.toFixed(4)) {
+                    if (xy[is.x.toFixed(4)] == is.y.toFixed(4)) {
                         continue;
                     }
 
-                    xy[is.props.x.toFixed(4)] = is.props.y.toFixed(4);
+                    xy[is.x.toFixed(4)] = is.y.toFixed(4);
                     
-                    var t1 = di.t + Math.abs((is.props[ci] - di[ci]) / (di1[ci] - di[ci])) * (di1.t - di.t),
-                        t2 = dj.t + Math.abs((is.props[cj] - dj[cj]) / (dj1[cj] - dj[cj])) * (dj1.t - dj.t);
+                    var t1 = di.t + Math.abs((is[ci] - di[ci]) / (di1[ci] - di[ci])) * (di1.t - di.t),
+                        t2 = dj.t + Math.abs((is[cj] - dj[cj]) / (dj1[cj] - dj[cj])) * (dj1.t - dj.t);
                     
                     if (t1 >= 0 && t1 <= 1.001 && t2 >= 0 && t2 <= 1.001) {
-                        is.props.t1 = Math.min(t1, 1);
-                        is.props.t2 = Math.min(t2, 1);
-
                         nres++;
                         ares.push(is);
                     }
@@ -284,9 +285,6 @@
 
             }
         }
-
-        cached.intersectnum = nres;
-        cached.intersection = ares;
 
         return number ? nres : ares;
     }

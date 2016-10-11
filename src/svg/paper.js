@@ -17,19 +17,24 @@
             type: 'paper',
             text: null,
             rotate: 0,
+
             traversable: false,
             selectable: false,
             selected: false,
             focusable: false,
+
             implicitRender: false,
-            rendered: false
+            rendered: false,
+
+            showAxis: true,
+            zoomEnabled: true
         },
 
         components: {
             viewport: null
         },
 
-        constructor: function(width, height) {
+        constructor: function(width, height, options) {
             var me = this;
 
             // me.$super('svg', {
@@ -48,6 +53,8 @@
                 // 'height': _.defaultTo(height, 200)
             });
 
+            _.assign(me.props, options || {});
+
             me.style({
                 overflow: 'hidden',
                 position: 'relative'
@@ -57,15 +64,24 @@
             me.initLayout();
 
             me.utils.collector = new Graph.util.Collector(me);
+            me.plugins.toolmgr.register('collector', 'util');
+
+            me.plugins.linker = new Graph.plugin.Linker(me);
+            me.plugins.toolmgr.register('linker', 'plugin');
+
+            me.plugins.canvas = new Graph.plugin.Canvas(me);
+
             me.utils.definer = new Graph.util.Definer(me);
             me.utils.spotlight = new Graph.util.Spotlight(me);
             me.utils.hinter = null; // new Graph.util.Hinter(me);
             me.utils.toolpad = new Graph.util.Toolpad(me);
+
             
             me.on('pointerdown', _.bind(me.onPointerDown, me));
+            me.on('keynav', _.bind(me.onNavigation, me));
 
-            Graph.subscribe('vector/dragend', _.bind(me.listenVectorDragend, me));
-            Graph.subscribe('vector/resize', _.bind(me.listenVectorResize, me));
+            Graph.topic.subscribe('vector/dragend', _.bind(me.listenVectorDragend, me));
+            Graph.topic.subscribe('vector/resize', _.bind(me.listenVectorResize, me));
         },
 
         initLayout: function() {
@@ -75,19 +91,31 @@
                 .addClass(Graph.string.CLS_VECTOR_VIEWPORT)
                 .selectable(false);
 
-            // viewport.scale(2).apply();
-            viewport.zoomable();
-            // viewport.rotate(45).apply();
-            
-            // test zoom
-            // var vp = this.components.viewport,
-            //     sx = vp.matrix().scale().x;
-            // sx += .1;
-            // this.components.viewport.scale(sx).apply();
+            viewport.props.viewport = true;
+
+            if (this.props.showAxis) {
+                // add axis sign
+                var gAxis, yAxis, xAxis, tAxis;
+
+                gAxis = Graph.$('<g>').appendTo(viewport.elem);
+                yAxis = Graph.$('<rect>').appendTo(gAxis);
+                xAxis = Graph.$('<rect>').appendTo(gAxis);
+                tAxis = Graph.$('<text>').appendTo(gAxis).text('(0, 0)');
+
+                gAxis.attr({'class': 'graph-axis'});
+                xAxis.attr({'class': 'x', rx: 1, ry: 1, x: -16, y:  -2, height:  2, width: 30});
+                yAxis.attr({'class': 'y', rx: 1, ry: 1, x:  -2, y: -16, height: 30, width: 2});
+                tAxis.attr({'class': 't', x: -40, y: -10});
+
+                gAxis = null;
+                xAxis = null;
+                yAxis = null;
+                tAxis = null;
+            }
 
             // render viewport
             viewport.tree.paper = viewport.tree.parent = this.guid();
-            viewport.translate(0.5, 0.5).apply();
+            viewport.translate(0.5, 0.5).commit();
 
             this.elem.append(viewport.elem);
             this.children().push(viewport);
@@ -118,6 +146,10 @@
             return this;
         },
 
+        canvas: function() {
+            return this.plugins.canvas;
+        },
+
         render: function(container) {
             var me = this, 
                 vp = me.components.viewport,
@@ -132,10 +164,9 @@
 
             me.tree.container = container;
             
-            // make fit
-            me.attr({
-                width: container.width(),
-                height: container.height()
+            me.elem.css({
+                width: '100%',
+                height: '100%'
             });
             
             me.props.rendered = true;
@@ -144,6 +175,17 @@
             vp.props.rendered = true;
             vp.fire('render');
 
+            if (me.props.zoomEnabled) {
+                me.zoomable();
+
+                var debounce = _.debounce(function(){
+                    debounce.flush();
+                    debounce = null;
+                    me.tool().activate('panzoom');
+                }, 1000);
+
+                debounce();
+            }
             // me.cascade(function(c){
             //     if (c !== me && ! c.props.rendered) {
             //         c.props.rendered = true;
@@ -175,6 +217,13 @@
 
         viewport: function() {
             return this.components.viewport;
+        },
+
+        scale: function(sx, sy, cx, cy) {
+            if (sx === undefined) {
+                return this.components.viewport.matrix().scale();
+            }
+            return this.plugins.transformer.scale(sx, sy, cx, cy);
         },
 
         scrollable: function(target) {
@@ -267,6 +316,22 @@
         onPointerDown: function(e) {
             var link = Graph.manager.link.get(e.target);
             this.deselectLinks(link);
+        },
+
+        onNavigation: function(e) {
+            var me = this;
+
+            switch(e.keyCode) {
+                case Graph.event.DELETE:
+
+                    var selections = me.utils.collector.collection;
+
+                    _.forEach(selections, function(v){
+
+                    });
+
+                    break;
+            }
         },
 
         listenVectorDragend: function(message) {

@@ -4171,8 +4171,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	            for (; l < animationElements.length; l++) {
 	                var e = animationElements[l];
 	                if (e.el.removed || e.paused) {
-	                    continue;
+	                	continue;
 	                }
+
 	                var time = Now - e.start,
 	                    ms = e.ms,
 	                    easing = e.easing,
@@ -4185,17 +4186,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    now,
 	                    init = {},
 	                    key;
+
 	                if (e.initstatus) {
 	                    time = (e.initstatus * e.anim.top - e.prev) / (e.percent - e.prev) * ms;
 	                    e.status = e.initstatus;
 	                    delete e.initstatus;
 	                    e.stop && animationElements.splice(l--, 1);
 	                } else {
-	                    e.status = (e.prev + (e.percent - e.prev) * (time / ms)) / e.anim.top;
+	                	e.status = (e.prev + (e.percent - e.prev) * (time / ms)) / e.anim.top;
 	                }
 	                if (time < 0) {
 	                    continue;
 	                }
+
 	                if (time < ms) {
 	                    var pos = easing(time / ms);
 	                    for (var attr in from) if (from[has](attr)) {
@@ -4236,6 +4239,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                                    };
 	                                    // now = [["r", get(2), 0, 0], ["t", get(3), get(4)], ["s", get(0), get(1), 0, 0]];
 	                                    now = [["m", get(0), get(1), get(2), get(3), get(4), get(5)]];
+	                                    console.log(now);
 	                                }
 	                                break;
 	                            case "csv":
@@ -4265,6 +4269,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        });
 	                    })(that.id, that, e.anim);
 	                } else {
+
 	                    (function(f, el, a) {
 	                        setTimeout(function() {
 	                            eve("raphael.anim.frame." + el.id, el, a);
@@ -4272,8 +4277,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	                            R.is(f, "function") && f.call(el);
 	                        });
 	                    })(e.callback, that, e.anim);
+
 	                    that.attr(to);
+
 	                    animationElements.splice(l--, 1);
+
 	                    if (e.repeat > 1 && !e.next) {
 	                        for (key in to) if (to[has](key)) {
 	                            init[key] = e.totalOrigin[key];
@@ -4281,11 +4289,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	                        e.el.attr(init);
 	                        runAnimation(e.anim, e.el, e.anim.percents[0], null, e.totalOrigin, e.repeat - 1);
 	                    }
+
 	                    if (e.next && !e.stop) {
-	                        runAnimation(e.anim, e.el, e.next, null, e.totalOrigin, e.repeat);
+	                    	runAnimation(e.anim, e.el, e.next, null, e.totalOrigin, e.repeat);
 	                    }
 	                }
 	            }
+
 	            animationElements.length && requestAnimFrame(animation);
 	        },
 	        upto255 = function (color) {
@@ -4387,7 +4397,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return solve(t, 1 / (200 * duration));
 	    }
 	    elproto.onAnimation = function (f) {
-	        f ? eve.on("raphael.anim.frame." + this.id, f) : eve.unbind("raphael.anim.frame." + this.id);
+	    	f ? eve.on("raphael.anim.frame." + this.id, f) : eve.unbind("raphael.anim.frame." + this.id);
 	        return this;
 	    };
 	    function Animation(anim, ms) {
@@ -4458,6 +4468,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            from = {},
 	            to = {},
 	            diff = {};
+
 	        if (status) {
 	            for (i = 0, ii = animationElements.length; i < ii; i++) {
 	                var e = animationElements[i];
@@ -4475,6 +4486,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        } else {
 	            status = +to; // NaN
 	        }
+
 	        for (var i = 0, ii = anim.percents.length; i < ii; i++) {
 	            if (anim.percents[i] == percent || anim.percents[i] > status * anim.top) {
 	                percent = anim.percents[i];
@@ -4490,6 +4502,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (!params) {
 	            return;
 	        }
+
 	        if (!isInAnim) {
 	            for (var attr in params) if (params[has](attr)) {
 	                if (availableAnimAttrs[has](attr) || element.paper.customAttributes[has](attr)) {
@@ -4611,7 +4624,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    easyeasy = pipe;
 	                }
 	            }
+
 	            timestamp = params.start || anim.start || +new Date;
+
 	            e = {
 	                anim: anim,
 	                percent: percent,
@@ -4633,7 +4648,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	                origin: element.attr(),
 	                totalOrigin: totalOrigin
 	            };
+
 	            animationElements.push(e);
+
 	            if (status && !isInAnim && !isInAnimSet) {
 	                e.stop = true;
 	                e.start = new Date - ms * status;
@@ -4641,12 +4658,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	                    return animation();
 	                }
 	            }
+	            
 	            if (isInAnimSet) {
 	                e.start = new Date - e.ms * status;
 	            }
+
 	            animationElements.length == 1 && requestAnimFrame(animation);
 	        } else {
-	            isInAnim.initstatus = status;
+	        	isInAnim.initstatus = status;
 	            isInAnim.start = new Date - isInAnim.ms * status;
 	        }
 	        eve("raphael.anim.start." + element.id, element, anim);
@@ -4782,7 +4801,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	            len,
 	            e;
 	        if (value != null) {
-	            runAnimation(anim, this, -1, mmin(value, 1));
+	        	runAnimation(anim, this, -1, mmin(value, 1));
 	            return this;
 	        } else {
 	            len = animationElements.length;
@@ -4859,7 +4878,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     = (object) original element
 	    \*/
 	    elproto.stop = function (anim) {
-	        for (var i = 0; i < animationElements.length; i++) if (animationElements[i].el.id == this.id && (!anim || animationElements[i].anim == anim)) {
+	    	for (var i = 0; i < animationElements.length; i++) if (animationElements[i].el.id == this.id && (!anim || animationElements[i].anim == anim)) {
 	            if (eve("raphael.anim.stop." + this.id, this, animationElements[i].anim) !== false) {
 	                animationElements.splice(i--, 1);
 	            }
@@ -4867,7 +4886,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return this;
 	    };
 	    function stopAnimation(paper) {
-	        for (var i = 0; i < animationElements.length; i++) if (animationElements[i].el.paper == paper) {
+	    	for (var i = 0; i < animationElements.length; i++) if (animationElements[i].el.paper == paper) {
 	            animationElements.splice(i--, 1);
 	        }
 	    }

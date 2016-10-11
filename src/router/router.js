@@ -81,7 +81,7 @@
             }
 
             this.props.command = command;
-            this.props.segments = Graph.cmd2seg(command);
+            this.props.segments = Graph.util.path2segments(command);
 
             return this;
         },
@@ -101,7 +101,7 @@
         },
 
         commit: function() {
-            this.props.command = Graph.seg2cmd(this.props.segments);
+            this.props.command = Graph.util.segments2path(this.props.segments);
         },
 
         route: function(start, end) {

@@ -1,5 +1,5 @@
 
-(function(){
+(function(_, $){
 
     var E = Graph.lang.Event = function(type, data){
         this.type = type;
@@ -19,11 +19,13 @@
         propagationStopped: false,
         immediatePropagationStopped: false,
 
-        data: null,
+        originalData: null,
 
         init: function(data) {
-            this.data = data;
-            _.assign(this, data || {});
+            if (data) {
+                this.originalData = data;    
+                _.assign(this, data || {});
+            }
         },
 
         stopPropagation: function() {
@@ -48,5 +50,59 @@
     Graph.event = function(type, data) {
         return new Graph.lang.Event(type, data);
     };
+
+    _.extend(Graph.event, {
+
+        ESC: 27,
+        ENTER: 13,
+        DELETE: 46,
+
+        fix: function(event) {
+            return $.event.fix(event);
+        },
+
+        original: function(event) {
+            return event.originalEvent || event;
+        },
+
+        position: function(event) {
+            return {
+                x: event.clientX,
+                y: event.clientY
+            };
+        },
+        
+        relativePosition: function(event, vector) {
+
+            var position = Graph.event.position(event),
+                matrix = vector.matrix().clone().invert(),
+                relative = {
+                    x: matrix.x(position.x, position.y),
+                    y: matrix.y(position.x, position.y)
+                };
+
+            matrix = null;
+
+            return relative;
+        },
+
+        isPrimaryButton: function(event) {
+            var original = Graph.event.original(event);
+            return ! original.button;
+        },
+
+        hasPrimaryModifier: function(event) {
+            if ( ! Graph.event.isPrimaryButton(event)) {
+                return false;
+            }
+            var original = Graph.event.original(event);
+            return Graph.isMac() ? original.metaKey : original.ctrlKey;
+        },
+
+        hasSecondaryModifier: function(event) {
+            var original = Graph.event.original(event);
+            return Graph.event.isPrimaryButton(event) && original.shiftKey;
+        }
+    });
     
-}());
+}(_, jQuery));

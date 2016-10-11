@@ -5006,7 +5006,7 @@
             // Interactable#on() listeners
             if (iEvent.type in this._iEvents) {
                 listeners = this._iEvents[iEvent.type];
-
+                
                 for (i = 0, len = listeners.length; i < len && !iEvent.immediatePropagationStopped; i++) {
                     funcName = listeners[i].name;
                     listeners[i](iEvent);

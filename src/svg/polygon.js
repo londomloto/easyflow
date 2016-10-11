@@ -32,7 +32,7 @@
         },
 
         pathinfo: function() {
-            var command = Graph.polygon2path(this.attrs.points);
+            var command = Graph.util.polygon2path(this.attrs.points);
             return Graph.path(command);
         },
         
@@ -71,7 +71,7 @@
             this.attr('points', dt);
 
             if (rotate) {
-                this.rotate(rotate, rx, ry).apply();
+                this.rotate(rotate, rx, ry).commit();
             }
             
             return {

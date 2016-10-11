@@ -1,7 +1,7 @@
 
-(function(){
+(function(_, $){
     
-    var REGEX_SVG_BUILDER = /^<(path|tspan|defs|marker)/i;
+    var REGEX_SVG_BUILDER = /^<(svg|g|rect|text|path|tspan|circle|polygon|defs|marker)>/i;
 
     var E = Graph.dom.Element = function(elem) {
         this.elem = elem instanceof jQuery ? elem : $(elem);
@@ -79,6 +79,13 @@
             var node = this.elem[0];
             if (Graph.isHTML(node)) {
                 this.elem.addClass(classes);
+            } else if (Graph.isSVG(node)) {
+                var currentClasses = _.split(node.className.baseVal || '', ' ');
+                classes = _.split(classes, ' ');
+                classes = _.concat(currentClasses, classes);
+                classes = _.uniq(classes);
+                classes = _.join(classes, ' ');
+                node.className.baseVal = _.trim(classes);
             }
             return this;
         },
@@ -111,6 +118,8 @@
             return new Graph.dom.Element(this.elem.closest(selector));
         },
         append: function(elem) {
+            elem = select(elem);
+
             if (Graph.isElement(elem)) {
                 this.elem.append(elem.elem);
             } else {
@@ -190,20 +199,34 @@
         }(method));
     });
 
-    /// SHORTHAND ///
+    /// HELPERS ///
 
     Graph.$ = function(selector, context) {
-        if (_.isString(selector) && /^</.test(selector)) {
-            var builder = selector.match(REGEX_SVG_BUILDER);
-            if (builder) {
-                selector = Graph.doc().createElementNS(Graph.config.xmlns.svg, builder[1]);    
-            }
-        }
+        selector = select(selector);
         return new Graph.dom.Element(selector, context);
     };
 
-    Graph.doc = function() {
-        return document;
-    };
+    _.extend(Graph.dom, {
+        doc: function() {},
+        body: function() {}
+    });
 
-}());
+    ///////// HELPER /////////
+    
+    function select(selector) {
+        if (_.isString(selector) && /^/.test(selector)) {
+            var builder = selector.match(REGEX_SVG_BUILDER);
+            
+            if (builder) {
+                selector = document.createElementNS(Graph.config.xmlns.svg, builder[1]); 
+                if (builder[1] == 'svg') {
+                    selector.setAttribute('xmlns', Graph.config.xmlns.svg);
+                    selector.setAttribute('xmlns:xlink', Graph.config.xmlns.xlink);
+                    selector.setAttribute('version', Graph.config.svg.version);
+                }
+            }
+        }
+        return selector;
+    }
+    
+}(_, jQuery));

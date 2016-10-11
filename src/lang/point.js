@@ -59,7 +59,7 @@
          * Angle to another point
          */
         angle: function(b) {
-            return Graph.angle(this.props.x, this.props.y, b.props.x, b.props.y);
+            return Graph.math.angle(this.props.x, this.props.y, b.props.x, b.props.y);
         },
         
         /**
@@ -70,7 +70,7 @@
         },
 
         theta: function(p) {
-            return Graph.theta(this.props.x, this.props.y, p.props.x, p.props.y);
+            return Graph.math.theta(this.props.x, this.props.y, p.props.x, p.props.y);
         },
 
         difference: function(p) {
@@ -128,7 +128,7 @@
         },
 
         move: function(to, distance) {
-            var rad = Graph.rad(to.theta(this));
+            var rad = Graph.math.rad(to.theta(this));
             this.expand(Math.cos(rad) * distance, -Math.sin(rad) * distance);
             return this;
         },
@@ -151,7 +151,7 @@
         },
 
         rotate: function(angle, origin) {
-            var rd = Graph.rad(angle), 
+            var rd = Graph.math.rad(angle), 
                 dx = this.props.x - (origin ? origin.props.x : 0),
                 dy = this.props.y - (origin ? origin.props.y : 0),
                 si = Math.sin(rd),
@@ -179,6 +179,13 @@
         comply: function(bbox) {
 
         },  
+
+        /**
+         * Export to polar
+         */
+        polar: function() {
+
+        },
 
         adhereToBox: function(box) {
             if (box.contains(this)) {
@@ -223,15 +230,14 @@
         return size * Math.round(value / size);
     }
 
-    ///////// SHORTCUT /////////
-    Graph.point = function(x, y) {
-        return new Graph.lang.Point(x, y);
-    };
-
-    ///////// LANGUAGE CHECK /////////
+    ///////// EXTENSION /////////
     
     Graph.isPoint = function(obj) {
         return obj instanceof Graph.lang.Point;
+    };
+
+    Graph.point = function(x, y) {
+        return new Graph.lang.Point(x, y);
     };
     
 }());

@@ -22,7 +22,7 @@
         },
 
         pathinfo: function() {
-            var command = Graph.polygon2path(this.attrs.points);
+            var command = Graph.util.polygon2path(this.attrs.points);
             command = command.replace(/Z/i, '');
             return Graph.path(command);
         },

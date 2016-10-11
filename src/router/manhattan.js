@@ -38,7 +38,7 @@
             ];
 
             _.forEach(me.directions, function(dir){
-                dir.angle = Graph.theta(0, 0, dir.dx, -dir.dy);
+                dir.angle = Graph.math.theta(0, 0, dir.dx, -dir.dy);
             });
         },
         

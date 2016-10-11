@@ -14,6 +14,7 @@
             width: 0,
             height: 0,
             offset: [0, 0],
+            enabled: false,
             suspended: true,
             rendered: false
         },
@@ -28,6 +29,10 @@
         constructor: function(paper) {
             var me = this;
 
+            if ( ! paper.isPaper()) {
+                throw Graph.error('Lasso tool only available for paper !');
+            }
+
             me.paper = paper;
             me.components.rubber = Graph.$('<div class="graph-rubberband">');
 
@@ -38,6 +43,17 @@
                     me.setup();
                 });
             }
+        },
+
+        enable: function() {
+            this.props.enabled = true;
+            this.paper.cursor('crosshair');
+            this.paper.state('collecting');
+        },
+
+        disable: function() {
+            this.props.enabled = false;
+            this.paper.cursor('default');
         },
 
         setup: function() {
@@ -153,6 +169,8 @@
                         }
                     });
 
+                    Graph.topic.publish('paper/collect');
+
                     me.resize(0, 0);
                     me.suspend();
                 }
@@ -160,10 +178,13 @@
             .on('down', function(e){
                 var single = ! (e.ctrlKey || e.shiftKey),
                     vector = Graph.manager.vector.get(e.target);
-                
-                if (vector && ! vector.selectable()) {
-                    single && me.clearCollection();    
-                    return;
+
+                if (vector) {
+                    if ( ! vector.isSelectable()) {
+                        if ( ! vector.elem.belong('graph-resizer')) {
+                            single && me.clearCollection();    
+                        }
+                    }
                 }
             })
             .on('tap', function(e){
@@ -171,20 +192,31 @@
                     single = ! (e.ctrlKey || e.shiftKey);
 
                 if (vector && vector.selectable()) {
-                    single && me.clearCollection(vector);
+                    if (vector.paper().state() == 'linking') {
+                        me.clearCollection();
+                        return;
+                    }
+
+                    if (single) {
+                        me.clearCollection();
+                    }
+                    
                     me.collect(vector);
-                    return;
                 }
 
             }, true)
             .on('move', function(e){
-                var action = e.interaction,
-                    target = e.target;
-                if (action.pointerIsDown && action.interacting() === false && target === paper.node()) {
-                    if (me.props.suspended) {
-                        me.resume();
+                var i = e.interaction;
+
+                if (me.props.enabled) {
+                    if (i.pointerIsDown && ! i.interacting()) {
+                        if (e.currentTarget === paper.node()) {
+                            if (me.props.suspended) {
+                                me.resume();
+                            }
+                            i.start({name: 'drag'}, e.interactable, me.components.rubber.node());        
+                        }
                     }
-                    action.start({name: 'drag'}, e.interactable, me.components.rubber.node());
                 }
             });
 
@@ -246,10 +278,10 @@
             }
         },
 
-        clearCollection: function(vector) {
+        clearCollection: function(except) {
             var me = this;
             me.paper.cascade(function(c){
-                if (c !== me.paper && c.props.selected) {
+                if (c !== me.paper && c !== except && c.props.selected) {
                     me.decollect(c);
                 }
             });
@@ -351,9 +383,9 @@
                             dy = e.ox * -v.syncdrag.sin + e.oy * v.syncdrag.cos;
 
                         if (v.plugins.dragger.components.helper) {
-                            v.plugins.dragger.components.helper.translate(e.ox, e.oy).apply();
+                            v.plugins.dragger.components.helper.translate(e.ox, e.oy).commit();
                         } else {
-                            v.translate(dx, dy).apply();
+                            v.translate(dx, dy).commit();
                         }
 
                         v.syncdrag.tdx += dx;
@@ -378,7 +410,7 @@
                     (function(v, e){
                         
                         if (v.plugins.dragger.components.helper) {
-                            v.translate(v.syncdrag.tdx, v.syncdrag.tdy).apply();
+                            v.translate(v.syncdrag.tdx, v.syncdrag.tdy).commit();
                             v.plugins.dragger.suspend();
                         }
 

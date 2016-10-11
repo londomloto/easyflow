@@ -14,9 +14,9 @@
         },
 
         transform: function(command) {
-            var me = this, transform = Graph.cmd2transform(command);
+            var me = this, segments = Graph.util.transform2segments(command);
 
-            _.forEach(transform, function(args){
+            _.forEach(segments, function(args){
                 var method = args.shift();
                 if (me[method] && _.isFunction(me[method])) {
                     (function(){
@@ -67,8 +67,8 @@
             this.queue('matrix', a, b, c, d, e, f);
             return this;
         },
-        
-        apply: function(absolute) {
+
+        commit: function(absolute, simulate) {
             var me = this,
                 actions = this.actions,
                 events = {
@@ -82,6 +82,7 @@
             }
             
             absolute = _.defaultTo(absolute, false);
+            simulate = _.defaultTo(simulate, false);
             
             var deg = 0, 
                 dx = 0, 
@@ -152,6 +153,11 @@
                     mat.multiply(arg[0], arg[1], arg[2], arg[3], arg[4], arg[5]);
                 }
             });
+
+            if (simulate) {
+                this.actions = [];
+                return mat;
+            }
             
             this.vector.graph.matrix = mat;
             this.vector.attr('transform', mat);
@@ -178,7 +184,7 @@
                 };
                 this.fire('scale', events.scale);
             }
-            
+
             this.actions = [];
         },
 

@@ -205,12 +205,13 @@
                 event = new Graph.lang.Event(type, data);
             } else {
                 event = type;
-                type  = event.type;
+                event.originalData = {};
+                type = event.originalType || event.type;
             }
 
             // add default publisher props for later use
             event.publisher = this;
-
+            
             args.push(event);
 
             part = _.split(type, '.');

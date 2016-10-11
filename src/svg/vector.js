@@ -24,7 +24,8 @@
             selectable: true,
             focusable: false,
             selected: false,
-            rendered: false
+            rendered: false,
+            state: null
         },
 
         attrs: {
@@ -45,7 +46,8 @@
             network: null,
             history: null,
             sorter: null,
-            panzoom: null
+            panzoom: null,
+            toolmgr: null
         },
 
         utils: {
@@ -85,7 +87,7 @@
                 id: 'graph-vector-' + (++Vector.guid)
             }, me.attrs, attrs || {});
 
-            me.elem = Graph.$(Graph.doc().createElementNS(Graph.config.xmlns.svg, type));
+            me.elem = Graph.$(document.createElementNS(Graph.config.xmlns.svg, type));
             
             // apply initial attributes
             me.attr(attrs);
@@ -96,13 +98,14 @@
             me.elem.data(Graph.string.ID_VECTOR, me.props.guid);
 
             // me.plugins.history = new Graph.plugin.History(me);
-            me.plugins.transformer = new Graph.plugin.Transformer(me);
+            me.plugins.transformer = (new Graph.plugin.Transformer(me))
+                .on('translate', _.bind(me.onTransformTranslate, me))
+                .on('rotate', _.bind(me.onTransformRotate, me))
+                .on('scale', _.bind(me.onTransformScale, me));
 
-            me.plugins.transformer.on({
-                translate: _.bind(me.onTransformTranslate, me),
-                rotate: _.bind(me.onTransformRotate, me),
-                scale: _.bind(me.onTransformScale, me)
-            });
+            me.plugins.toolmgr = (new Graph.plugin.ToolManager(me))
+                .on('activate', _.bind(me.onActivateTool, me))
+                .on('deactivate', _.bind(me.onDeactivateTool, me));
 
             Graph.manager.vector.register(me);
         },
@@ -172,6 +175,14 @@
             this.cached[cached] = null;
         },
 
+        state: function(name) {
+            if (name === undefined) {
+                return this.props.state;    
+            }
+            this.props.state = name;
+            return this;
+        },
+
         dirty: function(state) {
             if (state === undefined) {
                 return this.cached.bbox === null;
@@ -204,10 +215,23 @@
         },
 
         animable: function() {
-            if ( ! this.plugins.animator) {
-                this.plugins.animator = new Graph.plugin.Animator(this);
+            var me = this;
+
+            if ( ! me.plugins.animator) {
+                me.plugins.animator = new Graph.plugin.Animator(me);
+                me.plugins.animator.on({
+                    animstart: function(e) {
+                        me.fire(e);
+                    },
+                    animating: function(e) {
+                        me.fire(e);
+                    },
+                    animend: function(e) {
+                        me.fire(e);
+                    }
+                })
             }
-            return this.plugins.animator;
+            return me.plugins.animator;
         },
         
         resizable: function(config) {
@@ -236,6 +260,7 @@
         zoomable: function() {
             if ( ! this.plugins.panzoom) {
                 this.plugins.panzoom = new Graph.plugin.Panzoom(this);
+                this.plugins.toolmgr.register('panzoom');
             }
             return this.plugins.panzoom;
         },
@@ -390,6 +415,11 @@
 
             this.elem.css(name, value);
             return this;
+        },
+
+        // set/get pointer style
+        cursor: function(style) {
+            this.elem.css('cursor', style);
         },
 
         hasClass: function(predicate) {
@@ -729,7 +759,7 @@
             }
 
             // publish
-            Graph.publish('vector/select', {vector: this});
+            Graph.topic.publish('vector/select', {vector: this});
 
             return this;
         },
@@ -747,7 +777,7 @@
             }
 
             if ( ! this.$collector) {
-                Graph.publish('vector/deselect', {vector: this});
+                Graph.topic.publish('vector/deselect', {vector: this});
             }
 
             return this;
@@ -762,6 +792,9 @@
         },
 
         scale: function(sx, sy, cx, cy) {
+            if (sx === undefined) {
+                return this.matrix(true).scale();
+            }
             return this.plugins.transformer.scale(sx, sy, cx, cy);
         },
 
@@ -842,6 +875,10 @@
             return this.props.type == 'svg';
         },
 
+        isViewport: function() {
+            return this.props.viewport === true;
+        },
+
         isTraversable: function() {
             return this.props.traversable;
         },  
@@ -862,6 +899,16 @@
             return this.plugins.network ? true : false;
         },
 
+        isRendered: function() {
+            return this.props.rendered;
+        },
+
+        ///////// TOOLS //////////
+        
+        tool: function() {
+            return this.plugins.toolmgr;
+        },
+
         toString: function() {
             var name = this.cached.stringify;
             if ( ! name) {
@@ -878,7 +925,7 @@
             this.fire(e);
 
             // publish
-            Graph.publish('vector/resize', e);
+            Graph.topic.publish('vector/resize', e);
         },
 
         onDraggerStart: function(e) {
@@ -910,7 +957,7 @@
             this.fire(e);
 
             // publish
-            Graph.publish('vector/dragend', e);
+            Graph.topic.publish('vector/dragend', e);
 
             if (this.$collector) {
                 this.$collector.syncDragEnd(this, e);
@@ -941,9 +988,9 @@
             this.fire('rotate', {deg: e.deg});
 
             // invoke core plugins
-            if (this.dragger) {
+            if (this.plugins.dragger) {
                 var rotate = this.matrix(true).rotate();
-                this.dragger.rotate(rotate.deg);
+                this.plugins.dragger.rotate(rotate.deg);
             }
         },
 
@@ -959,10 +1006,20 @@
 
             this.fire('scale', {sx: e.sx, sy: e.sy});
 
-            if (this.dragger) {
+            if (this.plugins.dragger) {
                 var scale = this.matrix(true).scale();
-                this.dragger.scale(scale.x, scale.y);
+                this.plugins.dragger.scale(scale.x, scale.y);
             }
+        },
+
+        onActivateTool: function(e) {
+            var data = e.originalData;
+            this.fire('activatetool', data);
+        },
+
+        onDeactivateTool: function(e) {
+            var data = e.originalData
+            this.fire('deactivatetool', data);
         },
 
         onAppendChild: function(e) {

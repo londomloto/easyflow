@@ -14,10 +14,14 @@
             } else if (_.isArray(command)) {
                 segments = _.cloneDeep(command);
             } else {
-                segments = Graph.cmd2seg(command);
+                segments = Graph.util.path2segments(command);
             }
 
             this.segments = segments;
+        },
+
+        command: function() {
+            return Graph.util.segments2path(this.segments);
         },
 
         absolute: function() {
@@ -83,7 +87,7 @@
                                 dots[++j] = +dots[j] + y;
                             }
                             result.pop();
-                            result = _.concat(result, [['C'].concat(Graph.catmull2bezier(dots, z))])
+                            result = _.concat(result, [['C'].concat(cat2bezier(dots, z))])
                             break;
                         case 'M':
                             mx = +itm[1] + x;
@@ -97,7 +101,7 @@
                 } else if (itm[0] == 'R') {
                     dots = _.concat([x, y], itm.slice(1));
                     result.pop();
-                    result = _.concat(result, [['C'].concat(Graph.catmull2bezier(dots, z))]);
+                    result = _.concat(result, [['C'].concat(cat2bezier(dots, z))]);
                     seg = _.concat(['R'], itm.slice(-2));
                 } else {
                     for (var l = 0, ll = itm.length; l < ll; l++) {
@@ -222,15 +226,68 @@
             return result;
         },
 
-        curve: function(to){
-            var cached = to ? {} : Graph.lookup(this.__CLASS__, 'curve', this.toString());
+        curve: function() {
+            var cached = Graph.lookup(this.__CLASS__, 'curve', this.toString());
             
             if (cached.curve) {
                 return cached.curve;
             }
+
+            var p = _.cloneDeep(this.absolute().segments),
+                a = {x: 0, y: 0, bx: 0, by: 0, X: 0, Y: 0, qx: null, qy: null},
+                com = [],
+                init = '',
+                prev = '';
+
+            var fix;
+
+            for (var i = 0, ii = p.length; i < ii; i++) {
+                p[i] && (init = p[i][0]);
+                
+                if (init != 'C') {
+                    com[i] = init;
+                    i && (prev = com[i - 1]);
+                }
+                
+                p[i] = fixsegment(p[i], a, prev);
+
+                if (com[i] != 'A' && init == 'C') com[i] = 'C';
+
+                fixarc(p, i);
+
+                var s = p[i], l = s.length;
+
+                a.x = s[l - 2];
+                a.y = s[l - 1];
+                a.bx = _.float(s[l - 4]) || a.x;
+                a.by = _.float(s[l - 3]) || a.y;
+            }
+
+            cached.curve = new Path(p);
+            return cached.curve;
+
+            ///////// HELPER /////////
             
+            function fixarc(segments, i) {
+                if (segments[i].length > 7) {
+                    segments[i].shift();
+
+                    var pi = segments[i];
+
+                    while (pi.length) {
+                        com[i] = 'A';
+                        segments.splice(i++, 0, ['C'].concat(pi.splice(0, 6)));
+                    }
+                    
+                    segments.splice(i, 1);
+                    ii = p.length;
+                }
+            }
+        },
+
+        curve2curve: function(to){
             var p1 = _.cloneDeep(this.absolute().segments),
-                p2 = to && _.cloneDeep((new Path(to)).absolute().segments),
+                p2 = _.cloneDeep((new Path(to)).absolute().segments) ,
                 a1 = {x: 0, y: 0, bx: 0, by: 0, X: 0, Y: 0, qx: null, qy: null},
                 a2 = {x: 0, y: 0, bx: 0, by: 0, X: 0, Y: 0, qx: null, qy: null},
                 com1 = [],
@@ -238,7 +295,8 @@
                 init = '',
                 prev = '';
 
-            for (var i = 0, ii = _.max([p1.length, p2 && p2.length || 0]); i < ii; i++) {
+            for (var i = 0, ii = _.max([p1.length, p2.length]); i < ii; i++) {
+                // fix p1
                 p1[i] && (init = p1[i][0]);
                 
                 if (init != 'C') {
@@ -246,136 +304,68 @@
                     i && (prev = com1[i - 1]);
                 }
                 
-                p1[i] = process(p1[i], a1, prev);
-
+                p1[i] = fixsegment(p1[i], a1, prev);
+                
                 if (com1[i] != 'A' && init == 'C') com1[i] = 'C';
+                
+                fixarc2(p1, i);
 
-                fixarc(p1, i);
+                // fix p2
+                p2[i] && (init = p2[i][0]);
 
-                if (p2) {
-                    p2[i] && (init = p2[i][0]);
-
-                    if (init != 'C') {
-                        com2[i] = init;
-                        i && (prev = com2[i - 1]);
-                    }
-
-                    p2[i] = processPath(p2[i], attrs2, pcom);
-                    if (com2[i] != 'A' && init == 'C') com2[i] = 'C';
-
-                    fixArc(p2, i);
+                if (init != 'C') {
+                    com2[i] = init;
+                    i && (prev = com2[i - 1]);
                 }
 
-                fixmove(p1, p2, a1, a2, i);
-                fixmove(p2, p1, a2, a1, i);
+                p2[i] = fixsegment(p2[i], attrs2, pcom);
+                
+                if (com2[i] != 'A' && init == 'C') com2[i] = 'C';
+
+                // fix p1 & p2
+                fixArc2(p2, i);
+
+                fixmove2(p1, p2, a1, a2, i);
+                fixmove2(p2, p1, a2, a1, i);
 
                 var s1 = p1[i],
-                    s2 = p2 && p2[i],
+                    s2 = p2[i],
                     l1 = s1.length,
-                    l2 = p2 && s2.length;
+                    l2 = s2.length;
 
                 a1.x = s1[l1 - 2];
                 a1.y = s1[l1 - 1];
                 a1.bx = _.float(s1[l1 - 4]) || a1.x;
                 a1.by = _.float(s1[l1 - 3]) || a1.y;
 
-                a2.bx = p2 && (_.float(s2[l2 - 4]) || a2.x);
-                a2.by = p2 && (_.float(s2[l2 - 3]) || a2.y);
-                a2.x = p2 && s2[l2 - 2];
-                a2.y = p2 && s2[l2 - 1];
+                a2.bx = _.float(s2[l2 - 4]) || a2.x;
+                a2.by = _.float(s2[l2 - 3]) || a2.y;
+                a2.x = s2[l2 - 2];
+                a2.y = s2[l2 - 1];
 
-            }
-
-            if ( ! p2) {
-                cached.curve = new Path(p1);
-                return cached.curve;
             }
 
             return [new Path(p1), new Path(p2)];
 
             ///////// HELPER /////////
             
-            /**
-             * @param  Array    segment  segment
-             * @param  Object   attr  attribute
-             * @param  String   prev  previous toString
-             * @return Array        segments
-             */
-            function process(segment, attr, prev) {
-                var nx, ny, tq = {T:1, Q:1};
-
-                if ( ! segment) {
-                    return ['C', attr.x, attr.y, attr.x, attr.y, attr.x, attr.y];
-                }
-
-                ! ( segment[0] in tq) && (attr.qx = attr.qy = null);
-
-                switch (segment[0]) {
-                    case 'M':
-                        attr.X = segment[1];
-                        attr.Y = segment[2];
-                        break;
-                    case 'A':
-                        segment = ['C'].concat(Graph.arc2curve.apply(0, [attr.x, attr.y].concat(segment.slice(1))));
-                        break;
-                    case 'S':
-                        if (prev == 'C' || prev == 'S') {
-                            nx = attr.x * 2 - attr.bx;
-                            ny = attr.y * 2 - attr.by;
-                        } else {
-                            nx = attr.x;
-                            ny = attr.y;
-                        }
-                        segment = ['C', nx, ny].concat(segment.slice(1));
-                        break;
-                    case 'T':
-                        if (prev == 'Q' || prev == 'T') {
-                            attr.qx = attr.x * 2 - attr.qx;
-                            attr.qy = attr.y * 2 - attr.qy;
-                        } else {
-                            attr.qx = attr.x;
-                            attr.qy = attr.y;
-                        }
-                        path = ['C'].concat(Graph.quad2curve(attr.x, attr.y, attr.qx, attr.qy, segment[1], segment[2]));
-                        break;
-                    case 'Q':
-                        attr.qx = segment[1];
-                        attr.qy = segment[2];
-                        path = ['C'].concat(Graph.quad2curve(attr.x, attr.y, segment[1], segment[2], segment[3], segment[4]));
-                        break;
-                    case 'L':
-                        segment = ['C'].concat(Graph.line2curve(attr.x, attr.y, segment[1], segment[2]));
-                        break;
-                    case 'H':
-                        segment = ['C'].concat(Graph.line2curve(attr.x, attr.y, segment[1], attr.y));
-                        break;
-                    case 'V':
-                        segment = ['C'].concat(Graph.line2curve(attr.x, attr.y, attr.x, segment[1]));
-                        break;
-                    case 'Z':
-                        segment = ['C'].concat(Graph.line2curve(attr.x, attr.y, attr.X, attr.Y));
-                        break;
-                }
-                return segment;
-            }
-
-            function fixarc(segments, i) {
+            function fixarc2(segments, i) {
                 if (segments[i].length > 7) {
                     segments[i].shift();
                     var pi = segments[i];
 
                     while (pi.length) {
                         com1[i] = 'A';
-                        p2 && (com2[i] = 'A');
+                        com2[i] = 'A';
                         segments.splice(i++, 0, ['C'].concat(pi.splice(0, 6)));
                     }
                     
                     segments.splice(i, 1);
-                    ii = _.max([p1.length, p2 && p2.length || 0]);
+                    ii = _.max([p1.length, p2.length]);
                 }
             }
 
-            function fixmove(segments1, segments2, a1, a2, i) {
+            function fixmove2(segments1, segments2, a1, a2, i) {
                 if (segments1 && segments2 && segments1[i][0] == 'M' && segments2[i][0] != 'M') {
                     segments2.splice(i, 0, ['M', a2.x, a2.y]);
                     a1.bx = 0;
@@ -414,7 +404,7 @@
                     X.push(x);
                     Y.push(y);
                 } else {
-                    var box = Graph.curvebox(x, y, p[1], p[2], p[3], p[4], p[5], p[6]);
+                    var box = Graph.util.curvebox(x, y, p[1], p[2], p[3], p[4], p[5], p[6]);
                     X = X.concat(box.min.x, box.max.x);
                     Y = Y.concat(box.min.y, box.max.y);
                     x = p[5];
@@ -686,8 +676,19 @@
             return intersection(this, path, true) > 0;
         },
 
-        intersection: function(path) {
-            return intersection(this, path);
+        intersection: function(path, dots) {
+            var result = intersection(this, path);
+            
+            return dots ? result : _.map(result, function(d){
+                var p = Graph.point(d.x, d.y);
+                
+                p.segment1 = d.segment1;
+                p.segment2 = d.segment2;
+                p.bezier1  = d.bezier1;
+                p.bezier2  = d.bezier2;
+
+                return p;
+            });
         },
 
         intersectnum: function(path) {
@@ -767,8 +768,41 @@
             return simple;
         },
 
+        moveTo: function(x, y) {
+            var segments = this.segments;
+            
+            if (segments.length) {
+                segments[0][0] = 'M';
+                segments[0][1] = x;
+                segments[0][2] = y;
+            } else {
+                segments = [['M', x, y]];
+            }
+
+            return this;
+        },
+
+        lineTo: function(x, y, append) {
+            var segments = this.segments;
+                
+            append = _.defaultTo(append, true);
+
+            if (segments) {
+                var maxs = segments.length - 1;
+                
+                if (segments[maxs][0] == 'M' || append) {
+                    segments.push(['L', x, y]);
+                } else {
+                    segments[maxs][1] = x;
+                    segments[maxs][2] = y;
+                }
+            }
+
+            return this;
+        },
+
         toString: function() {
-            return Graph.seg2cmd(this.segments);
+            return Graph.util.segments2path(this.segments);
         },
 
         toArray: function() {
@@ -781,26 +815,276 @@
         }
     });
     
+    ///////// STATIC /////////
+    
+    Graph.lang.Path.toString = function() {
+        return "function(command)";
+    };
+
+    ///////// EXTENSION /////////
+    
+    Graph.isPath = function(obj) {
+        return obj instanceof Graph.lang.Path;
+    };
+
+    Graph.path = function(command) {
+        return new Graph.lang.Path(command);
+    };
+
     ///////// HELPERS /////////
     
+    function fixsegment(segment, attr, prev) {
+        var nx, ny, tq = {T:1, Q:1};
+
+        if ( ! segment) {
+            return ['C', attr.x, attr.y, attr.x, attr.y, attr.x, attr.y];
+        }
+
+        ! ( segment[0] in tq) && (attr.qx = attr.qy = null);
+
+        switch (segment[0]) {
+            case 'M':
+                attr.X = segment[1];
+                attr.Y = segment[2];
+                break;
+            case 'A':
+                segment = ['C'].concat(arc2curve.apply(0, [attr.x, attr.y].concat(segment.slice(1))));
+                break;
+            case 'S':
+                if (prev == 'C' || prev == 'S') {
+                    nx = attr.x * 2 - attr.bx;
+                    ny = attr.y * 2 - attr.by;
+                } else {
+                    nx = attr.x;
+                    ny = attr.y;
+                }
+                segment = ['C', nx, ny].concat(segment.slice(1));
+                break;
+            case 'T':
+                if (prev == 'Q' || prev == 'T') {
+                    attr.qx = attr.x * 2 - attr.qx;
+                    attr.qy = attr.y * 2 - attr.qy;
+                } else {
+                    attr.qx = attr.x;
+                    attr.qy = attr.y;
+                }
+                path = ['C'].concat(quad2curve(attr.x, attr.y, attr.qx, attr.qy, segment[1], segment[2]));
+                break;
+            case 'Q':
+                attr.qx = segment[1];
+                attr.qy = segment[2];
+                path = ['C'].concat(quad2curve(attr.x, attr.y, segment[1], segment[2], segment[3], segment[4]));
+                break;
+            case 'L':
+                segment = ['C'].concat(line2curve(attr.x, attr.y, segment[1], segment[2]));
+                break;
+            case 'H':
+                segment = ['C'].concat(line2curve(attr.x, attr.y, segment[1], attr.y));
+                break;
+            case 'V':
+                segment = ['C'].concat(line2curve(attr.x, attr.y, attr.x, segment[1]));
+                break;
+            case 'Z':
+                segment = ['C'].concat(line2curve(attr.x, attr.y, attr.X, attr.Y));
+                break;
+        }
+        return segment;
+    }
+
+    /**
+     * Convert catmull-rom to bezier segment
+     * https://advancedweb.hu/2014/10/28/plotting_charts_with_svg/
+     */
+    function cat2bezier(dots, z) {  
+        var segments = [],
+            def = _.defaultTo;
+
+        for (var i = 0, ii = dots.length; ii - 2 * !z > i; i += 2) {
+            var p = [
+                {x: def(dots[i - 2], 0), y: def(dots[i - 1], 0)},
+                {x: def(dots[i], 0),     y: def(dots[i + 1], 0)},
+                {x: def(dots[i + 2], 0), y: def(dots[i + 3], 0)},
+                {x: def(dots[i + 4], 0), y: def(dots[i + 5], 0)}
+            ];  
+
+            if (z) {
+                if (!i) {
+                    p[0] = {x: def(dots[ii - 2], 0), y: def(dots[ii - 1], 0)};
+                } else if (ii - 4 == i) {
+                    p[3] = {x: def(dots[0], 0), y: def(dots[1], 0)};
+                } else if (ii - 2 == i) {
+                    p[2] = {x: def(dots[0], 0), y: def(dots[1], 0)};
+                    p[3] = {x: def(dots[2], 0), y: def(dots[3], 0)};
+                }
+            } else {
+                if (ii - 4 == i) {
+                    p[3] = p[2];
+                } else if (!i) {
+                    p[0] = {x: def(dots[i], 0), y: def(dots[i + 1], 0)};
+                }
+            }
+
+            segments = [
+                (-p[0].x + 6 * p[1].x + p[2].x) / 6,
+                (-p[0].y + 6 * p[1].y + p[2].y) / 6,
+                ( p[1].x + 6 * p[2].x - p[3].x) / 6,
+                ( p[1].y + 6 * p[2].y - p[3].y) / 6,
+                p[2].x,
+                p[2].y
+            ];
+        }
+
+        return segments;
+    }
+
+    function line2curve(x1, y1, x2, y2) {
+        return [x1, y1, x2, y2, x2, y2];
+    }
+
+    function quad2curve (x1, y1, ax, ay, x2, y2) {
+        var _13 = 1 / 3, 
+            _23 = 2 / 3;
+            
+        return [
+            _13 * x1 + _23 * ax,
+            _13 * y1 + _23 * ay,
+            _13 * x2 + _23 * ax,
+            _13 * y2 + _23 * ay,
+            x2,
+            y2
+        ];
+    }
+
+    function arc2curve (x1, y1, rx, ry, angle, large_arc_flag, sweep_flag, x2, y2, recursive) {
+        var 
+            _120 = Math.PI * 120 / 180,
+            rad = Math.PI / 180 * (+angle || 0),
+            res = [],
+            xy,
+            rotate = Graph.memoize(function (x, y, rad) {
+                var X = x * Math.cos(rad) - y * Math.sin(rad),
+                    Y = x * Math.sin(rad) + y * Math.cos(rad);
+                return {x: X, y: Y};
+            });
+
+        if ( ! recursive) {
+            xy = rotate(x1, y1, -rad);
+            x1 = xy.x;
+            y1 = xy.y;
+            xy = rotate(x2, y2, -rad);
+            x2 = xy.x;
+            y2 = xy.y;
+            var cos = Math.cos(Math.PI / 180 * angle),
+                sin = Math.sin(Math.PI / 180 * angle),
+                x = (x1 - x2) / 2,
+                y = (y1 - y2) / 2;
+            var h = (x * x) / (rx * rx) + (y * y) / (ry * ry);
+            if (h > 1) {
+                h = Math.sqrt(h);
+                rx = h * rx;
+                ry = h * ry;
+            }
+            var rx2 = rx * rx,
+                ry2 = ry * ry,
+                k = (large_arc_flag == sweep_flag ? -1 : 1) *
+                    Math.sqrt(Math.abs((rx2 * ry2 - rx2 * y * y - ry2 * x * x) / (rx2 * y * y + ry2 * x * x))),
+                cx = k * rx * y / ry + (x1 + x2) / 2,
+                cy = k * -ry * x / rx + (y1 + y2) / 2,
+                f1 = Math.asin(((y1 - cy) / ry).toFixed(9)),
+                f2 = Math.asin(((y2 - cy) / ry).toFixed(9));
+
+            f1 = x1 < cx ? Math.PI - f1 : f1;
+            f2 = x2 < cx ? Math.PI - f2 : f2;
+            f1 < 0 && (f1 = Math.PI * 2 + f1);
+            f2 < 0 && (f2 = Math.PI * 2 + f2);
+            if (sweep_flag && f1 > f2) {
+                f1 = f1 - Math.PI * 2;
+            }
+            if (!sweep_flag && f2 > f1) {
+                f2 = f2 - Math.PI * 2;
+            }
+        } else {
+            f1 = recursive[0];
+            f2 = recursive[1];
+            cx = recursive[2];
+            cy = recursive[3];
+        }
+        var df = f2 - f1;
+        if (Math.abs(df) > _120) {
+            var f2old = f2,
+                x2old = x2,
+                y2old = y2;
+            f2 = f1 + _120 * (sweep_flag && f2 > f1 ? 1 : -1);
+            x2 = cx + rx * Math.cos(f2);
+            y2 = cy + ry * Math.sin(f2);
+            res = arc2curve(x2, y2, rx, ry, angle, 0, sweep_flag, x2old, y2old, [f2, f2old, cx, cy]);
+        }
+        df = f2 - f1;
+        var c1 = Math.cos(f1),
+            s1 = Math.sin(f1),
+            c2 = Math.cos(f2),
+            s2 = Math.sin(f2),
+            t = Math.tan(df / 4),
+            hx = 4 / 3 * rx * t,
+            hy = 4 / 3 * ry * t,
+            m1 = [x1, y1],
+            m2 = [x1 + hx * s1, y1 - hy * c1],
+            m3 = [x2 + hx * s2, y2 - hy * c2],
+            m4 = [x2, y2];
+
+        m2[0] = 2 * m1[0] - m2[0];
+        m2[1] = 2 * m1[1] - m2[1];
+
+        if (recursive) {
+            return [m2, m3, m4].concat(res);
+        } else {
+            res = [m2, m3, m4].concat(res).join().split(",");
+            var result = [];
+            for (var i = 0, ii = res.length; i < ii; i++) {
+                result[i] = i % 2 ? rotate(res[i - 1], res[i], rad).y : rotate(res[i], res[i + 1], rad).x;
+            }
+            return result;
+        }
+    }
+
     function taxicab(point1, point2) {
         var dx = point1.props.x - point2.props.x,
             dy = point1.props.y - point2.props.y;
         return dx * dx + dy * dy;
     }
 
+    function minimumLength(path1) {
+        var segments1 = path1.curve().segments;
+        var minimum, s, x1, y1, x2, y2;
+
+        for (i = 0, ii = segments.length; i < ii; i++) {
+            s = segments[i];
+            if (s[0] == 'M') {
+                x1 = s[1];
+                y1 = s[2];
+            } else {
+                if (s[0] == 'C') {
+                    x2 = s[5];
+                    y2 = s[6];
+                }
+
+                minimum = Graph.math.hypo((x2 - x1), (y2 - y1));
+            }
+        }
+
+        return minimum;
+    }
+
     function intersection(path1, path2, number) {
-        var curve1 = path1.curve(),   
-            segments1 = curve1.segments,
-            length1 = segments1.length,
-            curve2 = path2.curve(),
-            segments2 = curve2.segments,
-            length2 = segments2.length,
-            result = number ? 0 : [];
+        var segments1 = path1.curve().segments,
+            length1   = segments1.length,
+            segments2 = path2.curve().segments,
+            length2   = segments2.length,
+            result    = number ? 0 : [];
 
         var x1, y1, x2, y2, x1m, y1m, x2m, y2m, bz1, bz2;
         var si, sj, i, j;
-        var inter;
+        var inter;  
 
         for (i = 0; i < length1; i++) {
             si = segments1[i];
@@ -837,39 +1121,23 @@
                         if (number) {
                             result += bz1.intersectnum(bz2);
                         } else {
-                            inter = bz1.intersection(bz2);
+                            inter = bz1.intersection(bz2, true);
                             for (var k = 0, kk = inter.length; k < kk; k++) {
-                                inter[k].props.segment1 = i;
-                                inter[k].props.segment2 = j;
+                                inter[k].segment1 = i;
+                                inter[k].segment2 = j;
                                 inter[k].bezier1 = bz1;
                                 inter[k].bezier2 = bz2;
                             }
                             result = result.concat(inter);
                         }
+                        bz2 = null;
                     }
                 }
+                bz1 = null;
             }
         }
 
         return result;
     }
-
-    ///////// STATIC /////////
-    
-    Graph.lang.Path.toString = function() {
-        return "function(command)";
-    };  
-
-    ///////// SHORTCUT /////////
-    
-    Graph.path = function(command) {
-        return new Graph.lang.Path(command);
-    };
-
-    ///////// LANGUAGE CHECK /////////
-    
-    Graph.isPath = function(obj) {
-        return obj instanceof Graph.lang.Point;
-    };
 
 }());
