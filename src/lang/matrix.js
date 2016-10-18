@@ -118,7 +118,7 @@
                 var px = this.delta(0, 1),
                     py = this.delta(1, 0),
                     deg = 180 / Math.PI * Math.atan2(px.y, px.x) - 90,
-                    rad = Graph.math.rad(deg);
+                    rad = Graph.util.rad(deg);
 
                 return {
                     deg: deg,
@@ -126,7 +126,7 @@
                 };
             }
 
-            angle = Graph.math.rad(angle);
+            angle = Graph.util.rad(angle);
             cx = _.defaultTo(cx, 0);
             cy = _.defaultTo(cy, 0);
 
@@ -142,8 +142,8 @@
         scale: function(sx, sy, cx, cy) {
             if (sx === undefined) {
                 var prop = this.props,
-                    sx = Graph.math.hypo(prop.a, prop.b),
-                    sy = Graph.math.hypo(prop.c, prop.d);
+                    sx = Graph.util.hypo(prop.a, prop.b),
+                    sy = Graph.util.hypo(prop.c, prop.d);
 
                 if (this.determinant() < 0) {
                     sx = -sx;
@@ -184,12 +184,12 @@
             var px = this.delta(0, 1),
                 py = this.delta(1, 0),
                 skewX = 180 / Math.PI * Math.atan2(px.y, px.x) - 90,
-                radSkewX = Graph.math.rad(skewX),
+                radSkewX = Graph.util.rad(skewX),
                 cosSkewX = Math.cos(radSkewX),
                 sinSkewX = Math.sin(radSkewX),
-                scaleX = Graph.math.hypo(this.props.a, this.props.b),
-                scaleY = Graph.math.hypo(this.props.c, this.props.d),
-                radian = Graph.math.rad(skewX);
+                scaleX = Graph.util.hypo(this.props.a, this.props.b),
+                scaleY = Graph.util.hypo(this.props.c, this.props.d),
+                radian = Graph.util.rad(skewX);
 
             if (this.determinant() < 0) {
                 scaleX = -scaleX;

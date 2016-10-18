@@ -25,8 +25,7 @@
             comp.G = (new Graph.svg.Group())
                 .traversable(false)
                 .selectable(false)
-                .addClass('graph-util-spotlight')
-                .removeClass(Graph.string.CLS_VECTOR_GROUP);
+                .addClass('graph-util-spotlight');
 
             _.forEach(['N', 'E', 'S', 'W'], function(name){
                 comp[name] = (new Graph.svg.Line(0, 0, 0, 0))
@@ -37,7 +36,7 @@
             });
 
             // paper.on('pointerdown', function(e){
-            //     var vector = Graph.manager.vector.get(e.target);
+            //     var vector = Graph.registry.vector.get(e.target);
             //     me.focus(vector);
             // })
         },
@@ -80,7 +79,7 @@
                 return;
             }
 
-            var tbox = target.bbox().data(),
+            var tbox = target.bbox().toJson(),
                 dots = target.dots(true),
                 comp = this.components,
                 root = this.paper;

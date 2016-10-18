@@ -76,7 +76,7 @@
 
         each: function(handler) {
             _.forEach(this.items, function(id){
-                var vector = Graph.manager.vector.get(id);
+                var vector = Graph.registry.vector.get(id);
                 handler.call(vector, vector);
             });
         },
@@ -86,8 +86,8 @@
             var vector, box;
 
             for (var i = this.items.length - 1; i >= 0; i--) {
-                vector = Graph.manager.vector.get(this.items[i]);
-                box = vector.bbox().data();
+                vector = Graph.registry.vector.get(this.items[i]);
+                box = vector.bbox().toJson();
 
                 x.push(box.x);
                 y.push(box.y);
@@ -112,7 +112,7 @@
 
         toArray: function() {
             return _.map(this.items, function(id){
-                return Graph.manager.vector.get(id);
+                return Graph.registry.vector.get(id);
             });
         },
 
@@ -125,20 +125,19 @@
         return 'function(vectors)';
     };
 
-    _.forOwn(Graph.svg.Vector.prototype, function(value, name){
-        (function(name, value){
-            if (_.isUndefined(Collection.prototype[name]) && _.isFunction(value)) {
-                Collection.prototype[name] = function() {
-                    var args = _.toArray(arguments);
-                    
-                    this.each(function(vector){
-                        vector[name].apply(vector, args);
-                    });
-                    
-                    return this;
-                };
-            }
-        }(name, value));
-    });
+    ///////// COLLECTIVE METHOD /////////
+    var methods = ['attr', 'remove'];
 
+    _.forEach(methods, function(method){
+        (function(method){
+            Collection.prototype[method] = function() {
+                var args = _.toArray(arguments);
+                this.each(function(vector){
+                    vector[method].apply(vector, args);
+                });
+                return this;
+            };
+        }(method));
+    });
+    
 }());

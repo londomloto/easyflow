@@ -1,7 +1,7 @@
 
 (function(){
 
-    var Manager = Graph.extend({
+    var Registry = Graph.extend({
 
         shapes: {},
 
@@ -53,6 +53,6 @@
 
     });
 
-    Graph.manager.shape = new Manager();
+    Graph.registry.shape = new Registry();
 
 }());

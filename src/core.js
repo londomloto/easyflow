@@ -125,7 +125,12 @@
  */
 (function(){
 
-    var GLOBAL = typeof window != 'undefined' && window.Math == Math ? window : (typeof self != 'undefined' && self.Math == Math ? self : Function('return this')());
+    var GLOBAL = typeof window != 'undefined' && 
+                 window.Math == Math 
+                    ? window 
+                    : (typeof self != 'undefined' && self.Math == Math 
+                        ? self 
+                        : Function('return this')());
 
     var DOCUMENT = document;
 
@@ -142,354 +147,337 @@
     /**
      * Banner
      */
-    GLOBAL.Graph = GLOBAL.Graph || {};
+    GLOBAL.Graph = function() {
 
+    };
+
+    Graph.VERSION = '1.0.0';
+    
+    Graph.AUTHOR = 'Kreasindo Cipta Teknologi';
     
     /**
-     * Core helper
+     * Config
      */
-    _.extend(Graph, {
-        VERSION: '1.0.0',
-        AUTHOR: 'Kreasindo Cipta Teknologi',
-        cached: {},
-        config: {
-            base: 'easyflow/',
-            svg: {
-                version: '1.1'
-            },
-            xmlns: {
-                svg: 'http://www.w3.org/2000/svg',
-                xlink: 'http://www.w3.org/1999/xlink',
-                html: 'http://www.w3.org/1999/xhtml'
-            },
-            font: {
-                family: 'Segoe UI',
-                size: '12px',
-                line: 1
-            }
+    Graph.cached = {};
+
+    Graph.config = {
+        base: 'easyflow/',
+        svg: {
+            version: '1.1'
         },
-        setup: function(name, value) {
-            if (_.isPlainObject(name)) {
-                _.extend(Graph.config, name);
-            } else {
-                Graph.config[name] = value;
-            }
-        }/*,
-        toString: function() {
-            return 'SVG Library presented by ' + Graph.AUTHOR;
-        }*/
-    });
+        xmlns: {
+            svg: 'http://www.w3.org/2000/svg',
+            xlink: 'http://www.w3.org/1999/xlink',
+            html: 'http://www.w3.org/1999/xhtml'
+        },
+        font: {
+            family: 'Segoe UI',
+            size: '12px',
+            line: 1
+        }
+    };
+
+    Graph.setup = function(name, value) {
+        if (_.isPlainObject(name)) {
+            _.extend(Graph.config, name);
+        } else {
+            Graph.config[name] = value;
+        }
+    };
+
+    /*
+    Graph.toString = function() {
+        return 'SVG Library presented by ' + Graph.AUTHOR;
+    }
+    */
 
     /**
-     * Params name
+     * String params
      */
-    _.extend(Graph, {
-        string: {
-            ID_VECTOR: 'graph-vector-id',
-            ID_LINK: 'graph-link-id',
-            ID_PORT: 'graph-port-id',
+    Graph.string = {
+        ID_VECTOR: 'graph-vector-id',
+        ID_LINK: 'graph-link-id',
+        ID_PORT: 'graph-port-id',
 
-            CLS_VECTOR_SVG: 'graph-paper',
-            CLS_VECTOR_RECT: 'graph-elem graph-elem-rect',
-            CLS_VECTOR_PATH: 'graph-elem graph-elem-path',
-            CLS_VECTOR_TEXT: 'graph-elem graph-elem-text',
-            CLS_VECTOR_LINE: 'graph-elem graph-elem-line',
-            CLS_VECTOR_GROUP: 'graph-elem graph-elem-group',
-            CLS_VECTOR_IMAGE: 'graph-elem graph-elem-image',
-            CLS_VECTOR_CIRCLE: 'graph-elem graph-elem-circle',
-            CLS_VECTOR_ELLIPSE: 'graph-elem graph-elem-ellipse',
-            CLS_VECTOR_POLYGON: 'graph-elem graph-elem-polygon',
-            CLS_VECTOR_POLYLINE: 'graph-elem graph-elem-polyline',
-            CLS_VECTOR_VIEWPORT: 'graph-viewport'
-        }
-    });
-
-    /**
-     * Language checking
-     */
-    _.extend(Graph, {
-        isHTML: function(obj) {
-            return obj instanceof HTMLElement;
-        },
-        isSVG: function(obj) {
-            return obj instanceof SVGElement;
-        },
-        isElement: function(obj) {
-            return obj instanceof Graph.dom.Element;
-        },
-        isMac: function() {
-            return (/mac/i).test(navigator.platform);    
-        }
-    });
+        CLS_VECTOR_SVG: 'graph-paper',
+        CLS_VECTOR_RECT: 'graph-elem graph-elem-rect',
+        CLS_VECTOR_PATH: 'graph-elem graph-elem-path',
+        CLS_VECTOR_TEXT: 'graph-elem graph-elem-text',
+        CLS_VECTOR_LINE: 'graph-elem graph-elem-line',
+        CLS_VECTOR_GROUP: 'graph-elem graph-elem-group',
+        CLS_VECTOR_IMAGE: 'graph-elem graph-elem-image',
+        CLS_VECTOR_CIRCLE: 'graph-elem graph-elem-circle',
+        CLS_VECTOR_ELLIPSE: 'graph-elem graph-elem-ellipse',
+        CLS_VECTOR_POLYGON: 'graph-elem graph-elem-polygon',
+        CLS_VECTOR_POLYLINE: 'graph-elem graph-elem-polyline',
+        CLS_VECTOR_VIEWPORT: 'graph-viewport'
+    };
 
     /**
      * Language & Core helper
      */
-    _.extend(Graph, {
-        ns: function(namespace) {
-            var cached = Graph.lookup('Graph', 'ns', namespace);
+    Graph.isHTML = function(obj) {
+        return obj instanceof HTMLElement;
+    };
 
-            if (cached.clazz) {
-                return cached.clazz;
-            }
+    Graph.isSVG = function(obj) {
+        return obj instanceof SVGElement;
+    };
 
-            var parts = _.split(namespace, '.'),
-                parent = GLOBAL,
-                len = parts.length,
-                current,
-                i;
+    Graph.isElement = function(obj) {
+        return obj instanceof Graph.dom.Element;
+    };
 
-            for (i = 0; i < len; i++) {
-                current = parts[i];
-                parent[current] = parent[current] || {};
-                parent = parent[current];
-            }
+    Graph.isMac = function() {
+        return (/mac/i).test(navigator.platform);    
+    };
 
-            if (_.isFunction(parent)) {
-                cached.clazz = parent;
-            }
+    Graph.ns = function(namespace) {
+        var cached = Graph.lookup('Graph', 'ns', namespace);
 
-            return parent;
-        },
+        if (cached.clazz) {
+            return cached.clazz;
+        }
 
-        uuid: function() {
-            // credit: http://stackoverflow.com/posts/2117523/revisions
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                var r = Math.random() * 16|0;
-                var v = c == 'x' ? r : (r&0x3|0x8);
-                return v.toString(16);
-            });
-        },
+        var parts = _.split(namespace, '.'),
+            parent = GLOBAL,
+            len = parts.length,
+            current,
+            i;
 
-        /**
-         * Simple hashing
-         */
-        hash: function(str) {
-            var hash = 0, chr, len, i;
-            
-            if ( ! str.length) {
-                return hash;
-            }
+        for (i = 0; i < len; i++) {
+            current = parts[i];
+            parent[current] = parent[current] || {};
+            parent = parent[current];
+        }
 
-            for (i = 0, len = str.length; i < len; i++) {
-                chr   = str.charCodeAt(i);
-                hash  = ((hash << 5) - hash) + chr;
-                hash |= 0;
-            }
+        if (_.isFunction(parent)) {
+            cached.clazz = parent;
+        }
 
-            return hash;
-        },
+        return parent;
+    };
 
-        // prepare for prototypal factory
-        create: function($super, props) {
-            
-        },
+    Graph.uuid = function() {
+        // credit: http://stackoverflow.com/posts/2117523/revisions
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16|0;
+            var v = c == 'x' ? r : (r&0x3|0x8);
+            return v.toString(16);
+        });
+    };
 
-        factory: function(clazz, args) {
-            args = [clazz].concat(args);
-            return new (Function.prototype.bind.apply(clazz, args));
-        },
-
-        expand: function(target, source, scope) {
-            var tproto = target.constructor.prototype,
-                sproto = source.constructor.prototype;
-
-            scope = _.defaultTo(source);
-
-            _.forOwn(sproto, function(value, key){
-                if (_.isFunction(value) && _.isUndefined(tproto[key])) {
-                    (function(key, value){
-                        tproto[key] = _.bind(value, scope);
-                    }(key, value));    
-                }
-            });
-        },
-
-        extend: function(clazz, props) {
-            if (_.isPlainObject(clazz)) {
-                props = clazz;
-                clazz = Graph.lang.Class;
-            }
-            return clazz.extend(props);
-        },
+    /**
+     * Simple hashing
+     */
+    Graph.hash = function(str) {
+        var hash = 0, chr, len, i;
         
-        mixin: function(target, source) {
-            this.extend(target, source, target);
-        },
+        if ( ! str.length) {
+            return hash;
+        }
 
-        lookup: function(/* tag, ...tokens */) {
-            var args = _.toArray(arguments),
-                group = args.shift(),
-                token = _.join(args, '|'),
-                cached = Graph.cached[group] = Graph.cached[group] || {},
-                credit = group == 'Regex.event' ? null : CACHE_SIZE;
+        for (i = 0, len = str.length; i < len; i++) {
+            chr   = str.charCodeAt(i);
+            hash  = ((hash << 5) - hash) + chr;
+            hash |= 0;
+        }
 
-            if (cached[token]) {
-                cached[token].credit = credit;
-            } else {
-                cached[token] = {
-                    credit: credit,
-                    remove: (function(group, token){
-                        return function() {
-                            delete Graph.cached[group][token];    
-                        };
-                    }(group, token))
-                }
+        return hash;
+    };
+
+    // prepare for prototypal factory
+    Graph.create = function(superclass, props) {
+        
+    };
+
+    Graph.factory = function(clazz, args) {
+        args = [clazz].concat(args);
+        return new (Function.prototype.bind.apply(clazz, args));
+    };
+
+    Graph.expand = function(target, source, scope) {
+        var tproto = target.constructor.prototype,
+            sproto = source.constructor.prototype;
+
+        scope = _.defaultTo(source);
+
+        _.forOwn(sproto, function(value, key){
+            if (_.isFunction(value) && _.isUndefined(tproto[key])) {
+                (function(key, value){
+                    tproto[key] = _.bind(value, scope);
+                }(key, value));    
             }
+        });
+    };
 
-            _.debounce(function(t){
-                _.forOwn(cached, function(v, k){
-                    if (k != t) {
-                        if (cached[k].credit !== null) {
-                            cached[k].credit--;
-                            if (cached[k].credit <= 0) {
-                                delete cached[k];
-                            }
-                        }
-                    }
-                });
-            })(token);
+    Graph.extend = function(clazz, props) {
+        if (_.isPlainObject(clazz)) {
+            props = clazz;
+            clazz = Graph.lang.Class;
+        }
+        return clazz.extend(props);
+    };
 
-            return cached[token];
-        },
+    Graph.mixin = function(target, source) {
+        this.extend(target, source, target);
+    };
 
-        memoize: function(func) {
-            return function memo() {
-                var param = _.toArray(arguments),
-                    token = _.join(param, "\u2400"),
-                    cache = memo.cache = memo.cache || {},
-                    saved = memo.saved = memo.saved || [];
+    Graph.lookup = function(group, token) {
+        var args = _.toArray(arguments), cached, credit;
 
-                if ( ! _.isUndefined(cache[token])) {
-                    for (var i = 0, ii = saved.length; i < ii; i++) {
-                        if (saved[i] == token) {
-                            saved.push(saved.splice(i, 1)[0]);
-                            break;
-                        }
-                    }
-                    return cache[token];
-                }
+        group  = args.shift();
+        token  = _.join(args, '|');
+        cached = Graph.cached[group] = Graph.cached[group] || {};
+        credit = group == 'Regex.event' ? null : CACHE_SIZE;
 
-                if (saved.length >= MEMO_SIZE) {
-                    delete cache[saved.shift()];
-                }
-
-                saved.push(token);
-                cache[token] = func.apply(this, param);
-
-                return cache[token];
+        if (cached[token]) {
+            cached[token].credit = credit;
+        } else {
+            cached[token] = {
+                credit: credit,
+                remove: (function(group, token){
+                    return function() {
+                        delete Graph.cached[group][token];    
+                    };
+                }(group, token))
             }
         }
-    });
+
+        _.debounce(function(t){
+            _.forOwn(cached, function(v, k){
+                if (k != t) {
+                    if (cached[k].credit !== null) {
+                        cached[k].credit--;
+                        if (cached[k].credit <= 0) {
+                            delete cached[k];
+                        }
+                    }
+                }
+            });
+        })(token);
+
+        return cached[token];
+    };
+
+    Graph.memoize = function(func) {
+        return function memo() {
+            var param = _.toArray(arguments),
+                token = _.join(param, "\u2400"),
+                cache = memo.cache = memo.cache || {},
+                saved = memo.saved = memo.saved || [];
+
+            if ( ! _.isUndefined(cache[token])) {
+                for (var i = 0, ii = saved.length; i < ii; i++) {
+                    if (saved[i] == token) {
+                        saved.push(saved.splice(i, 1)[0]);
+                        break;
+                    }
+                }
+                return cache[token];
+            }
+
+            if (saved.length >= MEMO_SIZE) {
+                delete cache[saved.shift()];
+            }
+
+            saved.push(token);
+            cache[token] = func.apply(this, param);
+
+            return cache[token];
+        }
+    };
+
+    Graph.defer = function() {
+        return $.Deferred();
+    };
     
     /**
      * Expand namespaces
      */
-    Graph.ns('Graph.math');
     Graph.ns('Graph.lang');
     Graph.ns('Graph.dom');
     Graph.ns('Graph.collection');
-    Graph.ns('Graph.manager');
-    Graph.ns('Graph.layout');
-    Graph.ns('Graph.svg');
-    Graph.ns('Graph.router');
-    Graph.ns('Graph.link');
-    Graph.ns('Graph.util');
-    Graph.ns('Graph.plugin');
-    Graph.ns('Graph.shape');
+    Graph.ns('Graph.registry');
     Graph.ns('Graph.data');
-    Graph.ns('Graph.topic');
     
-    _.extend(Graph.math, {
-        deg: function(rad) {
-            return Math.round ((rad * 180 / Math.PI % 360) * 1000) / 1000;
-        },  
-        /**
-         * Convert degree to radian
-         */
-        rad: function(deg) {
-            return deg % 360 * Math.PI / 180;
-        },
+
+    /**
+     * Vector
+     */
+    Graph.paper = function(width, height, options) {
+        return Graph.factory(Graph.svg.Paper, [width, height, options]);
+    };
+
+    Graph.svg = function(type) {
+        var args = _.toArray(arguments), svg;
+
+        type = args.shift();
+        svg = Graph.factory(Graph.svg[_.capitalize(type)], args);
+        args = null;
         
-        /**
-         * Angle
-         */
-        angle: function(x1, y1, x2, y2) {
-            var dx = x1 - x2,
-                dy = y1 - y2;
+        return svg;
+    };
 
-            if ( ! dx && ! dy) {
-                return 0;
-            }
+    Graph.shape = function(names, options) {
+        var clazz, shape, chunk;
 
-            return (180 + Math.atan2(-dy, -dx) * 180 / Math.PI + 360) % 360;
-        },
+        chunk = names.lastIndexOf('.');
+        names = names.substr(0, chunk) + '.' + _.capitalize(names.substr(chunk + 1));
+        clazz = Graph.ns('Graph.shape.' + names);
+        shape = Graph.factory(clazz, options);
 
-        /**
-         * Angle at quadrant
-         */
-        theta: function(x1, y1, x2, y2) {
-            var y = -(y2 - y1),
-                x =   x2 - x1;
+        chunk = names = clazz = null;
+        return shape;
+    };
 
-            var r, d;
+    Graph.ns('Graph.shape.activity');
 
-            if (y.toFixed(10) == 0 && x.toFixed(10) == 0) {
-                r = 0;
-            } else {
-                r = Math.atan2(y, x);
-            }
+    /**
+     * Layout
+     */
+    Graph.layout = function(type) {
 
-            if (r < 0) {
-                r = 2 * Math.PI + r;
-            }
+    };
 
-            d = 180 * r / Math.PI;
+    /**
+     * Router
+     */
+    Graph.router = function(type) {
 
-            // normalize
-            d = (d % 360) + (d < 0 ? 360 : 0);
+    };
 
-            return d;
-        },
-        
-        taxicab: function(x1, y1, x2, y2) {
-            var dx = x1 - x2,
-                dy = y1 - y2;
-            return dx * dx + dy * dy;
-        },
+    /**
+     * Link / Connector
+     */
+    Graph.link = function(type) {
 
-        /**
-         * Get hypotenuse (magnitude) of triangle
-         */
-        hypo: function(a, b) {
-            return Math.sqrt(a * a + b * b);
-        },
-        
-        /**
-         * Get sign of number
-         */
-        sign: function(num) {
-            return num < 0 ? -1 : 1;
-        },
-        
-        quadrant: function(x, y) {
-            return x >= 0 && y >= 0 ? 1 : (x >= 0 && y < 0 ? 4 : (x < 0 && y < 0 ? 3 : 2));
-        }
-    });
+    };
+
+    /**
+     * Plugin
+     */
+    Graph.plugin = function(proto) {
+
+    };
     
     /**
      * Topic
      */
-    _.extend(Graph.topic, {
-        subscribers: {},
-        topics: {},
-        publish: function(topic, message) {
+    Graph.topic = {
+        subscribers: {
+
+        },
+        topics: {
+
+        },
+        publish: function(topic, message, scope) {
             var subs = Graph.topic.subscribers,
                 lsnr = subs[topic] || [];
 
             _.forEach(lsnr, function(handler){
                 (function(){
-                    handler.call(null, message);
+                    handler.call(null, message, scope);
                 }(handler));
             });
         },
@@ -548,15 +536,6 @@
                 }
             }
         }
-    });
+    };
     
-    /**
-     * Vector
-     */
-    _.extend(Graph, {
-        paper: function(width, height, options) {
-            return Graph.factory(Graph.svg.Paper, [width, height, options]);
-        }
-    });
-
 }());

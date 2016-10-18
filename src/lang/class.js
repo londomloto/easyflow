@@ -6,10 +6,10 @@
     var Class = Graph.lang.Class = function() {};
 
     Class.extend = function (config) {
-        var $super, proto, name, value, defs;
+        var $super, proto, name, value, defaults;
         
         $super = this.prototype;
-        defs = {};
+        defaults = {};
         
         initializing = true;
         
@@ -23,7 +23,8 @@
         for (name in config) {
             value = config[name];
             if ( ! _.isFunction(value)) {
-                proto[name] = defs[name] = value;
+                proto[name] = value;
+                defaults[name] = value;
             } else {
                 proto[name] = value;
 
@@ -52,7 +53,6 @@
         
         clazz = function() {
             var me = this, ct = me.constructor;
-            
             me.listeners = {};
 
             if (me.superclass.defaults) {
@@ -66,14 +66,14 @@
             });
             
             if ( ! initializing) {
-                init && init.apply(me, _.toArray(arguments));
+                init && init.apply(me, arguments);
             }
         };
 
         // statics
         clazz.init = init;
         clazz.extend = Class.extend;
-        clazz.defaults = defs;
+        clazz.defaults = defaults;
 
         // instance
         clazz.prototype = proto;
@@ -205,7 +205,7 @@
                 event = new Graph.lang.Event(type, data);
             } else {
                 event = type;
-                event.originalData = {};
+                event.originalData = event.originalData || {};
                 type = event.originalType || event.type;
             }
 

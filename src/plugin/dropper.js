@@ -1,7 +1,7 @@
 
 (function(){
 
-    Graph.plugin.Dropper = Graph.extend({
+    Graph.plugin.Dropper = Graph.extend(Graph.plugin.Plugin, {
 
         props: {
             overlap: 'center',
@@ -11,16 +11,16 @@
         constructor: function(vector, options) {
             var me = this;
 
-            me.vector = vector;
-            me.vector.addClass('graph-dropzone').removeClass('graph-draggable');
-            
             _.assign(me.props, options || {});
+            vector.addClass('graph-dropzone').removeClass('graph-draggable');
+
+            me.props.vector = vector.guid();    
             
-            me.vector.on({
+            vector.on({
                 render: _.bind(me.onVectorRender, me)
             });
 
-            if (me.vector.props.rendered) {
+            if (vector.props.rendered) {
                 me.setup();
             }
         },
@@ -62,27 +62,27 @@
         },
 
         onDropActivate: function(e) {
-            this.vector.addClass('drop-activate');
+            this.vector().addClass('drop-activate');
         },
 
         onDropDeactivate: function(e) {
-            this.vector.removeClass('drop-activate');
+            this.vector().removeClass('drop-activate');
         },
 
         onDragEnter: function(e) {
-            this.vector.removeClass('drop-activate').addClass('drop-enter');
+            this.vector().removeClass('drop-activate').addClass('drop-enter');
             e.type = 'dropenter';
             this.fire(e);
         },
 
         onDragLeave: function(e) {
-            this.vector.removeClass('drop-enter').addClass('drop-activate');
+            this.vector().removeClass('drop-enter').addClass('drop-activate');
             e.type = 'dropleave';
             this.fire(e);
         },
 
         onDrop: function(e) {
-            this.vector.removeClass('drop-activate drop-enter');
+            this.vector().removeClass('drop-activate drop-enter');
         }
     });
 

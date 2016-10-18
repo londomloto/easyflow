@@ -18,7 +18,7 @@
 
             if (_.isArray(d)) {
                 d = Graph.path(Graph.util.segments2path(d)).absolute().toString();
-            } else if (Graph.isPath(d)) {
+            } else if (d instanceof Graph.lang.Path) {
                 d = d.toString();
             } else {
                 d = Graph.path(d).absolute().toString();

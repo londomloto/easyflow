@@ -55,43 +55,24 @@
             return Math.abs(p.props.x - this.props.x) + Math.abs(p.props.y - this.props.y);
         },
 
-        /**
-         * Angle to another point
-         */
         angle: function(b) {
-            return Graph.math.angle(this.props.x, this.props.y, b.props.x, b.props.y);
+            return Graph.util.angle(a.toJson(), b.toJson());
         },
         
-        /**
-         * Angle created by two another points
-         */
         triangle: function(b, c) {
             return this.angle(c) - b.angle(c);
         },
 
         theta: function(p) {
-            return Graph.math.theta(this.props.x, this.props.y, p.props.x, p.props.y);
+            return Graph.util.theta(this.toJson(), p.toJson());
         },
 
         difference: function(p) {
-            return new Point(this.props.x - p.props.x, this.props.y - p.props.y);
+            return new Graph.lang.Point(this.props.x - p.props.x, this.props.y - p.props.y);
         },
 
         alignment: function(p) {
-            var cx = this.props.x,
-                cy = this.props.y,
-                px = p.props.x,
-                py = p.props.y;
-
-            if (Math.abs(cx - px) <= 2) {
-                return 'h';
-            }
-
-            if (Math.abs(cy - py) <= 2) {
-                return 'v';
-            }
-
-            return false;
+            return Graph.util.pointAlign(this.toJson(), p.toJson());
         },
 
         bbox: function() {
@@ -128,7 +109,7 @@
         },
 
         move: function(to, distance) {
-            var rad = Graph.math.rad(to.theta(this));
+            var rad = Graph.util.rad(to.theta(this));
             this.expand(Math.cos(rad) * distance, -Math.sin(rad) * distance);
             return this;
         },
@@ -151,7 +132,7 @@
         },
 
         rotate: function(angle, origin) {
-            var rd = Graph.math.rad(angle), 
+            var rd = Graph.util.rad(angle), 
                 dx = this.props.x - (origin ? origin.props.x : 0),
                 dy = this.props.y - (origin ? origin.props.y : 0),
                 si = Math.sin(rd),

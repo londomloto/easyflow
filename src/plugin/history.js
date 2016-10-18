@@ -1,7 +1,7 @@
 
 (function(){
 
-    Graph.plugin.History = Graph.extend({
+    Graph.plugin.History = Graph.extend(Graph.plugin.Plugin, {
         
         props: {
             limit: 1,
@@ -11,7 +11,7 @@
         items: {},
 
         constructor: function(vector) {
-            this.vector = vector;
+            this.props.vector = vector.guid();
         },
 
         save: function(prop, data) {

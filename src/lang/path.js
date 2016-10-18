@@ -141,6 +141,14 @@
             return this.pointAt(this.length());
         },
 
+        head: function() {
+
+        },
+
+        tail: function() {
+
+        },
+
         relative: function() {
             var cached = Graph.lookup(this.__CLASS__, 'relative', this.toString()),
                 segments = this.segments;
@@ -465,9 +473,11 @@
 
         },
 
-        pointAt: function(length) {
+        pointAt: function(length, dots) {
             var ps = this.curve().segments;
             var point, s, x, y, l, c, d;
+
+            dots = _.defaultTo(dots, false);
 
             l = 0;
 
@@ -480,7 +490,7 @@
                     c = Graph.curve([['M', x, y], s]);
                     d = c.length();
                     if (l + d > length) {
-                        point = c.pointAt(c.t(length - l));
+                        point = c.pointAt(c.t(length - l), dots);
                         c = null;
                         return point;
                     }
@@ -494,10 +504,9 @@
             }
 
             c = Graph.curve([['M', x, y], s]);
-            point = c.pointAt(1);
+            point = c.pointAt(1, dots);
 
             c = null;
-
             return point;
         },
 
@@ -676,10 +685,10 @@
             return intersection(this, path, true) > 0;
         },
 
-        intersection: function(path, dots) {
+        intersection: function(path, json) {
             var result = intersection(this, path);
             
-            return dots ? result : _.map(result, function(d){
+            return json ? result : _.map(result, function(d){
                 var p = Graph.point(d.x, d.y);
                 
                 p.segment1 = d.segment1;
@@ -705,7 +714,7 @@
             x = point.props.x;
             y = point.props.y;
             b = this.bbox();
-            d = b.data();
+            d = b.toJson();
             
             p = new Path([['M', x, y], ['H', d.x2 + 10]]);
 
@@ -1024,7 +1033,7 @@
             s1 = Math.sin(f1),
             c2 = Math.cos(f2),
             s2 = Math.sin(f2),
-            t = Math.tan(df / 4),
+            t =  Math.tan(df / 4),
             hx = 4 / 3 * rx * t,
             hy = 4 / 3 * ry * t,
             m1 = [x1, y1],
@@ -1053,91 +1062,73 @@
         return dx * dx + dy * dy;
     }
 
-    function minimumLength(path1) {
-        var segments1 = path1.curve().segments;
-        var minimum, s, x1, y1, x2, y2;
+    function intersection(path1, path2, count) {
+        var ss1 = path1.curve().segments,
+            ln1 = ss1.length,
+            ss2 = path2.curve().segments,
+            ln2 = ss2.length,
+            res = count ? 0 : [];
 
-        for (i = 0, ii = segments.length; i < ii; i++) {
-            s = segments[i];
-            if (s[0] == 'M') {
-                x1 = s[1];
-                y1 = s[2];
-            } else {
-                if (s[0] == 'C') {
-                    x2 = s[5];
-                    y2 = s[6];
-                }
-
-                minimum = Graph.math.hypo((x2 - x1), (y2 - y1));
-            }
-        }
-
-        return minimum;
-    }
-
-    function intersection(path1, path2, number) {
-        var segments1 = path1.curve().segments,
-            length1   = segments1.length,
-            segments2 = path2.curve().segments,
-            length2   = segments2.length,
-            result    = number ? 0 : [];
-
-        var x1, y1, x2, y2, x1m, y1m, x2m, y2m, bz1, bz2;
+        var x1, y1, x2, y2, x1m, y1m, x2m, y2m, bz1, bz2, cv1, cv2;
         var si, sj, i, j;
         var inter;  
 
-        for (i = 0; i < length1; i++) {
-            si = segments1[i];
+        for (i = 0; i < ln1; i++) {
+            si = ss1[i];
             if (si[0] == 'M') {
                 x1 = x1m = si[1];
                 y1 = y1m = si[2];
             } else {
                 if (si[0] == 'C') {
-                    bz1 = Graph.curve([['M', x1, y1], si]);
-                    x1 = bz1.x();
-                    y1 = bz1.y();
+                    bz1 = [['M', x1, y1], si];
+                    cv1 = [x1, y1].concat(si.slice(1));
+                    x1 = si[5];
+                    y1 = si[6];
                 } else {
-                    bz1 = Graph.curve([['M', x1, y1], ['C', x1, y1, x1m, y1m, x1m, x1m]]);
+                    bz1 = [['M', x1, y1], ['C', x1, y1, x1m, y1m, x1m, x1m]];
+                    cv1 = [x1, y1, x1, y1, x1m, y1m, x1m, y1m];
                     x1 = x1m;
                     y1 = y1m;
                 }
 
-                for (j = 0; j < length2; j++) {
-                    sj = segments2[j];
+                for (j = 0; j < ln2; j++) {
+                    sj = ss2[j];
                     if (sj[0] == 'M') {
                         x2 = x2m = sj[1];
                         y2 = y2m = sj[2];
                     } else {
                         if (sj[0] == 'C') {
-                            bz2 = Graph.curve([['M', x2, y2], sj]);
-                            x2 = bz2.x();
-                            y2 = bz2.y();
+                            bz2 = [['M', x2, y2], sj];
+                            cv2 = [x2, y2].concat(sj.slice(1));
+                            x2 = sj[5];
+                            y2 = sj[6];
                         } else {
-                            bz2 = Graph.curve([['M', x2, y2],['C', x2, y2, x2m, y2m, x2m, y2m]]);
+                            bz2 = [['M', x2, y2],['C', x2, y2, x2m, y2m, x2m, y2m]];
+                            cv2 = [x2, y2, x2, y2, x2m, y2m, x2m, y2m];
                             x2 = x2m;
                             y2 = y2m;
                         }
 
-                        if (number) {
-                            result += bz1.intersectnum(bz2);
+                        if (count) {
+                            res += Graph.util.curveIntersection(cv1, cv2, true);
                         } else {
-                            inter = bz1.intersection(bz2, true);
+                            inter = Graph.util.curveIntersection(cv1, cv2);
+
                             for (var k = 0, kk = inter.length; k < kk; k++) {
                                 inter[k].segment1 = i;
                                 inter[k].segment2 = j;
                                 inter[k].bezier1 = bz1;
                                 inter[k].bezier2 = bz2;
                             }
-                            result = result.concat(inter);
+
+                            res = res.concat(inter);
                         }
-                        bz2 = null;
                     }
                 }
-                bz1 = null;
             }
         }
 
-        return result;
+        return res;
     }
 
 }());

@@ -1,7 +1,7 @@
 
 (function(){
 
-    Graph.plugin.Linker = Graph.extend({
+    Graph.plugin.Linker = Graph.extend(Graph.plugin.Plugin, {
 
         props: {
             vector: null,
@@ -21,13 +21,9 @@
             enabled: false,
             moveHandler: null,
             stopHandler: null,
-
-            // linkable vectors
             source: null,
-            target: null,
-
-            // coords
             start: null,
+            target: null,
             end: null
         },
 
@@ -51,17 +47,12 @@
             me.props.vector = vector.guid();
             me.initComponent(vector);
         },
-
-        vector: function() {
-            return Graph.manager.vector.get(this.props.vector);
-        },
-
+        
         initComponent: function(paper) {
             var me = this, comp = me.components;
 
             comp.block = (new Graph.svg.Group())
                 .addClass('graph-linker-path')
-                .removeClass(Graph.string.CLS_VECTOR_GROUP)
                 .selectable(false);
 
             comp.pointer = (new Graph.svg.Circle())
@@ -95,11 +86,16 @@
 
             if (this.linking.enabled) {
                 vector = this.vector();
+                vendor = vector.interactable().vendor();
+
                 vector.removeClass('linking');
 
                 if (this.linking.moveHandler) {
-                    vendor = vector.interactable().vendor();
                     vendor.off('move', this.linking.moveHandler);
+                }
+
+                if (this.linking.stopHandler) {
+                    vendor.off('up', this.linking.stopHandler);   
                 }
 
                 if (this.linking.source) {
@@ -115,8 +111,8 @@
                     moveHandler: null,
                     stopHandler: null,
                     source: null,
-                    target: null,
                     start: null,
+                    target: null,
                     end: null
                 });
             }
@@ -158,21 +154,21 @@
         cropping: function(start, end) {
             var source = this.linking.source,
                 target = this.linking.target,
-                sample = Graph.path([['M', start.x, start.y], ['L', end.x, end.y]]);
+                sample = new Graph.lang.Path([['M', start.x, start.y], ['L', end.x, end.y]]);
 
             var spath, scrop, tpath, tcrop;
 
             if (source) {
-                spath = source.pathinfo().transform(source.matrix());
+                spath = source.connectable().pathinfo();
                 scrop = spath.intersection(sample, true);
             }
 
             if (target) {
-                tpath = target.pathinfo().transform(target.matrix());
+                tpath = target.connectable().pathinfo();
                 tcrop = tpath.intersection(sample, true);
             }
 
-            sample = null;
+            sample = spath = tpath = null;
 
             return {
                 start: scrop ? scrop[0] : null,
@@ -186,7 +182,12 @@
 
             if (tail && head) {
                 var paper = this.vector();
-                paper.connect(this.linking.source, this.linking.target, tail, head);
+                paper.connect(
+                    this.linking.source, 
+                    this.linking.target,
+                    tail,
+                    head
+                );
             }
 
             this.invalidate();
@@ -194,9 +195,11 @@
         },
 
         onPointerDown: function(e, paper) {
-            var vector = Graph.manager.vector.get(e.target), 
+            var layout = paper.layout(),
+                offset = layout.offset(),
+                vector = layout.grabVector(e), 
                 vendor = paper.interactable().vendor(),
-                tool  = paper.tool().current();
+                tool = paper.tool().current();
 
             if (tool != 'linker') {
                 return;
@@ -207,32 +210,32 @@
                     this.build();
                 }
             } else {
-                if (vector.isLinkable()) {
-                    var source = this.linking.source;
-                    var start;
+                if (vector.isConnectable()) {
+                    var sbox, port;
 
-                    if ( ! source) {
-                        source = this.linking.source = vector;
-                        start = this.linking.start = source.bbox().center(true);
+                    if ( ! this.linking.source) {
+                        
+                        sbox = vector.connectable().bbox();
+                        port = sbox.center(true);
+
+                        this.linking.source = vector;
+                        this.linking.start = port;
 
                         this.components.path
-                            .moveTo(start.x, start.y)
-                            .lineTo(start.x, start.y, false);
+                            .moveTo(port.x, port.y)
+                            .lineTo(port.x, port.y, false);
 
-                        source.addClass('disallowed');
+                        sbox = port = null;
                     }
 
                     if (this.props.suspended) {
                         this.resume();    
                     }
 
-                    // install handler
-                    this.linking.moveHandler = _.bind(this.onPointerMove, this, _, source, paper);
+                    this.linking.enabled = true;
+                    this.linking.moveHandler = _.bind(this.onPointerMove, this, _, paper);
                     this.linking.stopHandler = _.bind(this.onPointerStop, this, _, paper);
 
-                    this.linking.enabled = true;
-                    this.linking.offset = paper.node().getBoundingClientRect();
-                        
                     paper.addClass('linking');
 
                     vendor = paper.interactable().vendor();
@@ -242,31 +245,30 @@
             }
         },
 
-        onPointerMove: function(e, source, paper) {
-            var viewport = paper.viewport(),
-                offset = this.linking.offset,
+        onPointerMove: function(e, paper) {
+            var layout = paper.layout(),
+                offset = layout.offset(),
                 start = this.linking.start,
-                delta = this.linking.treshold,
-                position = Graph.event.relativePosition(e, viewport),
-                scale = viewport.matrix().scale();
+                coord = layout.grabLocation(e),
+                scale = layout.currentScale();
 
-            var x = position.x - (offset.left / scale.x),
-                y = position.y - (offset.top / scale.y);
+            var x = coord.x - (offset.left / scale.x),
+                y = coord.y - (offset.top  / scale.y);
 
             // add threshold
-            var rad = Graph.math.rad(Graph.math.theta(start.x, start.y, x, y)),
+            var rad = Graph.util.rad(Graph.util.theta( start, {x: x, y: y} )),
                 sin = Math.sin(rad),
                 cos = Math.cos(rad),
-                tdx = delta * -cos,
-                tdy = delta * sin;
+                tdx = this.linking.treshold * -cos,
+                tdy = this.linking.treshold *  sin;
 
             x += tdx;
             y += tdy;
 
-            var current = Graph.manager.vector.get(e.target);
-            var target, crop, end;
+            var current = layout.grabVector(e);
+            var target, crop, tbox, port;
 
-            if (current && current.isLinkable() && current !== source) {
+            if (current && current.isConnectable() && current !== this.linking.source) {
                 if (current !== this.linking.target) {
                     
                     if (this.linking.target) {
@@ -275,13 +277,14 @@
 
                     target = current;
                     target.addClass('allowed');
-
-                    end = target.bbox().center(true);
-
+                    
+                    tbox = current.connectable().bbox();
+                    port = tbox.center(true);
+                    
                     this.linking.target = target;
-                    this.linking.end = end;
+                    this.linking.end    = port;
 
-                    crop = this.cropping(start, end);
+                    crop = this.cropping(start, port);
 
                     if (crop.start) {
                         this.components.path.moveTo(crop.start.x, crop.start.y);
@@ -292,10 +295,12 @@
                     } else {
                         this.components.path.lineTo(x, y, false);
                     }
+
+                    tbox = port = null;
                 }
             } else {
                 this.linking.target = null;
-                this.linking.end = null;
+                this.linking.end    = null;
 
                 crop = this.cropping(start, {x: x, y: y});
 

@@ -12,9 +12,18 @@
         },
 
         constructor: function(points) {
-            // this.$super('polygon', {
-            //     points: points
-            // });
+            points = _.defaultTo(points, '');
+            
+            if (_.isArray(points)) {
+                if (points.length) {
+                    if (_.isPlainObject(points[0])) { 
+                        points = _.map(points, function(p){ return p.x + ',' + p.y; });
+                    }
+                    points = _.join(points, ',');
+                } else {
+                    points = '';
+                }
+            }
 
             this.superclass.prototype.constructor.call(this, 'polygon', {
                 points: points
@@ -23,9 +32,7 @@
 
         attr: function(name, value) {
             if (name == 'points' && _.isArray(value)) {
-                value = _.join(_.map(value, function(p){
-                    return p[0] + ',' + p[1];
-                }), ' ');
+                value = _.join(value, ',');
             }
             
             return this.superclass.prototype.attr.call(this, name, value); // this.$super(name, value);

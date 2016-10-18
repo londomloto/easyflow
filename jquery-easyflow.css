@@ -28,10 +28,6 @@ body {
     overflow: hidden;
 }
 
-.e-paper .e-page:last-child {
-    border-bottom: none;
-}
-
 /*.e-page:before,
 .e-page:after {
     content: '';
@@ -158,7 +154,7 @@ body {
     height: 70px;
     position: relative;
     z-index: 2;
-    border-bottom: solid 1px #434665;
+    /*border-bottom: solid 1px #434665;*/
 }
 .e-logo {}
 .e-logo-text {
@@ -211,10 +207,6 @@ body {
     display: block;
 }
 
-.e-paper {
-
-}
-
 .e-center {
     height: 100%;
     overflow: auto;
@@ -225,7 +217,11 @@ body {
     height: 600px;
 }
 
-.e-stencil-item .graph-elem-line {
+.e-stencil-item {
+    cursor: pointer;
+}
+
+.e-stencil-item line {
     stroke-width: 2;
     stroke: #30D0C6;
 }
@@ -237,7 +233,7 @@ body {
     fill: rgba(255, 255, 255, 0);
 }
 
-.e-stencil-item .graph-elem-rect.full {
+.e-stencil-item rect.full {
     fill: #FF4081;
     stroke-width: 0;
 }
@@ -248,21 +244,25 @@ body {
     fill: rgba(255, 255, 255, 0);
 }
 
-.e-stencil-item .graph-elem-circle.full {
+.e-stencil-item circle.full {
     stroke-width: 0;
     fill: #FF4081;
 }
 
+.e-stencil-item text,
 .e-stencil-item text tspan {
     stroke: #fff;
     stroke-width: 0;
     fill: #fff;
     font-family: 'Segoe UI';
     text-anchor: middle;
+    font-size: 12px;
+    pointer-events: none;
 }
 
-.e-stencil-item:hover .graph-elem,
-.e-stencil-item.graph-selected .graph-elem {
+.e-stencil-item:hover rect,
+.e-stencil-item:hover circle,
+.e-stencil-item:hover line {
     stroke: #FF4081;
 }
 

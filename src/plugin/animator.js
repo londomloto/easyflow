@@ -2,7 +2,7 @@
 (function(){
     var global = this;
 
-    var Animator = Graph.plugin.Animator = Graph.extend({
+    var Animator = Graph.plugin.Animator = Graph.extend(Graph.plugin.Plugin, {
 
         props: {
             vector: null,
@@ -19,11 +19,7 @@
         constructor: function(vector) {
             this.props.vector = vector.guid();
         },
-
-        vector: function() {
-            return Graph.manager.vector.get(this.props.vector);
-        },
-
+        
         create: function(keyframes, duration, easing, callback) {
             return new Animation(keyframes, duration, easing, callback);
         },

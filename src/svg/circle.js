@@ -14,6 +14,12 @@
         constructor: function(cx, cy, r) {
             var me = this;
             
+            if (Graph.isPoint(cx)) {
+                r  = cy;
+                cy = cx.props.y;
+                cx = cx.props.x;
+            }
+
             // me.$super('circle', {
             //     cx: cx,
             //     cy: cy,

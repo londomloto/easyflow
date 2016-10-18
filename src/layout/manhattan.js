@@ -115,9 +115,9 @@
 
         connect: function(source, target, start, end, opts) {
             var sbox = source.bbox(),
-                sdat = sbox.data(),
+                sdat = sbox.toJson(),
                 tbox = target.bbox(),
-                tdat = tbox.data();
+                tdat = tbox.toJson();
 
             start = _.defaultTo(start, sbox.center());
             end = _.defaultTo(end, tbox.center());
@@ -223,7 +223,7 @@
             router.route();
         },
 
-        snapping: function() {
+        dragSnapping: function() {
             var grid = this.props.grid;
 
             return {

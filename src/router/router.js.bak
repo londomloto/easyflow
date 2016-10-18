@@ -143,7 +143,7 @@
             return Math.floor((x1.theta(y1) + sectors / 2) / sectors) * sectors;
         } else {
             sectors = 360 / dirs;
-            return Math.floor((Graph.math.theta(x1, y1, x2, y2) + sectors / 2) / sectors) * sectors;
+            return Math.floor((Graph.util.theta({x: x1, y: y1}, {x: x2, y: y2}) + sectors / 2) / sectors) * sectors;
         }
     };
 

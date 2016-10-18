@@ -63,7 +63,7 @@
                 this.rotate(rotate, mx, my).commit();    
             }
 
-            var bb = this.bbox().data();
+            var bb = this.bbox().toJson();
 
             gx = mx - rx - dx;
             gy = my - ry - dy;

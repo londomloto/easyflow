@@ -66,7 +66,7 @@
         register: function(vector) {
             var me = this,
                 id = vector.id(),
-                box = vector.bbox().data();
+                box = vector.bbox().toJson();
 
             me.collection[id] = {
                 vector: vector,
@@ -111,7 +111,7 @@
             // me.paper.elem.append(me.components.G.elem);
             
             if (me.collection[id].dirty) {
-                var box = vector.bbox().data();
+                var box = vector.bbox().toJson();
                 me.collection[id].vertices = {
                     M: [
                         Math.round(box.x, 2),
@@ -138,7 +138,7 @@
             _.forEach(me.collection, function(col, id){
                 if (col.vector !== vector) {
                     if (col.dirty) {
-                        var box = col.vector.bbox().data();
+                        var box = col.vector.bbox().toJson();
                         col.vertices = {
                             M: [
                                 Math.round(box.x, 2),

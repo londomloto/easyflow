@@ -1,32 +1,30 @@
 
 (function(){
 
-    var Manager = Graph.extend({
+    var Registry = Graph.extend({
 
         vectors: {},
-
-        constructor: function() {
-            
-        },
+        
+        constructor: function() {},
 
         register: function(vector) {
             var id = vector.guid(), found = this.get(id);
             
             if (found !== vector) {
                 // vector.on('resize', function(){
-                //     if (vector.isLinkable()) {
+                //     if (vector.isConnectable()) {
                 //         var delay = _.delay(function(){
                 //             clearTimeout(delay);
-                //             Graph.manager.link.synchronize(vector);
+                //             Graph.registry.link.synchronize(vector);
                 //         }, 1);
                 //     }
                 // });
 
                 // vector.on('translate', function(){
-                //     if (vector.isLinkable()) {
+                //     if (vector.isConnectable()) {
                 //         var delay = _.delay(function(){
                 //             clearTimeout(delay);
-                //             Graph.manager.link.synchronize(vector);
+                //             Graph.registry.link.synchronize(vector);
                 //         }, 1);
                 //     }
                 // });
@@ -70,6 +68,22 @@
                 key = key.data(Graph.string.ID_VECTOR);
             }
             return this.vectors[key];
+        },
+
+        wipe: function(paper) {
+            var pid = paper.guid();
+
+            for (var id in this.vectors) {
+                if (this.vectors.hasOwnProperty(id)) {
+                    if (this.vectors[id].tree.paper == pid) {
+                        delete this.vectors[id];
+                    }
+                }
+            }
+
+            if (this.vectors[pid]) {
+                delete this.vectors[pid];
+            }
         }
 
     });
@@ -77,6 +91,6 @@
     /**
      * Singleton vector manager
      */
-    Graph.manager.vector = new Manager();
+    Graph.registry.vector = new Registry();
 
 }());

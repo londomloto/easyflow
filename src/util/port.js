@@ -50,8 +50,7 @@
                 prop = me.props;
 
             comp.port = (new Graph.svg.Group())
-                .addClass('graph-util-port')
-                .removeClass(Graph.string.CLS_VECTOR_GROUP);
+                .addClass('graph-util-port');
 
             comp.port.on({
                 render: _.bind(me.onPortRender, me)
@@ -357,7 +356,7 @@
 
         onLinkEnter: function(e) {
             var me = this,
-                link = Graph.manager.link.get(e.relatedTarget);
+                link = Graph.registry.link.get(e.relatedTarget);
 
             if (link) {
                 var source = link.ports.source,
@@ -382,7 +381,7 @@
 
         onLinkLeave: function(e) {
             var me = this,
-                link = Graph.manager.link.get(e.relatedTarget);
+                link = Graph.registry.link.get(e.relatedTarget);
 
             if (link) {
                 var source = link.ports.source,
@@ -396,7 +395,7 @@
 
         onLinkDrop: function(e) {
             var me = this,
-                link = Graph.manager.link.get(e.relatedTarget);
+                link = Graph.registry.link.get(e.relatedTarget);
 
             if (link) {
                 var source = link.ports.source,

@@ -1,9 +1,10 @@
 
 (function(){
     
-    Graph.plugin.Resizer = Graph.extend({
+    Graph.plugin.Resizer = Graph.extend(Graph.plugin.Plugin, {
         
         props: {
+            vector: null,
             enabled: true,
             suspended: true,
             handleImage: Graph.config.base + 'img/resize-control.png',
@@ -14,7 +15,7 @@
         components: {
             holder: null,
             helper: null,
-            handle: {}
+            handle: null
         },
 
         trans: {
@@ -43,36 +44,49 @@
         constructor: function(vector) {
             var me = this;
             
-            me.vector = vector;
-            me.vector.addClass('graph-resizable');
-            me.props.handleImage = Graph.config.base + 'img/resize-control.png';
+            vector.addClass('graph-resizable');
 
+            me.props.handleImage = Graph.config.base + 'img/resize-control.png';
+            me.props.vector = vector.guid();
             me.initComponent();
+        },
+        
+        holder: function() {
+            return Graph.registry.vector.get(this.components.holder);
+        },
+
+        helper: function() {
+            return Graph.registry.vector.get(this.components.helper);
+        },
+
+        handle: function(dir) {
+            return Graph.registry.vector.get(this.components.handle[dir]);
         },
 
         initComponent: function() {
             var me = this, comp = me.components;
+            var holder, helper;
 
-            comp.holder = (new Graph.svg.Group())
+            holder = (new Graph.svg.Group())
                 .addClass('graph-resizer')
                 .removeClass('graph-elem graph-elem-group');
 
-            comp.holder.elem.group('graph-resizer');
+            holder.elem.group('graph-resizer');
 
-            comp.holder.on({
+            holder.on({
                 render: _.bind(me.onHolderRender, me)
             });
             
-            comp.helper = (new Graph.svg.Rect(0, 0, 0, 0, 0))
+            helper = (new Graph.svg.Rect(0, 0, 0, 0, 0))
                 .addClass('graph-resizer-helper')
                 .removeClass('graph-elem graph-elem-rect')
                 .selectable(false)
                 .clickable(false)
-                .render(comp.holder);
+                .render(holder);
 
-            comp.helper.elem.group('graph-resizer');
+            helper.elem.group('graph-resizer');
 
-            me.handle = {};
+            comp.handle = {};
 
             var handle = {
                 ne: {cursor: 'nesw-resize'},
@@ -87,8 +101,7 @@
 
             _.forOwn(handle, function(c, dir){
                 (function(dir){
-
-                    comp.handle[dir] = (new Graph.svg.Image(
+                    var h = (new Graph.svg.Image(
                         me.props.handleImage,
                         0,
                         0,
@@ -99,48 +112,44 @@
                     .removeClass('graph-elem graph-elem-image')
                     .addClass('graph-resizer-handle handle-' + dir);
 
-                    comp.handle[dir].elem.group('graph-resizer');
-                    comp.handle[dir].props.dir = dir;
-                    comp.handle[dir].draggable(c);
+                    h.elem.group('graph-resizer');
+                    h.props.dir = dir;
+                    h.draggable(c);
                     
-                    comp.handle[dir].on('dragstart', _.bind(me.onHandleMoveStart, me));
-                    comp.handle[dir].on('dragmove', _.bind(me.onHandleMove, me));
-                    comp.handle[dir].on('dragend', _.bind(me.onHandleMoveEnd, me));
+                    h.on('dragstart', _.bind(me.onHandleMoveStart, me));
+                    h.on('dragmove', _.bind(me.onHandleMove, me));
+                    h.on('dragend', _.bind(me.onHandleMoveEnd, me));
 
-                    comp.handle[dir].render(comp.holder);
+                    h.render(holder);
+
+                    comp.handle[dir] = h.guid();
+                    h = null;
                 }(dir));
             });
+
+            comp.holder = holder.guid();
+            comp.helper = helper.guid();
+
+            holder = null;
+            helper = null;
+            handle = null;
         },
 
-        invalidate: function(cache)  {
-            this.cached[cache] = null;
-        },
-
-        dirty: function(state) {
-            if (state === undefined) {
-                return this.cached.vertices ? true : false;
-            }
-
-            if (state) {
-                this.invalidate('vertices');
-            }
-
-            return this;
+        invalidate: function()  {
+            this.cached.vertices = null;
         },
 
         render: function() {
-            var me = this, 
-                comp = me.components,
-                vector = me.vector;
+            var me = this;
 
             if (me.props.rendered) {
                 me.redraw();
                 return;
             }
-
-            comp.holder.render(vector.parent());
-
+            
+            me.holder().render(me.vector().parent());
             me.props.rendered = true;
+
             me.redraw();
         },
 
@@ -150,16 +159,19 @@
 
         vertices: function() {
             var me = this, 
-                vector = me.vector,
+                vector = me.vector(),
                 vertices = me.cached.vertices;
 
             var dt, m1, m2, b1, b2, ro, p1, p2, cx, cy;
-
+            
             if ( ! vertices) {
 
                 m1 = vector.matrix().clone();
-                b1 = vector.bbox(true).data();
-                p1 = vector.pathinfo().transform(m1);
+                b1 = vector.bbox(true).toJson();
+                // p1 = vector.pathinfo().transform(m1);
+                p1 = vector.pathinfo();
+                
+                // (new Graph.svg.Path(vector.pathinfo())).style('stroke', 'red').render(vector.parent());
                 
                 ro = m1.rotate().deg;
                 cx = b1.x + b1.width / 2;
@@ -169,7 +181,7 @@
                 m2.rotate(-ro, cx, cy);
 
                 p2 = p1.transform(m2);
-                b2 = p2.bbox().data();
+                b2 = p2.bbox().toJson();
 
                 var bx = b2.x,
                     by = b2.y,
@@ -239,32 +251,37 @@
         },
 
         redraw: function() {
-            var me = this, comp = me.components, vx;
+            var me = this,
+                helper = me.helper(),
+                holder = me.holder();
 
-            if ( ! comp.holder) {
+            var vx;
+
+            if ( ! holder) {
                 return;
             }
 
             vx = this.vertices();
             
-            comp.helper.reset();
+            helper.reset();
 
-            comp.helper.attr({
+            helper.attr({
                 x: vx.box.x,
                 y: vx.box.y,
                 width: vx.box.width,
                 height: vx.box.height
             });
             
-            comp.helper.rotate(vx.rotate.deg, vx.rotate.cx, vx.rotate.cy).commit();
+            helper.rotate(vx.rotate.deg, vx.rotate.cx, vx.rotate.cy).commit();
 
-            _.forOwn(comp.handle, function(h, d){
-                (function(h, d){
+            _.forOwn(me.components.handle, function(id, dir){
+                (function(id, dir){
+                    var h = me.handle(dir);
                     h.show();
                     h.reset();
-                    h.attr(vx[d]);
+                    h.attr(vx[dir]);
                     h.rotate(vx.rotate.deg, vx.rotate.cx, vx.rotate.cy).commit();
-                }(h, d));
+                }(id, dir));
             });
 
             me.trans.ox = vx.offset.x;
@@ -277,10 +294,7 @@
 
         suspend: function() {
             this.props.suspended = true;
-            if (this.components.holder) {
-                this.components.holder.elem.detach();
-                // this.components.holder.removeClass('visible');
-            }
+            this.holder().elem.detach();
         },
 
         resume: function() {
@@ -290,13 +304,11 @@
 
             this.props.suspended = false;
 
-            if (this.components.holder) {
-                if ( ! this.props.rendered) {
-                    this.render();
-                } else {
-                    this.vector.parent().elem.append(this.components.holder.elem);
-                    this.redraw();
-                }
+            if ( ! this.props.rendered) {
+                this.render();
+            } else {
+                this.vector().parent().elem.append(this.holder().elem);
+                this.redraw();
             }
         },
 
@@ -307,9 +319,10 @@
         onHandleMoveStart: function(e) {
             var me = this, handle = e.publisher;
 
-            _.forOwn(me.components.handle, function(a, b){
-                if (a !== handle) {
-                    a.hide();
+            _.forOwn(me.components.handle, function(id, dir){
+                var h = me.handle(dir);
+                if (h !== handle) {
+                    h.hide();
                 }
             });
 
@@ -324,7 +337,9 @@
         },
 
         onHandleMove: function(e) {
-            var me = this, handle = e.publisher;
+            var me = this, 
+                helper = me.helper(), 
+                handle = e.publisher;
             
             var tr = this.trans,
                 dx = e.dx,
@@ -336,7 +351,7 @@
                     tr.ch -= dy;
 
                     me.trans.dy += dy;
-                    me.components.helper.translate(0, dy).commit();
+                    helper.translate(0, dy).commit();
                     break;
 
                 case 'se':
@@ -350,7 +365,7 @@
                     tr.ch += dy;
 
                     me.trans.dx += dx;
-                    me.components.helper.translate(dx, 0).commit();
+                    helper.translate(dx, 0).commit();
                     break;
 
                 case 'nw':
@@ -359,7 +374,7 @@
 
                     me.trans.dx += dx;
                     me.trans.dy += dy;
-                    me.components.helper.translate(dx, dy).commit();
+                    helper.translate(dx, dy).commit();
                     break;
 
                 case 'n':
@@ -367,7 +382,7 @@
                     tr.ch -= dy;
 
                     me.trans.dy += dy;
-                    me.components.helper.translate(0, dy).commit();
+                    helper.translate(0, dy).commit();
                     break;
 
                 case 'e':
@@ -386,11 +401,11 @@
                     tr.ch += 0;
 
                     me.trans.dx += dx;
-                    me.components.helper.translate(dx, 0).commit();
+                    helper.translate(dx, 0).commit();
                     break;
             }
 
-            me.components.helper.attr({
+            helper.attr({
                 width:  tr.cw,
                 height: tr.ch
             });
@@ -444,10 +459,43 @@
                     break;
             }
 
-            var resize = me.vector.resize(sx, sy, cx, cy, dx, dy);
+            // track translation
+            var vector = me.vector(),
+                oldcen = vector.bbox().center().toJson(),
+                resize = vector.resize(sx, sy, cx, cy, dx, dy),
+                newcen = vector.bbox().center().toJson();
+
+            var vdx = newcen.x - oldcen.x,
+                vdy = newcen.y - oldcen.y;
+
+            resize.translate.dx = vdx;
+            resize.translate.dy = vdy;
             
             me.redraw();
             me.fire('resize', resize);
+        },
+
+        destroy: function() {
+            // remove handles
+            var me = this
+
+            _.forOwn(me.components.handle, function(id, dir){
+                var h = me.handle(dir);
+                h.remove();
+            });
+
+            me.components.handle = null;
+
+            // remove helper
+            me.helper().remove();
+            me.components.helper = null;
+
+            // remove holder
+            me.holder().remove();
+            me.components.holder = null;
+
+            // remove listeners
+            me.listeners = null;
         }
         
     });

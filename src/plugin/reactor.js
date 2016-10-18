@@ -1,35 +1,30 @@
 
 (function(){
     
-    Graph.plugin.Reactor = Graph.extend({
+    var Reactor = Graph.plugin.Reactor = Graph.extend(Graph.plugin.Plugin, {
+
+        props: {
+            vector: null
+        },
 
         plugin: null,
 
-        constructor: function(vector) {
-            var me = this;
+        cached: {
+            keynavHandler: null
+        },
 
-            me.vector = vector;
-            me.plugin = interact(vector.node());
+        constructor: function(vector, listeners) {
+            
+            this.props.vector = vector.guid();
+            this.plugin = interact(vector.node());
+            this.listeners = listeners || {};
 
-            // standard event
-            me.plugin.on('down', function(e){
+            this.plugin.on('down', function(e){
                 e.originalType = 'pointerdown';
                 vector.fire(e);
-                
-                if ( ! e.propagationStopped) {
-                    // bubbling up
-                    // vector.bubble(function(c){
-                    //     if (c !== vector && c.clickable()) {
-                    //         e.type = 'pointerdown';
-                    //         c.fire(e);
-                    //         e.type = 'down';
-                    //     }
-                    // });
-                }
-
             }, true);
-            
-            me.vector.elem.on({
+
+            vector.elem.on({
                 mouseenter: function(e) {
                     e.type = 'pointerin'
                     vector.fire(e);
@@ -40,13 +35,12 @@
                 }
             });
 
-            if (me.vector.isPaper()) {
+            if (vector.isPaper()) {
                 Graph.$(document).on('keydown', function(e){
                     e.originalType = 'keynav';
-                    me.vector.fire(e);
+                    vector.fire(e);
                 });
             }
-            
         },
         
         vendor: function() {
@@ -65,20 +59,6 @@
             return this.plugin.gesturable(options);
         },
 
-        locate: function(e) {
-            var paper = this.vector.paper(),
-                offset = paper.offset(),
-                dx = paper.scrollLeft() - offset.left,
-                dy = paper.scrollTop() - offset.top,
-                x = e.clientX,
-                y = e.clientY;
-
-            var point = Graph.point(x, y);
-            point.expand(dx, dy);
-
-            return point;
-        },
-
         destroy: function() {
             this.plugin.unset();
             this.plugin = null;
@@ -87,7 +67,25 @@
         toString: function() {
             return 'Graph.plugin.Reactor';
         }
-
     });
+
+    var on  = Reactor.prototype.on,
+        off = Reactor.prototype.off;
+
+    /**
+     * Override
+     */
+    Reactor.prototype.on = function(event, handler) {
+        var vector = this.vector();
+        return on.apply(vector, [event, handler]);
+    };
+
+    /**
+     * Override
+     */
+    Reactor.prototype.off = function(event, handler) {
+        var vector = this.vector();
+        return off.apply(vector, [event, handler]);
+    };
 
 }());

@@ -54,14 +54,14 @@
                 y1 = this.props.start.y,
                 x2 = this.props.end.x,
                 y2 = this.props.end.y,
-                lat1 = Graph.math.rad(y1),
-                lat2 = Graph.math.rad(y2),
+                lat1 = Graph.util.rad(y1),
+                lat2 = Graph.util.rad(y2),
                 lon1 = x1,
                 lon2 = x2,
-                deltaLon = Graph.math.rad(lon2 - lon1),
+                deltaLon = Graph.util.rad(lon2 - lon1),
                 dy = Math.sin(deltaLon) * Math.cos(lat2),
                 dx = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLon);
-                index = Graph.math.deg(Math.atan2(dy, dx)) - 22.5;
+                index = Graph.util.deg(Math.atan2(dy, dx)) - 22.5;
 
             if (index < 0) {
                 index += 360;
@@ -108,7 +108,7 @@
 
     ///////// SHORTCUT /////////
     
-    Graph.line = function(/** command */) {
+    Graph.line = function(command) {
         var args = _.toArray(arguments);
         return Graph.factory(Graph.lang.Line, args);
     };

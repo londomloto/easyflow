@@ -1,7 +1,7 @@
 
 (function(){
 
-    Graph.plugin.Sorter = Graph.extend({
+    Graph.plugin.Sorter = Graph.extend(Graph.plugin.Plugin, {
 
         props: {
             height: 0,
@@ -79,8 +79,8 @@
 
             me.plugin.styleCursor(false);
 
-            if (paper.utils.collector) {
-                paper.utils.collector.on({
+            if (paper.plugins.collector) {
+                paper.plugins.collector.on({
                     afterdrag: function(e) {
                         var origin = e.origin;
                         if (_.indexOf(me.sortables, origin) > -1) {
@@ -229,7 +229,7 @@
 
             _.forEach(me.sortables, function(s){
                 if ( ! s.$sorting) {
-                    var sbox = s.bbox().data(),
+                    var sbox = s.bbox().toJson(),
                         dy = me.props.height- sbox.y + me.props.offsetTop;
 
                     s.translate(0, dy).commit();
@@ -429,7 +429,7 @@
             me.trans.drag = item;
             me.trans.sorting = true;
 
-            bbox = item.bbox().data();  
+            bbox = item.bbox().toJson();  
             width = me.props.width;
             height = bbox.height;
 
@@ -440,7 +440,7 @@
                 } else {
                     height = 0;
                     me.suspendBatch(me.batch, function(b){
-                        var box = b.bbox().data();
+                        var box = b.bbox().toJson();
                         height += box.height;
 
                         b.$sorter = me;
@@ -501,8 +501,8 @@
                 return;
             }
 
-            drag = Graph.manager.vector.get(e.relatedTarget);
-            drop = Graph.manager.vector.get(e.target);
+            drag = Graph.registry.vector.get(e.relatedTarget);
+            drop = Graph.registry.vector.get(e.target);
 
             if (drag.$collector) {
                 
@@ -519,7 +519,7 @@
                             me.batch.push(v);
                         }
                         
-                        box = v.bbox().data();
+                        box = v.bbox().toJson();
                         height += box.height;
 
                         if (box.width > width) {
@@ -541,7 +541,7 @@
 
                         me.enroll(drag);
 
-                        bbox = drag.bbox().data();
+                        bbox = drag.bbox().toJson();
                         height = bbox.height;
                         width = me.props.width;
 

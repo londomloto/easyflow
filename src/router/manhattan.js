@@ -2,6 +2,8 @@
 (function(){
     
     var R = Graph.router.Router;
+    
+    
 
     Graph.router.Manhattan = Graph.extend(R, {
 
@@ -38,7 +40,7 @@
             ];
 
             _.forEach(me.directions, function(dir){
-                dir.angle = Graph.math.theta(0, 0, dir.dx, -dir.dy);
+                dir.angle = Graph.util.theta({x: 0, y: 0}, {x: dir.dx, y: -dir.dy});
             });
         },
         
@@ -576,7 +578,7 @@
                 })
                 .map(function(c){
                     var box = c.bbox().clone().expand(step);
-                    // var dat = box.data();
+                    // var dat = box.toJson();
                     // me.paper.rect(dat.x, dat.y, dat.width, dat.height).traversable(false).render().style('fill', 'none');
                     return box;
                 })

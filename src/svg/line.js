@@ -22,10 +22,18 @@
                 x2 = end.x;
                 y2 = end.y;
             } else if (args.length === 2) {
-                x1 = args[0].props.x;
-                y1 = args[0].props.y;
-                x2 = args[1].props.x;
-                y2 = args[1].props.y;
+                if (Graph.isPoint(args[0])) {
+                    x1 = args[0].props.x;
+                    y1 = args[0].props.y;
+                    x2 = args[1].props.x;
+                    y2 = args[1].props.y;
+                } else {
+                    x1 = args[0].x;
+                    y1 = args[0].y;
+                    x2 = args[1].x;
+                    y2 = args[1].y;
+                }
+                
             }
 
             // this.$super('line', {

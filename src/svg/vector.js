@@ -38,6 +38,7 @@
 
         plugins: {
             transformer: null,
+            collector: null,
             animator: null,
             resizer: null,
             reactor: null,
@@ -47,7 +48,8 @@
             history: null,
             sorter: null,
             panzoom: null,
-            toolmgr: null
+            toolmgr: null,
+            editor: null
         },
 
         utils: {
@@ -55,7 +57,6 @@
             hinter: null,
             spotlight: null,
             definer: null,
-            scroller: null,
             toolpad: null
         },
 
@@ -70,6 +71,8 @@
             position: null,
             offset: null
         },
+
+        elem: null,
 
         constructor: function(type, attrs) {
             var me = this;
@@ -103,11 +106,13 @@
                 .on('rotate', _.bind(me.onTransformRotate, me))
                 .on('scale', _.bind(me.onTransformScale, me));
 
-            me.plugins.toolmgr = (new Graph.plugin.ToolManager(me))
-                .on('activate', _.bind(me.onActivateTool, me))
-                .on('deactivate', _.bind(me.onDeactivateTool, me));
-
-            Graph.manager.vector.register(me);
+            if (me.isPaper()) {
+                me.plugins.toolmgr = (new Graph.plugin.ToolManager(me))
+                    .on('activate', _.bind(me.onActivateTool, me))
+                    .on('deactivate', _.bind(me.onDeactivateTool, me));    
+            }
+            
+            Graph.registry.vector.register(this);
         },
 
         matrix: function(global) {
@@ -131,7 +136,7 @@
 
             return matrix;
         },
-
+        
         layout: function(options) {
             if (options === undefined) {
                 return this.graph.layout;
@@ -162,6 +167,8 @@
             this.graph.matrix = Graph.matrix();
             this.removeAttr('transform');
             this.props.rotate = 0;
+            this.props.scale = 0;
+
             this.dirty(true);
             this.fire('reset', this.props);
 
@@ -172,7 +179,7 @@
         },
 
         invalidate: function(cache) {
-            this.cached[cached] = null;
+            this.cached[cache] = null;
         },
 
         state: function(name) {
@@ -184,33 +191,35 @@
         },
 
         dirty: function(state) {
+            var me = this;
+
             if (state === undefined) {
-                return this.cached.bbox === null;
+                return me.cached.bbox === null;
             }
             
             if (state) {
                 // invalidates
                 for (var name in this.cached) {
-                    if (name != 'stringify') {
-                        this.cached[name] = null;
-                    }
+                    me.cached[name] = null;
                 }
 
                 // update core plugins
-                // `resizer`
-                if (this.plugins.resizer) {
-                    this.plugins.resizer.dirty(state);
-                }
+                var plugins = ['resizer', 'network'];
+
+                _.forEach(plugins, function(name){
+                    if (me.plugins[name]) {
+                        me.plugins[name].invalidate();
+                    }
+                });
             }
             
             return this;
         },
 
-        interactable: function() {
+        interactable: function(options) {
             if ( ! this.plugins.reactor) {
-                this.plugins.reactor = new Graph.plugin.Reactor(this);
+                this.plugins.reactor = new Graph.plugin.Reactor(this, options);
             }
-
             return this.plugins.reactor;
         },
 
@@ -284,7 +293,7 @@
             return this.plugins.sorter;
         },
 
-        linkable: function(config) {
+        connectable: function(config) {
             if ( ! this.plugins.network) {
                 this.plugins.network = new Graph.plugin.Network(this, config);
             }
@@ -320,6 +329,19 @@
                 this.attr('pointer-events', 'none');
             }
             
+            return this;
+        },
+
+        editable: function(options) {
+            var me = this;
+            if ( ! this.plugins.editor) {
+                this.plugins.editor = new Graph.plugin.Editor(this, options);
+                this.plugins.editor.on({
+                    edit: function(e) {
+                        me.fire(e);
+                    }
+                });
+            }
             return this;
         },
 
@@ -518,14 +540,11 @@
 
         offset: function() {
             var node = this.node(),
-                bbox = node.getBoundingClientRect(),
-                scroller = this.isPaper() ? this.utils.scroller : this.paper().utils.scroller,
-                sctop = scroller.scrollTop(),
-                scleft = scroller.scrollLeft();
+                bbox = node.getBoundingClientRect();
             
             var offset = {
-                top: bbox.top + sctop,
-                left: bbox.left + scleft,
+                top: bbox.top,
+                left: bbox.left,
                 bottom: bbox.bottom,
                 right: bbox.right,
                 width: bbox.width,
@@ -563,14 +582,16 @@
                 bbox = this.cached.originalBBox;
                 if ( ! bbox) {
                     path = this.pathinfo();
-                    bbox = this.cached.originalBBox = path.bbox();
+                    bbox = path.bbox();
+                    this.cached.originalBBox = bbox;
                 }
             } else {
                 bbox = this.cached.bbox;
                 if ( ! bbox) {
                     path = this.pathinfo().transform(this.matrix());
-                    bbox = this.cached.bbox = path.bbox();
-                }
+                    bbox = path.bbox();
+                    this.cached.bbox = bbox;
+                } 
             }
             
             path = null;
@@ -582,7 +603,7 @@
                 vectors = [];
 
             elems.each(function(i, node){
-                vectors.push(Graph.manager.vector.get(node));
+                vectors.push(Graph.registry.vector.get(node));
             });
 
             return new Graph.collection.Vector(vectors);
@@ -595,8 +616,23 @@
         },
         
         append: function(vector) {
+            var me = this;
+
+            if (_.isArray(vector)) {
+                _.forEach(vector, function(v){
+                    me.append(v);
+                });
+                return me;
+            }
+
+            if (_.isString(vector)) {
+                var clazz = Graph.svg[_.capitalize(vector)];
+                vector = Graph.factory(clazz, []);
+            }
+
             vector.render(this, 'append');
-            return vector;
+
+            return me;
         },
 
         prepend: function(vector) {
@@ -630,7 +666,7 @@
                 switch(method) {
                     case 'append':
                         container.elem.append(me.elem);
-                                
+                        
                         if (traversable) {
                             container.children().push(me);
                         }
@@ -696,20 +732,20 @@
             if (this.isPaper()) {
                 return this;
             } else {
-                return Graph.manager.vector.get(this.tree.paper);
+                return Graph.registry.vector.get(this.tree.paper);
             }
         },  
 
         parent: function() {
-            return Graph.manager.vector.get(this.tree.parent);
+            return Graph.registry.vector.get(this.tree.parent);
         },
 
         prev: function() {
-            return Graph.manager.vector.get(this.tree.prev);
+            return Graph.registry.vector.get(this.tree.prev);
         },
         
         next: function() {
-            return Graph.manager.vector.get(this.tree.next);
+            return Graph.registry.vector.get(this.tree.next);
         },
 
         cascade: function(handler) {
@@ -717,20 +753,36 @@
         },
 
         bubble: function(handler) {
-            bubble(this, handler);
+            return bubble(this, handler);
         },
 
         remove: function() {
             var parent = this.parent();
 
+            if (this.$collector) {
+                this.$collector.decollect(this);
+            }
+
+            // destroy plugins
+            for (var name in this.plugins) {
+                if (this.plugins[name]) {
+                    this.plugins[name].destroy();
+                    this.plugins[name] = null;    
+                }
+            }
+
             if (parent) {
                 parent.children().pull(this);
             }
+            
+            if (this.elem) {
+                this.elem.remove();
+                this.elem = null;
+            }
 
-            this.elem.remove();
-            this.elem = null;
-
-            Graph.manager.vector.unregister(this);
+            Graph.registry.vector.unregister(this);
+            
+            this.fire('remove');
         },
 
         empty: function() {
@@ -738,7 +790,7 @@
 
             me.cascade(function(c){
                 if (c !== me) {
-                    Graph.manager.vector.unregister(c);    
+                    Graph.registry.vector.unregister(c);    
                 }
             });
 
@@ -895,7 +947,7 @@
             return this.plugins.resizer !== null;
         },
 
-        isLinkable: function() {
+        isConnectable: function() {
             return this.plugins.network ? true : false;
         },
 
@@ -910,11 +962,7 @@
         },
 
         toString: function() {
-            var name = this.cached.stringify;
-            if ( ! name) {
-                name = this.cached.stringify = 'Graph.svg.' + _.capitalize(this.props.type);
-            }
-            return name;
+            return 'Graph.svg.Vector';
         },
 
         ///////// OBSERVERS /////////
@@ -939,6 +987,10 @@
             // invoke core plugins
             if (this.plugins.resizer) {
                 this.plugins.resizer.suspend();
+            }
+
+            if (this.plugins.editor) {
+                this.plugins.editor.suspend();
             }
         },
 
@@ -1068,11 +1120,13 @@
 
     function bubble(vector, handler) {
         var parent = vector.parent();
+        var result;
 
-        handler.call(vector, vector);
-
-        if (parent) {
-            bubble(parent, handler);
+        result = handler.call(vector, vector);
+        result = _.defaultTo(result, true);
+        
+        if (result && parent) {
+            return bubble(parent, handler);
         }
     }
 

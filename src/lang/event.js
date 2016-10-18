@@ -72,7 +72,7 @@
             };
         },
         
-        relativePosition: function(event, vector) {
+        relative: function(event, vector) {
 
             var position = Graph.event.position(event),
                 matrix = vector.matrix().clone().invert(),

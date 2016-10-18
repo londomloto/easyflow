@@ -5,7 +5,7 @@
             
         }
     });
-
+    
     Graph.data.parser = new Parser();
     
 }());

@@ -1,7 +1,11 @@
 
 (function(){
 
-    Graph.util.Definer = Graph.extend({
+    Graph.plugin.Definer = Graph.extend(Graph.plugin.Plugin, {
+        props: {
+            vector: null
+        },
+
         definitions: {
 
         },
@@ -10,24 +14,18 @@
             holder: null
         },
 
-        paper: null,
+        constructor: function(vector) {
+            this.props.vector = vector.guid();
 
-        constructor: function(paper) {
-            var me = this;
-            me.components.holder = Graph.$('<defs>');
-            me.render(paper);
+            this.components.holder = Graph.$('<defs>');
+            this.components.holder.prependTo(vector.elem);
+
+            if (vector.isPaper()) {
+                this.defineArrowMarker('marker-arrow');
+            }
+
         },
-
-        render: function(paper) {
-            this.paper = paper;
-            this.paper.elem.prepend(this.components.holder);
-            this.defines();
-        },
-
-        defines: function() {
-            this.defineArrowMarker('marker-arrow');
-        },
-
+        
         defineArrowMarker: function(id) {
             if (this.definitions[id]) {
                 return this.definitions[id];
@@ -81,7 +79,7 @@
         },
 
         toString: function() {
-            return 'Graph.util.Definer';
+            return 'Graph.plugin.Definer';
         }
     });
 

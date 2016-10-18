@@ -23,11 +23,9 @@
             selected: false,
             focusable: false,
 
-            implicitRender: false,
             rendered: false,
-
             showAxis: true,
-            zoomEnabled: true
+            zoomable: true
         },
 
         components: {
@@ -36,14 +34,6 @@
 
         constructor: function(width, height, options) {
             var me = this;
-
-            // me.$super('svg', {
-            //     'xmlns': Graph.config.xmlns.svg,
-            //     'xmlns:link': Graph.config.xmlns.xlink,
-            //     'version': Graph.config.svg.version,
-            //     'width': _.defaultTo(width, 200),
-            //     'height': _.defaultTo(height, 200)
-            // });
 
             me.superclass.prototype.constructor.call(me, 'svg', {
                 'xmlns': Graph.config.xmlns.svg,
@@ -63,54 +53,47 @@
             me.interactable();
             me.initLayout();
 
-            me.utils.collector = new Graph.util.Collector(me);
-            me.plugins.toolmgr.register('collector', 'util');
+            me.plugins.collector = new Graph.plugin.Collector(me);
+            me.plugins.toolmgr.register('collector', 'plugin');
 
             me.plugins.linker = new Graph.plugin.Linker(me);
             me.plugins.toolmgr.register('linker', 'plugin');
 
-            me.plugins.canvas = new Graph.plugin.Canvas(me);
+            me.plugins.pencil = new Graph.plugin.Pencil(me);
+            me.plugins.definer = new Graph.plugin.Definer(me);
 
-            me.utils.definer = new Graph.util.Definer(me);
             me.utils.spotlight = new Graph.util.Spotlight(me);
             me.utils.hinter = null; // new Graph.util.Hinter(me);
             me.utils.toolpad = new Graph.util.Toolpad(me);
 
-            
             me.on('pointerdown', _.bind(me.onPointerDown, me));
             me.on('keynav', _.bind(me.onNavigation, me));
-
-            Graph.topic.subscribe('vector/dragend', _.bind(me.listenVectorDragend, me));
-            Graph.topic.subscribe('vector/resize', _.bind(me.listenVectorResize, me));
         },
 
         initLayout: function() {
             // create viewport
-            var viewport = this.components.viewport = (new Graph.svg.Group())
-                .removeClass(Graph.string.CLS_VECTOR_GROUP)
+            var viewport = (new Graph.svg.Group())
                 .addClass(Graph.string.CLS_VECTOR_VIEWPORT)
                 .selectable(false);
 
             viewport.props.viewport = true;
+            this.components.viewport = viewport.guid();
 
             if (this.props.showAxis) {
                 // add axis sign
-                var gAxis, yAxis, xAxis, tAxis;
+                var gs, ys, as, ts;
+                
+                gs = Graph.$('<g>').appendTo(viewport.elem);
+                ys = Graph.$('<rect>').appendTo(gs);
+                as = Graph.$('<rect>').appendTo(gs);
+                ts = Graph.$('<text>').appendTo(gs).text('(0, 0)');
 
-                gAxis = Graph.$('<g>').appendTo(viewport.elem);
-                yAxis = Graph.$('<rect>').appendTo(gAxis);
-                xAxis = Graph.$('<rect>').appendTo(gAxis);
-                tAxis = Graph.$('<text>').appendTo(gAxis).text('(0, 0)');
+                gs.attr({'class': 'graph-axis'});
+                as.attr({'class': 'x', rx: 1, ry: 1, x: -16, y:  -2, height:  2, width: 30});
+                ys.attr({'class': 'y', rx: 1, ry: 1, x:  -2, y: -16, height: 30, width: 2});
+                ts.attr({'class': 't', x: -40, y: -10});
 
-                gAxis.attr({'class': 'graph-axis'});
-                xAxis.attr({'class': 'x', rx: 1, ry: 1, x: -16, y:  -2, height:  2, width: 30});
-                yAxis.attr({'class': 'y', rx: 1, ry: 1, x:  -2, y: -16, height: 30, width: 2});
-                tAxis.attr({'class': 't', x: -40, y: -10});
-
-                gAxis = null;
-                xAxis = null;
-                yAxis = null;
-                tAxis = null;
+                gs = as = ys = ts = null;
             }
 
             // render viewport
@@ -134,11 +117,11 @@
         },
 
         layout: function(options) {
-            var viewport = this.components.viewport;
+            var viewport = this.viewport();
 
             if (options === undefined) {
                 return viewport.graph.layout;
-            }
+            }1
             
             viewport.layout(options);
             viewport.graph.layout.on('refresh', _.bind(this.onLayoutRefresh, this));
@@ -146,13 +129,21 @@
             return this;
         },
 
-        canvas: function() {
-            return this.plugins.canvas;
+        shape: function(names, options) {
+            var shape = Graph.shape(names, options);
+            shape.render(this);
+            
+            return shape;
+        },
+
+        draw: function(shape, options) {
+            var shape = this.plugins.pencil.draw(shape, options);
+            return shape;
         },
 
         render: function(container) {
             var me = this, 
-                vp = me.components.viewport,
+                vp = me.viewport(),
                 id = me.guid();
 
             if (me.props.rendered) {
@@ -175,40 +166,20 @@
             vp.props.rendered = true;
             vp.fire('render');
 
-            if (me.props.zoomEnabled) {
+            if (me.props.zoomable) {
                 me.zoomable();
-
+                
                 var debounce = _.debounce(function(){
                     debounce.flush();
                     debounce = null;
+                    
                     me.tool().activate('panzoom');
                 }, 1000);
-
+                
                 debounce();
             }
-            // me.cascade(function(c){
-            //     if (c !== me && ! c.props.rendered) {
-            //         c.props.rendered = true;
-            //         c.tree.paper = id;
-            //         c.fire('render');
-            //     }
-            // });
 
-            var scroller = container;
-
-            while(scroller.length()) {
-                if (scroller.node().tagName === 'BODY') {
-                    break;
-                }
-                if ( scroller.css('overflow') != 'hidden' || 
-                     scroller.css('overflow-x') != 'hidden' || 
-                     scroller.css('overflow-y') != 'hidden' ) {
-                    break;
-                }
-                scroller = scroller.parent();
-            }
-
-            me.utils.scroller = scroller;
+            return me;
         },
 
         container: function() {
@@ -216,61 +187,19 @@
         },
 
         viewport: function() {
-            return this.components.viewport;
+            return Graph.registry.vector.get(this.components.viewport);
         },
 
+        // @Override
         scale: function(sx, sy, cx, cy) {
             if (sx === undefined) {
-                return this.components.viewport.matrix().scale();
+                return this.viewport().matrix().scale();
             }
             return this.plugins.transformer.scale(sx, sy, cx, cy);
         },
 
-        scrollable: function(target) {
-            this.utils.scroller = Graph.$(target);
-        },
-
-        scrollLeft: function() {
-            return this.utils.scroller ? this.utils.scroller.scrollLeft() : 0;
-        },
-
-        scrollTop: function() {
-            return this.utils.scroller ? this.utils.scroller.scrollTop() : 0;
-        },
-
-        // link: function(port1, port2, options) {
-        //     var link = new Graph.util.Link(this, port1, port2, options);
-        //     return link;
-        // },
-
-        /**
-         * Create router based on current layout
-         */
-        router: function(source, target, options) {
-            return this.layout().router(source, target, options);
-        },
-
-        /**
-         * Create link based on selected router
-         */
-        link: function(router, options) {
-            return this.layout().link(router, options);
-        },
-
-        selectLinks: function(except) {
-            
-        },
-
-        deselectLinks: function(except) {
-
-        },
-
-        synchronizeLinks: function(ref) {
-
-        },
-
         connect: function(source, target, start, end, options) {
-            var router, link;
+            var layout, router, link;
 
             if (start) {
                 if ( ! Graph.isPoint(start)) {
@@ -280,12 +209,39 @@
                 }
             }
 
-            router = this.layout().router(source, target, options);
+            source = Graph.isShape(source) ? source.hub() : source;
+            target = Graph.isShape(target) ? target.hub() : target;
             
-            link = this.link(router);
+            layout = this.layout();
+            router = layout.createRouter(source, target, options);
+            
+            link = layout.createLink(router);
             link.connect(start, end);
-
             link.render(this);
+        },
+
+        parse: function(json) {
+            var paper  = this;
+            var shapes = {};
+
+            _.forEach(json.shapes, function(o){
+                (function(o){
+                    var s = Graph.shape(o.type, o.data);
+                    s.render(paper);
+                    shapes[o.data.id] = s;    
+                }(o));
+            });
+
+            _.forEach(json.links, function(o){
+                (function(o){
+                    paper.connect(shapes[o.source], shapes[o.target]);
+                }(o))
+            });
+
+        },
+
+        save: function() {
+            alert('save');
         },
 
         toString: function() {
@@ -297,7 +253,7 @@
         onLayoutRefresh: function(e) {
             var me = this,
                 viewport = this.viewport(),
-                snapping = this.layout().snapping();
+                snapping = this.layout().dragSnapping();
             
             viewport.cascade(function(v){
                 if (v !== viewport) {
@@ -314,8 +270,12 @@
         },
 
         onPointerDown: function(e) {
-            var link = Graph.manager.link.get(e.target);
-            this.deselectLinks(link);
+            if (e.target === this.node()) {
+                var tool = this.tool().current();
+                if (tool != 'collector') {
+                    this.tool().activate('panzoom');    
+                }
+            }
         },
 
         onNavigation: function(e) {
@@ -324,26 +284,17 @@
             switch(e.keyCode) {
                 case Graph.event.DELETE:
 
-                    var selections = me.utils.collector.collection;
-
-                    _.forEach(selections, function(v){
-
-                    });
+                    var selections = me.plugins.collector.collection;
+                    
+                    for (var v, i = selections.length - 1; i >= 0; i--) {
+                        if ((v = selections[i])) {
+                            v.remove();
+                            selections.splice(i, 1);
+                        }
+                    }
 
                     break;
             }
-        },
-
-        listenVectorDragend: function(message) {
-            var vector = message.publisher;
-            if (vector.isLinkable()) {
-                this.synchronizeLinks(vector);
-            }
-        },
-
-        listenVectorResize: function(message) {
-            var vector = message.publisher;
-            this.synchronizeLinks(vector);
         }
 
     });
@@ -373,15 +324,17 @@
     _.forOwn(vectors, function(name, method){
         (function(name, method){
             Paper.prototype[method] = function() {
-                var args, clazz, vector;
+                var arg = [name].concat(_.toArray(arguments)),
+                    svg = Graph.svg.apply(null, arg);
 
-                args   = _.toArray(arguments);
-                clazz  = Graph.svg[name];
-                vector = Graph.factory(clazz, args);
-                vector.tree.paper = this.guid();
-                return vector;
+                svg.tree.paper = this.guid();
+                svg.render(this);
+
+                arg = null;
+                return svg;
             };
         }(name, method));
     });
+
 
 }());

@@ -1,7 +1,7 @@
 
 (function(){
 
-    Graph.plugin.Panzoom = Graph.extend({
+    Graph.plugin.Panzoom = Graph.extend(Graph.plugin.Plugin, {
 
         props: {
             panEnabled: false,
@@ -75,11 +75,7 @@
                 y: bound.top
             };
         },
-
-        vector: function() {
-            return Graph.manager.vector.get(this.props.vector);
-        },
-
+        
         enable: function() {
             var vector = this.vector();
 
@@ -106,6 +102,8 @@
                 scale = 1 / currentScale * zoom,
                 matrixScale = matrix.clone();
 
+            this.onBeforeZoom(paper);
+
             matrixScale.scale(scale, scale, origin.x, origin.y);
 
             viewport.attr('transform', matrixScale.toString());
@@ -122,8 +120,10 @@
         },
 
         scroll: function(paper, viewport, dx, dy) {
-            var matrix = viewport.matrix().clone();
+            var matrix = viewport.matrix().clone(),
                 scale = this.zooming.scale;
+
+            this.onBeforeScroll(paper);
 
             dx /= scale;
             dy /= scale;
@@ -137,6 +137,8 @@
                 this.zooming.origin.x += dx;
                 this.zooming.origin.y += dy;
             }
+
+            this.onScroll();
         },
 
         onMouseWheel: function(e, paper, viewport) {
@@ -194,7 +196,7 @@
 
         onPointerDown: function(e, paper, viewport, vendor) {
             var target = Graph.$(e.target),
-                vector = Graph.manager.vector.get(target),
+                vector = Graph.registry.vector.get(target),
                 vendor = paper.interactable().vendor(),
                 tool   = paper.tool().current();
 
@@ -242,7 +244,7 @@
                 },
                 dx = current.x - start.x,
                 dy = current.y - start.y,
-                mg = Graph.math.hypo(dx, dy);
+                mg = Graph.util.hypo(dx, dy);
 
             paper.cursor('move');
 
@@ -274,14 +276,26 @@
             paper.cursor('default');
         },
 
+        onBeforeZoom: _.debounce(function(paper){
+            
+            Graph.topic.publish('paper/beforezoom', null, paper);
+
+        }, 300, {leading: true, trailing: false}),
+
         onZoom: _.debounce(function(paper) {
             var state = paper.state();
 
             if (state == 'panning') {
-                paper.cursor('default');    
+                paper.cursor('default');
             }
 
         }, 300),
+
+        onBeforeScroll: _.debounce(function(paper){
+            
+            Graph.topic.publish('paper/beforescroll', null, paper);
+
+        }, 300, {leading: true, trailing: false}),
 
         onScroll: _.debounce(function() {
 

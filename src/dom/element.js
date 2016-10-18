@@ -1,34 +1,34 @@
 
 (function(_, $){
     
-    var REGEX_SVG_BUILDER = /^<(svg|g|rect|text|path|tspan|circle|polygon|defs|marker)>/i;
+    var REGEX_SVG_BUILDER = /^<(svg|g|rect|text|path|line|tspan|circle|polygon|defs|marker)>/i;
 
     var E = Graph.dom.Element = function(elem) {
-        this.elem = elem instanceof jQuery ? elem : $(elem);
+        this.query = $(elem);
     };
     
     _.extend(E.prototype, {
         node: function() {
-            return this.elem[0];
+            return this.query[0];
         },
         length: function() {
-            return this.elem.length;
+            return this.query.length;
         },
         group: function(name) {
-            if (_.isUndefined(name)) {
-                return this.elem.data('component-group');
+            if (name === undefined) {
+                return this.query.data('component-group');
             }
-            this.elem.data('component-group', name);
+            this.query.data('component-group', name);
             return this;
         },
         belong: function(group) {
             return this.group() == group;
         },
         attr: function(name, value) {
-            var me = this, node = this.elem[0];
+            var me = this, node = this.query[0];
 
             if (Graph.isHTML(node)) {
-                this.elem.attr(name, value);
+                this.query.attr(name, value);
             } else if (Graph.isSVG(node)) {
 
                 if (_.isPlainObject(name)) {
@@ -48,37 +48,44 @@
             return this;
         },
         width: function(value) {
-            if (_.isUndefined(value)) {
-                return this.elem.width();
+            if (value === undefined) {
+                return this.query.width();
             }
-            this.elem.width(value);
+            this.query.width(value);
             return this;
         },
         height: function(value) {
-            if (_.isUndefined(value)) {
-                return this.elem.height();
+            if (value === undefined) {
+                return this.query.height();
             }
-            this.elem.height(value);
+            this.query.height(value);
             return this;
         },
         show: function() {
-            this.elem.show();
+            this.query.show();
             return this;
         },
         hide: function() {
-            this.elem.hide();
+            this.query.hide();
             return this;
         },
         offset: function() {
-            return this.elem.offset();
+            return this.query.offset();
         },
         position: function() {
-            return this.elem.position();
+            return this.query.position();
         },
+        css: function(name, value) {
+            if (value === undefined) {
+                return this.query.css(name);
+            }
+            this.query.css(name, value);
+            return this;
+        },  
         addClass: function(classes) {
-            var node = this.elem[0];
+            var node = this.query[0];
             if (Graph.isHTML(node)) {
-                this.elem.addClass(classes);
+                this.query.addClass(classes);
             } else if (Graph.isSVG(node)) {
                 var currentClasses = _.split(node.className.baseVal || '', ' ');
                 classes = _.split(classes, ' ');
@@ -90,17 +97,17 @@
             return this;
         },
         removeClass: function(classes) {
-            var node = this.elem[0];
+            var node = this.query[0];
             if (Graph.isHTML(node)) {
-                this.elem.removeClass(classes);
+                this.query.removeClass(classes);
             }
             return this;
         },
         hasClass: function(clazz) {
-            var node = this.elem[0];
+            var node = this.query[0];
 
             if (Graph.isHTML(node)) {
-                return this.elem.hasClass(clazz); 
+                return this.query.hasClass(clazz); 
             } else if (Graph.isSVG(node)) {
                 var classes = _.split(node.className.baseVal, ' ');
                 return classes.indexOf(clazz) > -1;
@@ -109,100 +116,122 @@
             return false;
         },
         find: function(selector) {
-            return new Graph.dom.Element(this.elem.find(selector));
+            return new Graph.dom.Element(this.query.find(selector));
         },
         parent: function() {
-            return new Graph.dom.Element(this.elem.parent());
+            return new Graph.dom.Element(this.query.parent());
         },
-        closest: function(selector) {
-            return new Graph.dom.Element(this.elem.closest(selector));
+        closest: function(element) {
+            return new Graph.dom.Element(this.query.closest(element));
         },
-        append: function(elem) {
-            elem = select(elem);
-
-            if (Graph.isElement(elem)) {
-                this.elem.append(elem.elem);
-            } else {
-                this.elem.append(elem);
-            }
-            
+        append: function(element) {
+            this.query.append(element.query);
             return this;
         },
-        prepend: function(elem) {
-            if (Graph.isElement(elem)) {
-                this.elem.prepend(elem.elem);
-            } else {
-                this.elem.prepend(elem);
-            }
+        prepend: function(element) {
+            this.query.prepend(element.query);
             return this;
         },
-        appendTo: function(elem) {
-            if (Graph.isElement(elem)) {
-                this.elem.appendTo(elem.elem);
-            } else {
-                this.elem.appendTo(elem);
-            }
+        appendTo: function(element) {
+            this.query.appendTo(element.query);
+            return this;
+        },
+        prependTo: function(element) {
+            this.query.prependTo(element.query);
             return this;
         },
         remove: function() {
-            this.elem.remove();
-            this.elem = null;
+            this.query.remove();
+            this.query = null;
             return this;
         },
         detach: function() {
-            this.elem = this.elem.detach();
+            this.query = this.query.detach();
             return this;
         },
         on: function(types, selector, data, fn, /*INTERNAL*/ one) {
-            this.elem.on.call(this.elem, types, selector, data, fn, one);
+            this.query.on.call(this.query, types, selector, data, fn, one);
             return this;
         },
         off: function(types, selector, fn) {
-            this.elem.off.call(this.elem, types, selector, fn);
+            this.query.off.call(this.query, types, selector, fn);
+            return this;
+        },
+        trigger: function(type, data) {
+            this.query.trigger(type, data);
             return this;
         },
         text: function(text) {
-            this.elem.text(text);
+            if (text === undefined) {
+                return this.query.text();
+            }
+            this.query.text(text);
             return this;
         },
         html: function(html) {
-            this.elem.html(html);
+            if (html === undefined) {
+                return this.query.html();
+            }
+            this.query.html(html);
+            return this;
+        },
+        focus: function() {
+            this.query.focus();
             return this;
         },
         contextmenu: function(state) {
             state = _.defaultTo(state, true);
             if ( ! state) {
-                this.elem.on('contextmenu', function(e){
+                this.query.on('contextmenu', function(e){
                     return false;
                 });
             }
+        },
+        each: function(callback) {
+            this.query.each(callback);
+            return this;
+        },
+        empty: function() {
+            this.query.empty();
+            return this;
+        },  
+        data: function(key, value) {
+            if (value === undefined) {
+                return this.query.data(key);
+            }
+            this.query.data(key, value);
+            return this;
+        },
+        prop: function(name, value) {
+            if (value === undefined) {
+                return this.query.data(name);
+            }
+            this.query.prop(name, value);
+            return this;
+        },
+        scrollTop: function(value) {
+            if (value === undefined) {
+                return this.query.scrollTop();
+            }
+            this.query.scrollTop(value);
+            return this;
+        },
+        scrollLeft: function(value) {
+            if (value === undefined) {
+                return this.query.scrollLeft();
+            }
+            this.query.scrollLeft(value);
+            return this;
         },
         toString: function() {
             return 'Graph.dom.Element';
         }
     });
-    
-    var borrows = [
-        'css', 
-        'prop', 'data', 
-        'each', 'hover', 'empty',
-        'trigger', 'scrollTop', 'scrollLeft'
-    ];
-
-    _.forEach(borrows, function(method) {
-        (function(method){
-            E.prototype[method] = function() {
-                var args = _.toArray(arguments), value;
-                value = this.elem[method].apply(this.elem, args);
-                return value instanceof jQuery ? this : value;
-            };
-        }(method));
-    });
 
     /// HELPERS ///
 
     Graph.$ = function(selector, context) {
-        selector = select(selector);
+        selector = prepare(selector);
         return new Graph.dom.Element(selector, context);
     };
 
@@ -213,17 +242,21 @@
 
     ///////// HELPER /////////
     
-    function select(selector) {
-        if (_.isString(selector) && /^/.test(selector)) {
-            var builder = selector.match(REGEX_SVG_BUILDER);
-            
-            if (builder) {
-                selector = document.createElementNS(Graph.config.xmlns.svg, builder[1]); 
-                if (builder[1] == 'svg') {
-                    selector.setAttribute('xmlns', Graph.config.xmlns.svg);
-                    selector.setAttribute('xmlns:xlink', Graph.config.xmlns.xlink);
-                    selector.setAttribute('version', Graph.config.svg.version);
+    function prepare(selector) {
+        if (_.isString(selector)) {
+            if (REGEX_SVG_BUILDER.test(selector)) {
+                var dummy = $(selector),
+                    type = dummy[0].tagName.toLowerCase(),
+                    node = document.createElementNS(Graph.config.xmlns.svg, type);
+                
+                if (type == 'svg') {
+                    node.setAttribute('xmlns', Graph.config.xmlns.svg);
+                    node.setAttribute('xmlns:xlink', Graph.config.xmlns.xlink);
+                    node.setAttribute('version', Graph.config.svg.version);
                 }
+
+                dummy = null;
+                return node;    
             }
         }
         return selector;

@@ -125,6 +125,9 @@
                 x: x,
                 y: y
             };
+        },
+        toString: function() {
+            return 'Graph.svg.Image';
         }
     });
 

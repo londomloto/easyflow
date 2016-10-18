@@ -1,18 +1,19 @@
 
 (function(){
 
-    Graph.plugin.Dragger = Graph.extend({
+    Graph.plugin.Dragger = Graph.extend(Graph.plugin.Plugin, {
         
         props: {
-            manual: true,
+            manual: false,
+            single: true,
+            ghost: false,
             vector: null,
             enabled: true,
             rendered: false,
             suspended: true,
             inertia: false,
-            ghost: false,
             bound: false,
-            grid: [10, 10],
+            grid: [1, 1],
             axis: false,
             hint: false,
             cursor: 'move'
@@ -33,6 +34,7 @@
         trans: {
             vector: null,
             paper: null,
+            helper: null,
             dx: 0,
             dy: 0
         },
@@ -45,7 +47,7 @@
         cached: {
             snapping: null
         },
-
+        
         constructor: function(vector, options) {
             var me = this;
 
@@ -53,8 +55,7 @@
             me.props.vector = vector.guid();
 
             options = _.extend({
-                inertia: false,
-                manual: true
+                inertia: false
             }, options || {});
 
             _.forEach(['axis', 'grid', 'bbox', 'ghost', 'hint'], function(name){
@@ -62,42 +63,50 @@
                     me.props[name] = options[name];
                 }
             });
-
+            
             _.assign(me.props, options);
 
             me.initComponent();
 
-            vector.on({
-                render: _.bind(me.onVectorRender, me)
-            });
-
+            vector.on('render', _.bind(me.onVectorRender, me));
+            
             if (vector.props.rendered) {
                 me.setup();
             }
-
+        },
+        
+        holder: function() {
+            return Graph.registry.vector.get(this.components.holder);
         },
 
-        vector: function() {
-            return Graph.manager.vector.get(this.props.vector);
+        helper: function() {
+            return Graph.registry.vector.get(this.components.helper);
         },
 
         initComponent: function() {
             var me = this, comp = me.components;
+            var holder, helper;
 
             if (me.props.ghost) {
-                comp.holder = (new Graph.svg.Group())
+                holder = (new Graph.svg.Group())
                     .addClass('graph-dragger')
                     .removeClass('graph-elem graph-elem-group')
                     .traversable(false)
                     .selectable(false);
 
-                comp.helper = (new Graph.svg.Rect(0, 0, 0, 0, 0))
+                helper = (new Graph.svg.Rect(0, 0, 0, 0, 0))
                     .addClass('graph-dragger-helper')
                     .removeClass('graph-elem graph-elem-rect')
                     .traversable(false)
                     .selectable(false)
                     .clickable(false)
-                    .render(comp.holder);
+                    .render(holder);
+
+                comp.holder = holder.guid();
+                comp.helper = helper.guid();
+
+                holder = null;
+                helper = null;
             }
         },
 
@@ -122,15 +131,24 @@
             }
 
             _.extend(options, {
-                manualStart: me.props.manual,
+                manualStart: true,
                 onstart: _.bind(me.onDragStart, me),
                 onmove: _.bind(me.onDragMove, me),
                 onend: _.bind(me.onDragEnd, me)
             });
 
-            me.plugin = vector.interactable().draggable(options);
-            me.plugin.styleCursor(false);
-            me.plugin.on('move', _.bind(me.onPointerMove, me, _, vector));
+            var vendor = vector.interactable().vendor();
+            
+            vendor.draggable(options);
+            vendor.styleCursor(false);
+            
+            vendor.on('down', function(e){
+                e.preventDefault();
+            });
+
+            if (me.props.single) {
+                vendor.on('move', _.bind(me.onPointerMove, me, _, vector));    
+            }
 
             var matrix = vector.matrix(true),
                 rotate = matrix.rotate(),
@@ -138,7 +156,7 @@
 
             me.rotate(rotate.deg);
             me.scale(scale.x, scale.y);
-
+            
             me.snap({
                 mode: 'grid',
                 x: me.props.grid[0],
@@ -163,13 +181,11 @@
         },
 
         render: function() {
-            var me = this, 
-                comp = me.components,
-                vector = me.vector();
+            var me = this, vector = me.vector();
 
             if ( ! me.props.rendered) {
                 me.props.rendered = true;
-                me.components.holder.render(vector.parent());
+                me.holder().render(vector.parent());
             }
 
             if (me.props.ghost) {
@@ -180,37 +196,34 @@
 
         suspend: function() {
             this.props.suspended = true;
-            if (this.components.holder) {
-                this.components.holder.elem.detach();
-            }
+            this.holder().elem.detach();
         },
 
         resume: function() {
             this.props.suspended = false;
 
-            if (this.components.holder) {
-                if ( ! this.props.rendered) {
-                    this.render();
-                } else {
-                    this.vector().parent().elem.append(this.components.holder.elem);
-                    this.redraw();
-                }
+            if ( ! this.props.rendered) {
+                this.render();
+            } else {
+                this.vector().parent().elem.append(this.holder().elem);
+                this.redraw();
             }
         },
 
         redraw: function() {
-            var comp = this.components;
+            var vector = this.vector(),
+                helper = this.helper();
 
-            if (comp.helper) {
-                var vbox = this.vector().bbox().data(),
-                    hbox = comp.helper.bbox().data();
+            if (helper) {
+                var vbox = vector.bbox().toJson(),
+                    hbox = helper.bbox().toJson();
 
                 var dx = vbox.x - hbox.x,
                     dy = vbox.y - hbox.y;
 
-                comp.helper.translate(dx, dy).commit();
+                helper.translate(dx, dy).commit();
 
-                comp.helper.attr({
+                helper.attr({
                     width: vbox.width,
                     height: vbox.height
                 });
@@ -218,7 +231,7 @@
         },
 
         rotate: function(deg) {
-            var rad = Graph.math.rad(deg);
+            var rad = Graph.util.rad(deg);
             this.rotation.deg = deg;
             this.rotation.rad = rad;
             this.rotation.sin = Math.sin(rad);
@@ -231,10 +244,14 @@
             this.scaling.y = sy;
         },
 
-        snap: function(snap) {
+        snap: function(snap, end) {
 
             if (snap === undefined) {
                 return this.cached.snapping;
+            }
+
+            if (end === undefined) {
+                end = false;
             }
 
             var me = this, snaps = [];
@@ -250,23 +267,31 @@
                 snaps.push(fixsnap(snap));
             }
 
-            if (this.plugin) {
-                this.plugin.setOptions('snap', {
-                    targets: snaps
+            var vendor = this.vector().interactable().vendor();
+
+            if (vendor) {
+                vendor.setOptions('snap', {
+                    targets: snaps,
+                    endOnly: end
                 });
-                // this.plugin.setOptions('snap', {
-                //     targets: snaps
-                //     relativePoints: [
-                //         {x: .5, y: .5}
-                //     ]
-                // });
             }
+
+            // if (this.plugin) {
+            //     this.plugin.setOptions('snap', {
+            //         targets: snaps
+            //     });
+            // }
 
             /////////
             
             function fixsnap(snap) {
+                
+                if (_.isFunction(snap)) {
+                    return snap;
+                }
+                
                 snap.mode = _.defaultTo(snap.mode, 'anchor');
-
+                
                 if (snap.mode == 'grid') {
                     if (me.props.axis == 'x') {
                         snap.y = 0;
@@ -328,7 +353,12 @@
             if (this.props.enabled) {
                 if (i.pointerIsDown && ! i.interacting()) {
                     var paper = vector.paper(),
-                        node = vector.node();
+                        node = vector.node(),
+                        action = {name: 'drag'};
+
+                    // -- workaround for a bug in v1.2.6 of interact.js
+                    i.prepared.name = action.name;
+                    i.setEventXY(i.startCoords, i.pointers);
 
                     if (e.currentTarget === node) {
                         if (paper) {
@@ -349,25 +379,31 @@
                             if (this.props.suspended) {
                                 this.resume();
                             }
-                            i.start({name: 'drag'}, e.interactable, this.components.helper.node());
+                            i.start(action, e.interactable, this.helper().node());
                         } else {
-                            i.start({name: 'drag'}, e.interactable, node);
+                            i.start(action, e.interactable, node);
                         }
 
                     }
                 }    
             }
 
+            e.preventDefault();
+
         },
 
         onDragStart: function(e) {
-            var vector = this.vector(), paper = vector.paper();
+            var vector = this.vector(), 
+                paper = vector.paper(),
+                helper = this.helper();
 
             vector.addClass('dragging');
             paper.cursor(this.props.cursor);
 
             this.trans.vector = vector;
             this.trans.paper = paper;
+            this.trans.helper = helper;
+
             this.trans.dx = 0;
             this.trans.dy = 0;
 
@@ -389,7 +425,7 @@
             var trans = this.trans,
                 paper = trans.paper,
                 vector = trans.vector,
-                helper = this.components.helper,
+                helper = trans.helper,
                 axs = this.props.axis,
                 deg = this.rotation.deg,
                 sin = this.rotation.sin,
@@ -405,10 +441,10 @@
                 scaleX = scaling.x;
                 scaleY = scaling.y;
             }
-
+            
             var edx = _.defaultTo(e.dx, 0),
                 edy = _.defaultTo(e.dy, 0);
-
+                
             var dx, dy, hx, hy, tx, ty;
             
             dx = dy = hx = hy = tx = ty = 0;
@@ -431,51 +467,54 @@
             } else {
                 hx = edx;
                 hy = edy;
-
+                
                 dx = tx = edx *  cos + edy * sin;
                 dy = ty = edx * -sin + edy * cos;  
             }
 
             this.trans.dx += tx;
             this.trans.dy += ty;
+            
+            var pageX = _.defaultTo(e.pageX, e.x0),
+                pageX = _.defaultTo(e.pageY, e.y0);
+
+            pageX /= scaleX;
+            pageX /= scaleY;
 
             if (this.props.hint && paper.utils.hinter) {
                 paper.utils.hinter.watch(dx, dy);
             }
-
-            if (helper) {
-                helper.translate(hx, hy).commit();
-            } else {
-                vector.translate(dx, dy).commit(); 
-            }
-
-            var pgx = _.defaultTo(e.pageX, e.x0),
-                pgy = _.defaultTo(e.pageY, e.y0);
-
-            pgx /= scaleX;
-            pgy /= scaleY;
-
-            var edata = {
-                pageX: pgx,
-                pageY: pgy,
-
+            
+            var event = {
+                pageX: pageX,
+                pageY: pageX,
+                
                 dx: dx,
                 dy: dy,
                 
-                ox: hx, // _.defaultTo(e.dx, 0),
-                oy: hy, // _.defaultTo(e.dy, 0),
+                hx: hx,
+                hy: hy,
+                
+                ox: hx,
+                oy: hy,
                 
                 ghost: this.props.ghost
             };
 
-            this.fire('dragmove', edata);
+            this.fire('dragmove', event);
+            
+            if (helper) {
+                helper.translate(event.hx, event.hy).commit();
+            } else {
+                vector.translate(event.dx, event.dy).commit();
+            }
         },
 
         onDragEnd: function(e) {
             var trans = this.trans,
                 paper = trans.paper,
                 vector = trans.vector,
-                helper = this.components.helper,
+                helper = trans.helper,
                 dx = trans.dx,
                 dy = trans.dy;
                 
@@ -502,9 +541,27 @@
             
             this.trans.vector = null;
             this.trans.paper = null;
+            this.trans.helper = null;
             this.trans.dx = 0;
             this.trans.dy = 0;
 
+        },
+
+        destroy: function() {
+            var me = this;
+
+            if (me.components.helper) {
+                me.helper().remove();
+            }
+
+            me.components.helper = null;
+
+            if (me.components.holder) {
+                me.holder().remove();
+            }
+
+            me.components.holder = null;
+            me.listeners = {};
         }
     });
 

@@ -46,7 +46,7 @@
         },
 
         vector: function() {
-            return Graph.manager.vector.get(this.props.vector);
+            return Graph.registry.vector.get(this.props.vector);
         },
 
         resume: function() {
@@ -63,7 +63,7 @@
 
         redraw: function() {
             var vector = this.vector(),
-                box = vector.bbox().data(),
+                box = vector.bbox().toJson(),
                 pos = vector.position();
 
             this.components.block.css({

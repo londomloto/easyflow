@@ -1,39 +1,34 @@
 
 (function(){
 
-    Graph.ns('Graph.shape.activity');
+    Graph.shape.activity.Action = Graph.extend(Graph.shape.Shape, {
 
-    Graph.shape.activity.Start = Graph.extend(Graph.shape.Shape, {
-        
         props: {
-            label: 'START',
-            width: 60,
+            label: 'Action',
+            width: 140,
             height: 60,
             left: 0,
             top: 0
-        }, 
+        },
 
         initComponent: function() {
-            var me = this, 
-                comp = me.components;
-
+            var me = this, comp = this.components;
             var shape, block, label;
-
-            shape = (new Graph.svg.Group(me.props.left, me.props.top))
-                .addClass('graph-shape-activity-start')
-                .selectable(false);
 
             var cx = me.props.width / 2,
                 cy = me.props.height / 2;
 
-            block = (new Graph.svg.Ellipse(cx, cy, cx, cy))
+            shape = (new Graph.svg.Group(me.props.left, me.props.top))
+                .selectable(false);
+
+            block = (new Graph.svg.Rect(0, 0, me.props.width, me.props.height))
                 .data('text', me.props.label)
                 .render(shape);
 
             block.draggable({ghost: true});
-            block.connectable({wiring: 'h:v'});
             block.resizable();
             block.editable();
+            block.connectable({wiring: 'h:v'});
 
             block.on('edit',    _.bind(me.onLabelEdit, me));
             block.on('dragend', _.bind(me.onDragEnd, me));
@@ -41,8 +36,8 @@
             block.on('remove',  _.bind(me.onRemove, me));
 
             label = (new Graph.svg.Text(cx, cy, me.props.label))
-                .selectable(false)
                 .clickable(false)
+                .selectable(false)
                 .render(shape);
 
             comp.shape = shape.guid();
@@ -57,38 +52,39 @@
                 shape = this.component('shape'),
                 label = this.component('label');
 
-            var matrix, bound, cx, cy;
+            var bound, matrix;
 
-            bound  = block.bbox().toJson(),
+            bound = block.bbox().toJson();
             matrix = Graph.matrix().translate(bound.x, bound.y);
 
             shape.matrix().multiply(matrix);
             shape.attr('transform', shape.matrix().toString());
 
-            cx = bound.width  / 2;
-            cy = bound.height / 2;
-
             block.attr({
-                cx: cx,
-                cy: cy
+                x: 0,
+                y: 0
             });
 
             block.dirty(true);
             block.resizable().redraw();
             
             label.attr({
-                x: cx, 
-                y: cy
+                x: bound.width  / 2, 
+                y: bound.height / 2
             });
 
             label.wrap(bound.width - 10);
 
-            bound  = null;
+            bound = null;
             matrix = null;
         },
 
+        onResize: function() {
+            this.redraw();
+        },
+
         toString: function() {
-            return 'Graph.shape.activity.Start';
+            return 'Graph.shape.activity.Action';
         }
 
     });

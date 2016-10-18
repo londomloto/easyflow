@@ -60,15 +60,14 @@
             this.createRouter();
             this.initComponent();
 
-            Graph.manager.link.register(this);
+            Graph.registry.link.register(this);
         },
 
         initComponent: function() {
             var comp = this.components;
 
             comp.block = (new Graph.svg.Group())
-                .addClass('graph-util-link')
-                .removeClass(Graph.string.CLS_VECTOR_GROUP);
+                .addClass('graph-util-link');
 
             comp.block.on({
                 render: _.bind(this.onBlockRender, this)
@@ -105,8 +104,7 @@
 
             // vertex edit
             comp.edit = (new Graph.svg.Group())
-                .addClass('graph-util-link-edit')
-                .removeClass(Graph.string.CLS_VECTOR_GROUP);
+                .addClass('graph-util-link-edit');
 
             for(var name in comp) {
                 comp[name].props.traversable = false;
@@ -700,7 +698,7 @@
             this.components = null;
             this.router = null;
 
-            Graph.manager.link.unregister(this);
+            Graph.registry.link.unregister(this);
         }
 
     });

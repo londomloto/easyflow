@@ -4,14 +4,14 @@
     Graph.svg.Group = Graph.extend(Graph.svg.Vector, {
 
         attrs: {
-            'class': Graph.string.CLS_VECTOR_GROUP
+            // 'class': '' // Graph.string.CLS_VECTOR_GROUP
         },
         
         constructor: function(x, y) {
             // this.$super('g');
             this.superclass.prototype.constructor.call(this, 'g');
 
-            if ( ! _.isUndefined(x) && ! _.isUndefined(y)) {
+            if (x !== undefined && y !== undefined) {
                 this.graph.matrix.translate(x, y);
                 this.attr('transform', this.graph.matrix.toString());
             }

@@ -1,7 +1,7 @@
 
 (function(){
 
-    Graph.plugin.Transformer = Graph.extend({
+    Graph.plugin.Transformer = Graph.extend(Graph.plugin.Plugin, {
         
         props: {
             scale: 1,
@@ -10,7 +10,7 @@
 
         constructor: function(vector) {
             this.actions = [];
-            this.vector = vector;
+            this.props.vector = vector.guid();
         },
 
         transform: function(command) {
@@ -70,7 +70,8 @@
 
         commit: function(absolute, simulate) {
             var me = this,
-                actions = this.actions,
+                actions = me.actions,
+                vector = me.vector(),
                 events = {
                     translate: false,
                     rotate: false,
@@ -90,7 +91,7 @@
                 sx = 1, 
                 sy = 1;
                 
-            var mat = this.vector.graph.matrix.clone();
+            var mat = vector.matrix().clone();
             
             _.forEach(actions, function(act){
                 var arg = act.args,
@@ -117,7 +118,7 @@
                     events.translate = true;
                 } else if (cmd == 'rotate') {
                     if (len == 1) {
-                        bb = bb || me.vector.bbox(true).data();
+                        bb = bb || vector.bbox(true).toJson();
                         mat.rotate(arg[0], bb.x + bb.width / 2, bb.y + bb.height / 2);
                         deg += arg[0];
                     } else if (len == 3) {
@@ -133,7 +134,7 @@
                     events.rotate = true;
                 } else if (cmd == 'scale') {
                     if (len === 1 || len === 2) {
-                        bb = bb || me.vector.bbox(true).data();
+                        bb = bb || vector.bbox(true).toJson();
                         mat.scale(arg[0], arg[len - 1], bb.x + bb.width / 2, bb.y + bb.height / 2);
                         sx *= arg[0];
                         sy *= arg[len - 1];
@@ -159,8 +160,8 @@
                 return mat;
             }
             
-            this.vector.graph.matrix = mat;
-            this.vector.attr('transform', mat);
+            vector.graph.matrix = mat;
+            vector.attr('transform', mat);
 
             if (events.translate) {
                 events.translate = {

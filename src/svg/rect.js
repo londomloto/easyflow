@@ -101,7 +101,7 @@
             if (rotate) {
                 this.rotate(rotate, x, y).commit();    
             }
-
+            
             return {
                 matrix: matrix,
                 translate: {

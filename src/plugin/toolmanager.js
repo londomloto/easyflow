@@ -1,7 +1,7 @@
 
 (function(){
 
-    Graph.plugin.ToolManager = Graph.extend({
+    Graph.plugin.ToolManager = Graph.extend(Graph.plugin.Plugin, {
 
         props: {
             vector: null,
@@ -24,11 +24,7 @@
             }
 
         },
-
-        vector: function() {
-            return Graph.manager.vector.get(this.props.vector);
-        },
-
+        
         has: function(tool) {
             return !!this.tools[tool];
         },
@@ -70,22 +66,25 @@
         },
 
         activate: function(name) {
-            var tool = this.get(name), data;
+            if (this.props.current != name) {
+                var tool = this.get(name), data;
+                
+                if (tool) {
+                    this.deactivateAll(name);
+                    this.props.current = name;
 
-            if (tool) {
-                this.deactivateAll(name);
-                this.props.current = name;
+                    data = this.tools[name];
+                    data.enabled = true;
 
-                data = this.tools[name];
-                data.enabled = true;
+                    tool.enable();
 
-                tool.enable();
-
-                this.fire('activate', {
-                    name: data.name,
-                    enabled: data.enabled
-                });
+                    this.fire('activate', {
+                        name: data.name,
+                        enabled: data.enabled
+                    });
+                }
             }
+            
         },
 
         deactivate: function(name) {

@@ -1,7 +1,7 @@
 
 (function(){
 
-    var Manager = Graph.extend({
+    var Registry = Graph.extend({
 
         links: {},
         
@@ -45,7 +45,7 @@
             /*var me = this;
 
             if (me.count()) {
-                var links = vector.linkable().links().slice(),
+                var links = vector.connectable().links().slice(),
                     path1 = vector.bbox().clone().expand(10).pathinfo();
 
                 var path2;
@@ -88,7 +88,7 @@
         },
 
         toString: function() {
-            return 'Graph.manager.Link';
+            return 'Graph.registry.Link';
         }
 
     });
@@ -96,6 +96,6 @@
     /**
      * Singleton link manager
      */
-    Graph.manager.link = new Manager();
+    Graph.registry.link = new Registry();
 
 }());

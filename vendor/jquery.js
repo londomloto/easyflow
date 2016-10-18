@@ -5358,7 +5358,6 @@ jQuery.fn.extend({
 	},
 
 	domManip: function( args, callback ) {
-
 		// Flatten any nested arrays
 		args = concat.apply( [], args );
 

@@ -12,10 +12,17 @@
         constructor: function(points) {
             points = _.defaultTo(points, '');
 
-            // this.$super('polyline', {
-            //     points: points
-            // });
-
+            if (_.isArray(points)) {
+                if (points.length) {
+                    if (_.isPlainObject(points[0])) { 
+                        points = _.map(points, function(p){ return p.x + ',' + p.y; });
+                    }
+                    points = _.join(points, ',');
+                } else {
+                    points = '';
+                }
+            }
+            
             this.superclass.prototype.constructor.call(this, 'polyline', {
                 points: points
             });

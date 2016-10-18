@@ -46,7 +46,10 @@
                 'font-family': Graph.config.font.family
             });
 
-            this.draw(text);
+            if (text) {
+                this.write(text);
+            }
+            
             this.on('render', _.bind(this.onTextRender, this));
         },
 
@@ -60,7 +63,7 @@
             return result;
         },
 
-        draw: function(text) {
+        write: function(text) {
             var me = this, parts, span;
 
             if (text === undefined) {
@@ -100,7 +103,7 @@
             var rows = this.rows,
                 size = this.props.fontSize,
                 line = this.props.lineHeight,
-                bbox = this.bbox().data();
+                bbox = this.bbox().toJson();
 
             if (rows.length) {
                 for (var i = 0, ii = rows.length; i < ii; i++) {
@@ -112,7 +115,7 @@
 
                 rows[0].attr('dy', 0);
 
-                // var box = this.bbox().data(),
+                // var box = this.bbox().toJson(),
                 //     off = this.attrs.y - (box.y + box.height / 2);
 
                 // if (off) {
@@ -162,14 +165,14 @@
 
         center: function(target) {
             if (target) {
-                var targetBox = target.bbox().data(),
+                var targetBox = target.bbox().toJson(),
                     matrix = this.graph.matrix.data();
 
                 var textBox, dx, dy, cx, cy;
 
                 this.reset();
 
-                textBox = this.bbox().data();   
+                textBox = this.bbox().toJson();   
 
                 dx = targetBox.width / 2;
                 dy = targetBox.height / 2;
@@ -195,6 +198,7 @@
                 ['l', -size.width, 0], 
                 ['z']
             ]);
+
         },
 
         toString: function() {

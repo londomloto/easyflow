@@ -22,11 +22,11 @@
         },
         
         data: function(name, value) {
-            if (_.isUndefined(name) && _.isUndefined(value)) {
+            if (name === undefined && value === undefined) {
                 return this.props;
             }
 
-            if (_.isUndefined(value)) {
+            if (value === undefined) {
                 return this.props[name];
             }
 
@@ -36,7 +36,7 @@
         pathinfo: function() {
             var a = this.props;
 
-            return Graph.path([
+            return new Graph.lang.Path([
                 ['M', a.x, a.y], 
                 ['l', a.width, 0], 
                 ['l', 0, a.height], 
@@ -148,10 +148,31 @@
             return this;
         },
 
+        transform: function(matrix) {
+            var x = this.props.x,
+                y = this.props.y;
+
+            this.props.x = matrix.x(x, y);
+            this.props.y = matrix.y(x, y);
+
+            x = this.props.x2;
+            y = this.props.y2;
+
+            this.props.x2 = matrix.x(x, y);
+            this.props.y2 = matrix.y(x, y);
+
+            var scale = matrix.scale();
+
+            this.props.width  *= scale.x;
+            this.props.height *= scale.y;
+
+            return this;
+        },
+
         intersect: function(tbox) {
             var me = this,
                 bdat = me.props,
-                tdat = tbox.data();
+                tdat = tbox.toJson();
 
             return tbox.contains(bdat.x, bdat.y)
                 || tbox.contains(bdat.x2, bdat.y)
@@ -208,6 +229,10 @@
                 }
             }
             return point.clone().adhereToBox(this);
+        },
+
+        toJson: function() {
+            return this.props;
         }
     });
 
@@ -223,8 +248,8 @@
         return obj instanceof Graph.lang.BBox;
     };
 
-    Graph.bbox = function(bbox) {
-        return new Graph.lang.BBox(bbox);
+    Graph.bbox = function(bounds) {
+        return new Graph.lang.BBox(bounds);
     };
     
 }());

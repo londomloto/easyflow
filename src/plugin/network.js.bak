@@ -1,7 +1,7 @@
 
 (function(){
 
-    Graph.plugin.Network = Graph.extend({
+    Graph.plugin.Network = Graph.extend(Graph.plugin.Plugin, {
 
         props: {
             segments: 4,
@@ -30,7 +30,7 @@
             _.extend(me.props, options || {});
 
             me.vector = vector;
-            me.vector.addClass('graph-linkable');
+            me.vector.addClass('graph-connectable');
 
             // TODO: check dirty state
             me.props.dirty = vector.dirty();
@@ -288,7 +288,7 @@
             var dragel = Graph.$(e.relatedTarget), link;
             if (dragel.belong('graph-util-link')) {
                 this.resume();
-                link = Graph.manager.link.get(dragel);
+                link = Graph.registry.link.get(dragel);
                 if (link) {
                     link.drag.dragger.setActiveDrops(dragel.node());
                 }
@@ -307,7 +307,7 @@
             var rad, sin, cos, dx, dy;
 
             if (ro) {
-                rad = Graph.math.rad(-ro),
+                rad = Graph.util.rad(-ro),
                 sin = Math.sin(rad),
                 cos = Math.cos(rad);
                 dx = e.dx *  cos + e.dy * sin;
