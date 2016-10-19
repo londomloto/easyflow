@@ -85,3 +85,65 @@ Get or set animator plugin
 var r = paper.rect();
 r.animable().animate({x: 100}, 1000, 'bounce');
 ```
+
+## Layout
+
+#### default
+```javascript
+// create paper
+var p = Graph.paper().render('#div');
+
+// setup layout
+p.layout('default', {
+	router: {
+    	type: 'orthogonal'
+    },
+    link: {
+    	type: 'rounded'
+    }
+});
+
+// add new rectangle
+p.rect();
+
+// refresh
+p.layout().refresh();
+```
+
+## Link (Connector)
+By default, link type defined in layout
+```javascript
+var p = Graph.paper().render('#div');
+var a = p.rect();
+var b = p.circle();
+
+// connect two vector
+p.connect(a, b);
+
+```
+
+## Directed Link
+```javascript
+
+var rect1 = paper.rect();
+var rect2 = paper.rect();
+
+var router = new Graph.router.Directed(rect1, rect2);
+var link = new Graph.link.Directed(router);
+link.connect();
+link.render(paper);
+
+```
+## Orthogonal Link
+
+```javascript
+
+var rect1 = paper.rect();
+var rect2 = paper.rect();
+
+var router = new Graph.router.Orthogonal(rect1, rect2);
+var link = new Graph.link.Orthogonal(router);
+link.connect();
+link.render(paper);
+
+```
