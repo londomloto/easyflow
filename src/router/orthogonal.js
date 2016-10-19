@@ -5,6 +5,66 @@
 
     Graph.router.Orthogonal = Graph.extend(Router, {
         
+        bendpoints: function() {
+            var points = this.cached.bendpoints;
+
+            if ( ! points) {
+                var segments = this.pathinfo().curve().segments,
+                    maxlen = segments.length - 1;
+                    
+                var segment, curve, length, point, x, y;
+
+                points = [];
+                
+                for (var i = 0, ii = segments.length; i < ii; i++) {
+                    segment = segments[i];
+                    
+                    if (i === 0) {
+                        
+                        x = segment[1];
+                        y = segment[2];
+                        
+                        curve = Graph.curve([['M', x, y], ['C', x, y, x, y, x, y]]);
+                        point = curve.pointAt(curve.t(0), true);
+                        
+                        point.index = i;
+                        point.range = [i, i + 1];
+                        point.space = 0;
+                        
+                        points.push(point);
+                    } else {
+                        
+                        curve = Graph.curve([['M', x, y], segment]);
+                        
+                        x = segment[5];
+                        y = segment[6];
+                        
+                        length = curve.length();
+                        
+                        point = curve.pointAt(curve.t(length / 2), true);
+                        point.index = i;
+                        point.range = [i - 1, i];
+                        point.space = 0;
+                        
+                        points.push(point);
+                        
+                        if (i === maxlen) {
+                            point = curve.pointAt(curve.t(length), true);
+                            point.index = i;
+                            point.range = [i - 1, i];
+                            point.space = 0;
+                            
+                            points.push(point);
+                        }
+                    }
+                }
+
+                this.cached.bendpoints = points;
+            }
+
+            return points;
+        },
+        
         route: function(start, end) {
 
             var source = this.source(),
@@ -98,7 +158,7 @@
                 
             }
             
-            var bends, shape, cable, inter;
+            var routes, bends, shape, cable, inter;
             
             if (tuneup) {
                 
@@ -123,9 +183,10 @@
                     }
                 }
                 
-                bends = Graph.util.lineBendpoints(sdot, edot, direct);
-                this.values.waypoints = [sdot].concat(bends).concat([edot]);
+                bends  = Graph.util.lineBendpoints(sdot, edot, direct);
+                routes = [sdot].concat(bends).concat([edot]);
                 
+                this.values.waypoints = Router.tidyRoutes(routes);
             } else {
                 
                 sdot = start;
@@ -150,7 +211,8 @@
                     edot = inter[inter.length - 1];
                 }
                 
-                this.values.waypoints = [sdot].concat(bends).concat([edot]);
+                routes = [sdot].concat(bends).concat([edot]);
+                this.values.waypoints = Router.tidyRoutes(routes);
             }
             
             this.commit();
@@ -163,7 +225,7 @@
         repair: function(component, port) {
             var routes = this.values.waypoints.slice();
             
-            if ( ! Router.possibleRepair(routes)) {
+            if ( ! Router.isRepairable(routes)) {
                 return this.route();
             }
             
@@ -208,18 +270,18 @@
                 }
                 
                 cropped = repaired.slice();
-                closest = Router.closestIntersection(repaired, srcnet.pathinfo(), tarbox.center(true));
+                closest = Router.getClosestIntersect(repaired, srcnet.pathinfo(), tarbox.center(true));
 
                 if (closest) {
-                    rangeStart = Router.pointSegment(repaired, closest);
+                    rangeStart = Router.getSegmentIndex(repaired, closest);
                     cropped = cropped.slice(rangeStart + 1);
                     cropped.unshift(closest);
                 }
 
-                closest = Router.closestIntersection(cropped, tarnet.pathinfo(), srcbox.center(true));
+                closest = Router.getClosestIntersect(cropped, tarnet.pathinfo(), srcbox.center(true));
 
                 if (closest) {
-                    rangeEnd = Router.pointSegment(cropped, closest);
+                    rangeEnd = Router.getSegmentIndex(cropped, closest);
                     cropped = cropped.slice(0, rangeEnd + 1);
                     cropped.push(closest);
 
@@ -243,80 +305,161 @@
             }
         },
         
-        initBending: function(trans) {
+        initTrans: function(context) {
             var waypoints = this.waypoints(),
                 source = this.source(),
                 target = this.target(),
-                rangeStart = trans.ranges.start,
-                rangeEnd = trans.ranges.end,
+                rangeStart = context.ranges.start,
+                rangeEnd = context.ranges.end,
                 srcnet = source.connectable(),
                 tarnet = target.connectable(),
                 sourceBox = srcnet.bbox(),
                 targetBox = tarnet.bbox(),
                 segmentStart = waypoints[rangeStart],
                 segmentEnd = waypoints[rangeEnd];
+                
+            var snaps = [];
             
-            // force start & end to center
-            if (rangeStart === 0) {
-                Router.portCentering(segmentStart, sourceBox.center(true), trans.axis);
-            }
-            
-            if (rangeEnd === waypoints.length - 1) {
-                Router.portCentering(segmentEnd, targetBox.center(true), trans.axis);
-            }
-            
-            // snapping
-            var snaps = [
-                waypoints[rangeStart - 1],
-                segmentStart,
-                segmentEnd,
-                waypoints[rangeEnd + 1]
-            ];
-            
-            if (rangeStart < 2) {
-                snaps.unshift(sourceBox.center(true));
-            }
-            
-            if (rangeEnd > waypoints.length - 3) {
-                snaps.unshift(targetBox.center(true));
+            if (context.trans == 'BENDING') {
+                // force start & end to center
+                if (rangeStart === 0) {
+                    Router.portCentering(segmentStart, sourceBox.center(true), context.axis);
+                }
+                
+                if (rangeEnd === waypoints.length - 1) {
+                    Router.portCentering(segmentEnd, targetBox.center(true), context.axis);
+                }
+                
+                snaps = [
+                    waypoints[rangeStart - 1],
+                    segmentStart,
+                    segmentEnd,
+                    waypoints[rangeEnd + 1]
+                ];
+                
+                if (rangeStart < 2) {
+                    snaps.unshift(sourceBox.center(true));
+                }
+                
+                if (rangeEnd > waypoints.length - 3) {
+                    snaps.unshift(targetBox.center(true));
+                }
             }
             
             var offset = this.layout().offset(),
                 snapH = [],
                 snapV = [];
             
-            trans.snap.hor = [];
-            trans.snap.ver = [];
+            context.snap.hor = [];
+            context.snap.ver = [];
             
             _.forEach(snaps, function(p){
                 if (p) {
-                    if (trans.axis == 'y') {
+                    
+                    if (context.axis == 'y') {
                         snapH.push(p.y);
-                        trans.snap.hor.push(p.y + offset.top);
+                        context.snap.hor.push(p.y + offset.top);
                     }
                     
-                    if (trans.axis == 'x') {
+                    if (context.axis == 'x') {
                         snapV.push(p.x);
-                        trans.snap.ver.push(p.x + offset.left);
+                        context.snap.ver.push(p.x + offset.left);
                     }
                 }
             });
             
-            this.cached.bending = {
-                source: source,
-                target: target,
-                original: waypoints,
-                rangeStart: rangeStart,
-                rangeEnd: rangeEnd,
-                segmentStart: segmentStart,
-                segmentEnd: segmentEnd,
-                sourceBound: sourceBox.toJson(),
-                targetBound: targetBox.toJson(),
-                sourcePath: srcnet.pathinfo(),
-                targetPath: tarnet.pathinfo(),
-                snapH: snapH,
-                snapV: snapV
-            };
+            if (context.trans == 'BENDING') {
+                this.cached.bending = {
+                    source: source,
+                    target: target,
+                    original: waypoints,
+                    rangeStart: rangeStart,
+                    rangeEnd: rangeEnd,
+                    segmentStart: segmentStart,
+                    segmentEnd: segmentEnd,
+                    sourceBound: sourceBox.toJson(),
+                    targetBound: targetBox.toJson(),
+                    sourcePath: srcnet.pathinfo(),
+                    targetPath: tarnet.pathinfo(),
+                    snapH: snapH,
+                    snapV: snapV
+                };
+            } else {
+                var original = waypoints.slice(),
+                    segmentAlign = Graph.util.pointAlign(segmentStart, segmentEnd, 10);
+                
+                if (original.length === 2) {
+                    var q1, q2;
+                    
+                    q1 = {
+                        x: (segmentStart.x + segmentEnd.x) / 2,
+                        y: (segmentStart.y + segmentEnd.y) / 2
+                    };
+                    
+                    q2 = {
+                        x: q1.x,
+                        y: q1.y
+                    };
+                    
+                    original.splice(1, 0, q1, q2);
+                    
+                    if (context.index !== 0) {
+                        rangeStart += 2;
+                        rangeEnd   += 2;
+                        
+                        segmentStart = original[rangeStart];
+                        segmentEnd   = original[rangeEnd];
+                        
+                        context.index += 2;
+                        
+                        context.point = _.extend({}, segmentEnd);
+                        context.event = _.extend({}, segmentEnd);
+                    } else {
+                        segmentEnd = original[rangeEnd];
+                    }
+                }
+                
+                this.cached.connect = {
+                    valid: false,
+                    source: null,
+                    target: null,
+                    sourcePath: null,
+                    targetPath: null,
+                    rangeStart: rangeStart,
+                    rangeEnd: rangeEnd,
+                    segmentStart: segmentStart,
+                    segmentEnd: segmentEnd,
+                    segmentAlign: segmentAlign,
+                    original: original
+                };
+            }
+        },
+        
+        updateTrans: function(trans, data) {
+            if (trans == 'CONNECT') {
+                var connect = this.cached.connect,
+                    oldSource = connect.source,
+                    oldTarget = connect.target;
+                    
+                _.assign(connect, data);
+                
+                if (oldSource && connect.source) {
+                    if (oldSource.guid() != connect.source.guid()) {
+                        connect.sourcePath = connect.source.connectable().pathinfo();
+                    }
+                } else if ( ! oldSource && connect.source) {
+                    connect.sourcePath = connect.source.connectable().pathinfo();
+                }
+                
+                if (oldTarget && connect.target) {
+                    if (oldTarget.guid() != connect.target.guid()) {
+                        connect.targetPath = connect.target.connectable().pathinfo();
+                    }
+                } else if ( ! oldTarget && connect.target) {
+                    connect.targetPath = connect.target.connectable().pathinfo();
+                }
+                
+            }
         },
         
         /**
@@ -420,18 +563,10 @@
             bending.routes = routes;
             bending.newRangeStart = rangeStart + offset;  
             
-            this.cropping(callback);
+            this.cropBending(callback);
         },
         
-        stopBending: function () {
-            var bending = this.cached.bending;
-            
-            this.tidify();
-            this.values.waypoints = bending.waypoints;
-            this.commit();
-        },
-        
-        cropping: _.debounce(function(callback) {
+        cropBending: _.debounce(function(callback) {
             
             var bending = this.cached.bending,
                 routes = bending.routes,
@@ -447,29 +582,150 @@
             bending.waypoints = cropped;
             
             if (callback) {
-                command = Graph.util.points2path(bending.waypoints);
+                command = Graph.util.points2path(cropped);
                 callback({
                     command: command
                 });
             }
         }, 0),
         
-        tidify: function() {
-            var bending = this.cached.bending,
-                points = bending.waypoints,
-                offset = 0;
+        connecting: function(context, callback) {
+            var connect = this.cached.connect,
+                routes = connect.original.slice(),
+                segmentAlign = connect.segmentAlign,
+                segmentStart = connect.segmentStart,
+                segmentEnd = connect.segmentEnd,
+                rangeStart = connect.rangeStart,
+                rangeEnd = connect.rangeEnd;
                 
-            var concised = _.filter(points, function(p, i){
-                if (Graph.util.isPointOnLine(points[i - 1], points[i + 1], p)) {
-                    offset = i <= bending.newRangeStart ? offset - 1 : offset;
-                    return false;
+            var point, command;
+            
+            point = {
+                x: context.point.x + context.delta.x,
+                y: context.point.y + context.delta.y
+            };
+            
+            var newStart, newEnd;
+            
+            if (context.index === 0) {
+                newStart = {
+                    x: context.point.x + context.delta.x,
+                    y: context.point.y + context.delta.y
+                };
+                
+                if (segmentAlign == 'v') {
+                    newEnd = {
+                        x: segmentEnd.x,
+                        y: newStart.y
+                    };
+                } else {
+                    newEnd = {
+                        x: newStart.x,
+                        y: segmentEnd.y
+                    };
                 }
-                return true;
-            });
+            } else {
+                newEnd = {
+                    x: context.point.x + context.delta.x,
+                    y: context.point.y + context.delta.y
+                };
+                
+                if (segmentAlign == 'h') {
+                    newStart = {
+                        x: newEnd.x,
+                        y: segmentStart.y
+                    };
+                } else {
+                    newStart = {
+                        x: segmentStart.x,
+                        y: newEnd.y
+                    };
+                }
+            }
             
-            bending.waypoints = concised;
-            bending.newRangeStart = bending.newRangeStart + offset;
+            routes[rangeStart] = newStart;
+            routes[rangeEnd]   = newEnd;
             
+            context.event.x = point.x;
+            context.event.y = point.y;
+            
+            connect.routes  = routes;
+            
+            this.cropConnect(context, callback);
+        },
+        
+        cropConnect: _.debounce(function(context, callback) {
+            var connect = this.cached.connect,
+                routes = connect.routes;
+            
+            if (connect.valid) {
+                var command, shape, cable, inter, align;
+            
+                if (context.index === 0) {
+                    if (connect.source) {
+                        shape = connect.sourcePath;
+                    }
+                } else {
+                    if (connect.target) {
+                        shape = connect.targetPath;
+                    }
+                }
+        
+                if (shape) {
+                    cable = Graph.path(Graph.util.points2path(routes));
+                    inter = shape.intersection(cable, true);
+                    
+                    if (inter.length) {
+                        routes[context.index] = inter[0];
+                    }
+                }
+            }
+            
+            connect.waypoints = routes;
+
+            if (callback) {
+                command = Graph.util.points2path(routes);
+                callback({command: command});
+            }
+        }, 0),
+        
+        stopTrans: function (context) {
+            var connect, bending, points, changed, concised;
+            
+            if (context.trans == 'CONNECT') {
+                connect = this.cached.connect;
+                points = connect.waypoints;
+                
+                if (this.cached.connect.valid) {
+                    changed = true;
+                    
+                    this.source(connect.source);
+                    this.target(connect.target);
+                    
+                    this.fire('reroute', {
+                        source: connect.source,
+                        target: connect.target
+                    });
+                } else {
+                    points = connect.original.slice();
+                    changed = false;
+                }
+            } else if (context.trans == 'BENDING') {
+                bending = this.cached.bending;
+                points = bending.waypoints;
+                changed = true;
+            }
+            
+            if (changed) {
+                this.values.waypoints = Router.tidyRoutes(points);
+            } else {
+                this.values.waypoints = points;
+            }
+            
+            this.commit();
+            
+            this.cached.connect = null;
+            this.cached.bending = null;
         },
         
         toString: function() {

@@ -1,7 +1,9 @@
 
 (function(){
-
-    Graph.link.Directed = Graph.extend(Graph.link.Link, {
+    
+    var Link = Graph.link.Link;
+    
+    Graph.link.Directed = Graph.extend(Link, {
         
         renderControl: function() {
             var me = this, editor = me.component('editor');
@@ -15,52 +17,54 @@
             }
 
             var points = this.cached.bendpoints,
+                maxlen = points.length - 1,
+                linkid = me.guid(),
                 controls = [];
 
-            _.forEach(points, function(dot){
-                var x = dot.x, y = dot.y;
+            _.forEach(points, function(dot, i){
                 
                 var control = (new Graph.svg.Image(
                     Graph.config.base + 'img/resize-control.png',
-                    x - 17 / 2,
-                    y - 17 / 2,
+                    dot.x - 17 / 2,
+                    dot.y - 17 / 2,
                     17,
                     17
                 ));
                 
-                /*
-                control = (new Graph.svg.Circle(x, y, 5));
-                control.removeClass(Graph.string.CLS_VECTOR_CIRCLE);
-                control.addClass('graph-link-bend');
-                */
-                
                 control.selectable(false);
-                control.elem.group('graph-link');
+                control.removeClass(Graph.string.CLS_VECTOR_IMAGE);
                 
-                var trans = {
-                    
+                if (i === 0) {
+                    control.addClass(Graph.string.CLS_LINK_TAIL);
+                    control.elem.data('pole', 'tail');
+                } else if (i === maxlen) {
+                    control.addClass(Graph.string.CLS_LINK_HEAD);
+                    control.elem.data('pole', 'head');
+                }
+                
+                control.elem.group('graph-link');
+                control.elem.data(Graph.string.ID_LINK, linkid);
+                
+                var context = {
+                    trans: (i === 0 || i === maxlen) ? 'CONNECT' : 'BENDING',
+                    index: dot.index,
                     space: dot.space,
-                    
-                    segment: {
+                    point: {
                         x: dot.x,
                         y: dot.y
                     },
-                    
                     event: {
                         x: dot.x,
                         y: dot.y
                     },
-                    
                     range: {
-                        start: dot.from,
-                        end: dot.to
+                        start: dot.range[0],
+                        end:   dot.range[1]
                     },
-                    
                     delta: {
                         x: 0,
                         y: 0
                     },
-                    
                     snap: {
                         hor: [],
                         ver: []
@@ -70,12 +74,11 @@
                 control.draggable();
                 control.cursor('default');
                 
-                control.on('dragstart', _.bind(me.onControlStart, me, _, trans, control));
-                control.on('dragmove',  _.bind(me.onControlMove,  me, _, trans, control));
-                control.on('dragend',   _.bind(me.onControlEnd,   me, _, trans, control));
+                control.on('dragstart', _.bind(me.onControlStart, me, _, context, control));
+                control.on('dragmove',  _.bind(me.onControlMove,  me, _, context, control));
+                control.on('dragend',   _.bind(me.onControlEnd,   me, _, context, control));
                 
                 control.render(editor);
-                
                 controls.push(control.guid());
             });
             
@@ -83,11 +86,11 @@
             controls = null;
         },
         
-        onControlStart: function(e, trans, control) {
-            this.router.initBending(trans);
+        onControlStart: function(e, context, control) {
+            this.router.initTrans(context);
             
-            var snaphor = trans.snap.hor,
-                snapver = trans.snap.ver;
+            var snaphor = context.snap.hor,
+                snapver = context.snap.ver;
             
             control.draggable().snap([
                 function(x, y){
@@ -112,31 +115,37 @@
             control.show();
         },
         
-        onControlMove: function(e, trans, control) {
+        onControlMove: function(e, context, control) {
             var me = this;
             
-            trans.delta.x += e.dx;
-            trans.delta.y += e.dy;
+            context.delta.x += e.dx;
+            context.delta.y += e.dy;
             
             var x1, y1, x2, y2;
             
-            x1 = trans.event.x,
-            y1 = trans.event.y;
-                
-            me.router.bending(trans, function(result){
-                me.update(result.command);
-            });
+            x1 = context.event.x,
+            y1 = context.event.y;
             
-            x2 = trans.event.x,
-            y2 = trans.event.y;
+            if (context.trans == 'BENDING') {
+                me.router.bending(context, function(result){
+                    me.update(result.command);
+                });
+            } else {
+                me.router.connecting(context, function(result){
+                    me.update(result.command);
+                });
+            }
+            
+            x2 = context.event.x,
+            y2 = context.event.y;
             
             // update dragger
             e.originalData.dx = (x2 - x1);
             e.originalData.dy = (y2 - y1);
         },
         
-        onControlEnd: function(e, trans, control) {
-            this.router.stopBending(trans);
+        onControlEnd: function(e, context, control) {
+            this.router.stopTrans(context);
             this.update(this.router.command());
             this.invalidate();
             this.resumeControl();

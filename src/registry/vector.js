@@ -1,11 +1,15 @@
 
 (function(){
-
+    
+    var vectors = {};
+    
     var Registry = Graph.extend({
-
-        vectors: {},
         
-        constructor: function() {},
+        vectors: {},
+
+        constructor: function() {
+            this.vectors = vectors;
+        },
 
         register: function(vector) {
             var id = vector.guid(), found = this.get(id);
@@ -30,23 +34,23 @@
                 // });
             }
 
-            this.vectors[id] = vector;
+            vectors[id] = vector;
         },
 
         unregister: function(vector) {
             var id = vector.guid();
-            if (this.vectors[id]) {
-                this.vectors[id] = null;
-                delete this.vectors[id];
+            if (vectors[id]) {
+                vectors[id] = null;
+                delete vectors[id];
             }
         },
 
         count: function() {
-            return _.keys(this.vectors).length;
+            return _.keys(vectors).length;
         },
 
         toArray: function() {
-            var vectors = this.vectors, keys = _.keys(vectors);
+            var keys = _.keys(vectors);
             return _.map(keys, function(k){
                 return vectors[k];
             });
@@ -67,23 +71,27 @@
             } else if (key instanceof Graph.dom.Element) {
                 key = key.data(Graph.string.ID_VECTOR);
             }
-            return this.vectors[key];
+            return vectors[key];
         },
 
         wipe: function(paper) {
             var pid = paper.guid();
 
-            for (var id in this.vectors) {
-                if (this.vectors.hasOwnProperty(id)) {
-                    if (this.vectors[id].tree.paper == pid) {
-                        delete this.vectors[id];
+            for (var id in vectors) {
+                if (vectors.hasOwnProperty(id)) {
+                    if (vectors[id].tree.paper == pid) {
+                        delete vectors[id];
                     }
                 }
             }
 
-            if (this.vectors[pid]) {
-                delete this.vectors[pid];
+            if (vectors[pid]) {
+                delete vectors[pid];
             }
+        },
+        
+        toString: function() {
+            return 'Graph.registry.Vector';
         }
 
     });

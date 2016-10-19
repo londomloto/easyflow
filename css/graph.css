@@ -202,22 +202,23 @@ text, tspan {
 }
 
 /** network */
-.graph-network {
+.graph-connectable {
     /*visibility: hidden;*/
     /*opacity: 0;*/
 }
 
-.graph-network.visible {
+.graph-connectable.visible {
     /*visibility: visible;*/
     /*opacity: 1;*/
 }
 
-.graph-connectable.disallowed:hover {
-    cursor: not-allowed;
+.graph-connectable.connect-invalid.connect-hover,
+.graph-connectable.connect-invalid:hover {
     fill: #FFDDE8;
 }
 
-.graph-connectable.allowed:hover {
+.graph-connectable.connect-valid.connect-hover,
+.graph-connectable.connect-valid:hover {
     fill: #DEFFC9;
 }
 
@@ -254,41 +255,16 @@ text, tspan {
     stroke: #007DFC;
 }
 
-.graph-link-bend {
-    /*fill: #007DFC;
-    stroke: #999;
-    stroke-width: 1;*/
-}
-
-.graph-link-vertex.vertex-n {
-    cursor: n-resize;
-}
-
-.graph-link-vertex.vertex-e {
-    cursor: e-resize;
-}
-
-.graph-link-helper {
-    fill: none;
-    /*stroke: #007DFC;
-    stroke: #3e7cf7;*/
-    stroke: #000000;
-    stroke-dasharray: 5 3;
-    /*display: none;*/
-}
-
-.graph-link-helper.visible {
-    /*display: inline;*/
-}
-
-.graph-link-tail,
 .graph-link-head {
-    stroke-width: 0;
-    fill: rgba(255, 184, 19, .5);
+
 }
 
 .graph-link-tail {
-    
+
+}
+
+.graph-link-bend {
+
 }
 
 /** ================= AUXILIARY ================= **/

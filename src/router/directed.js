@@ -16,31 +16,44 @@
 
                 for (var i = 0, ii = segments.length; i < ii; i++) {
                     segment = segments[i];
+                    
                     if (i === 0) {
+                        
                         x = segment[1];
                         y = segment[2];
+                        
+                        curve = Graph.curve([['M', x, y], ['C', x, y, x, y, x, y]]);
+                        point = curve.pointAt(curve.t(0), true);
+                        
+                        point.index = i;
+                        point.range = [0, 0];
+                        point.space = 0;
+                        
+                        points.push(point);
                     } else {
+                        
                         curve = Graph.curve([['M', x, y], segment]);
+                        
                         x = segment[5];
                         y = segment[6];
                         
                         length = curve.length();
                         
+                        // half
                         point = curve.pointAt(curve.t(length / 2), true);
-                        point.from = i - 1;
-                        point.to = i;
+                        point.index = i;
+                        point.range = [i - 1, i];
                         point.space = 0;
-
+                        
                         points.push(point);
                             
-                        if (i < ii - 1) {
-                            point = curve.pointAt(curve.t(length), true);
-                            point.from = i - 1;
-                            point.to = i + 1;
-                            point.space = 1;
-                            
-                            points.push(point);
-                        }
+                        // full
+                        point = curve.pointAt(curve.t(length), true);
+                        point.index = i;
+                        point.range = [i - 1, i + 1];
+                        point.space = 1;
+                        
+                        points.push(point);
                     }
                 }
 
@@ -148,7 +161,6 @@
                 routes = [start, end];
             }
             
-            // cropping
             var cable = Graph.path(Graph.util.points2path(routes));
             var inter;
             
@@ -190,16 +202,15 @@
                 routes[maxlen] = port;
             }
             
-            // cropping
             var closest;
             
-            closest = Router.closestIntersection(routes, srcnet.pathinfo(), tarbox.center(true));
+            closest = Router.getClosestIntersect(routes, srcnet.pathinfo(), tarbox.center(true));
             
             if (closest) {
                 routes[0] = closest;
             }
             
-            closest = Router.closestIntersection(routes, tarnet.pathinfo(), srcbox.center(true));
+            closest = Router.getClosestIntersect(routes, tarnet.pathinfo(), srcbox.center(true));
             
             if (closest) {
                 routes[maxlen] = closest;
@@ -209,7 +220,7 @@
             this.fire('route', {command: this.command()});
         },
         
-        initBending: function(trans) {
+        initTrans: function(context) {
             var source = this.source(),
                 target = this.target(),
                 srcnet = source.connectable(),
@@ -217,42 +228,85 @@
                 sourcePath = srcnet.pathinfo(),
                 targetPath = tarnet.pathinfo(),
                 waypoints = this.waypoints(),
-                rangeStart = trans.range.start,
-                rangeEnd = trans.range.end,
+                rangeStart = context.range.start,
+                rangeEnd = context.range.end,
                 segmentStart = waypoints[rangeStart],
                 segmentEnd = waypoints[rangeEnd];
             
-            var snaps = [
-                waypoints[rangeStart],
-                waypoints[rangeEnd]
-            ];
-            
+            var snaps = [];
+
+            if (context.trans == 'BENDING') {
+                snaps = [
+                    waypoints[rangeStart],
+                    waypoints[rangeEnd]
+                ];
+            }
+
             var offset  = this.layout().offset();
             
-            trans.snap.hor = [];
-            trans.snap.ver = [];
+            context.snap.hor = [];
+            context.snap.ver = [];
             
             _.forEach(snaps, function(p){
                 if (p) {
-                    trans.snap.hor.push(p.y + offset.top);
-                    trans.snap.ver.push(p.x + offset.left);
+                    context.snap.hor.push(p.y + offset.top);
+                    context.snap.ver.push(p.x + offset.left);
                 }
             });
             
-            this.cached.bending = {
-                source: source,
-                target: target,
-                rangeStart: rangeStart,
-                rangeEnd: rangeStart,
-                segmentStart: segmentStart,
-                segmentEnd: segmentEnd,
-                original: waypoints.slice(),
-                sourcePath: sourcePath,
-                targetPath: targetPath
-            };
+            if (context.trans == 'BENDING') {
+                this.cached.bending = {
+                    source: source,
+                    target: target,
+                    rangeStart: rangeStart,
+                    rangeEnd: rangeStart,
+                    segmentStart: segmentStart,
+                    segmentEnd: segmentEnd,
+                    original: waypoints.slice(),
+                    sourcePath: sourcePath,
+                    targetPath: targetPath
+                };
+            } else {
+                this.cached.connect = {
+                    valid: false,
+                    source: null,
+                    target: null,
+                    sourcePath: null,
+                    targetPath: null,
+                    original: waypoints.slice()
+                };
+            }
+            
+        },
+
+        updateTrans: function(trans, data) {
+            if (trans == 'CONNECT') {
+                var connect = this.cached.connect,
+                    oldSource = connect.source,
+                    oldTarget = connect.target;
+                    
+                _.assign(connect, data);
+                
+                if (oldSource && connect.source) {
+                    if (oldSource.guid() != connect.source.guid()) {
+                        connect.sourcePath = connect.source.connectable().pathinfo();
+                    }
+                } else if ( ! oldSource && connect.source) {
+                    connect.sourcePath = connect.source.connectable().pathinfo();
+                }
+                
+                if (oldTarget && connect.target) {
+                    if (oldTarget.guid() != connect.target.guid()) {
+                        connect.targetPath = connect.target.connectable().pathinfo();
+                    }
+                } else if ( ! oldTarget && connect.target) {
+                    connect.targetPath = connect.target.connectable().pathinfo();
+                }
+                
+            }
         },
         
-        bending: function(trans, callback) {
+        bending: function(context, callback) {
             var bending = this.cached.bending,
                 routes = bending.original.slice(),
                 rangeStart = bending.rangeStart,
@@ -261,8 +315,8 @@
                 segmentEnd = bending.segmentEnd;
             
             var segment = {
-                x: trans.segment.x + trans.delta.x,
-                y: trans.segment.y + trans.delta.y
+                x: context.point.x + context.delta.x,
+                y: context.point.y + context.delta.y
             };
             
             var align1 = Graph.util.pointAlign(segmentStart, segment, 10),
@@ -284,24 +338,16 @@
                 segment.y = segmentEnd.y;
             }
             
-            trans.event.x = segment.x;
-            trans.event.y = segment.y;
+            context.event.x = segment.x;
+            context.event.y = segment.y;
             
-            routes.splice(rangeStart + 1, trans.space, segment);
+            routes.splice(rangeStart + 1, context.space, segment);
             bending.routes = routes;
             
-            this.cropping(trans, callback);
+            this.cropBinding(context, callback);
         },
         
-        stopBending: function(trans) {
-            var bending = this.cached.bending;
-            
-            this.tidify();
-            this.values.waypoints = bending.waypoints;
-            this.commit();
-        },
-        
-        cropping: _.debounce(function(trans, callback){
+        cropBinding: _.debounce(function(context, callback){
             var bending = this.cached.bending,
                 routes  = bending.routes,
                 srcport = Router.porting(routes, bending.sourcePath, true),
@@ -316,26 +362,106 @@
             bending.waypoints = cropped;
             
             if (callback) {
-                command = Graph.util.points2path(bending.waypoints);
+                command = Graph.util.points2path(cropped);
                 callback({command: command});
             }
             
         }, 0),
         
-        tidify: function() {
-            var bending = this.cached.bending,
-                points = bending.waypoints;
+        connecting: function(context, callback) {
+            var connect = this.cached.connect,
+                routes = connect.original.slice();
                 
-            var concised = _.filter(points, function(p, i){
-                if (Graph.util.isPointOnLine(points[i - 1], points[i + 1], p)) {
-                    return false;
-                }
-                return true;
-            });
+            var segment, command;
             
-            bending.waypoints = concised;   
+            segment = {
+                x: context.point.x + context.delta.x,
+                y: context.point.y + context.delta.y
+            };
+            
+            routes[context.index] = segment;
+            
+            context.event.x = segment.x;
+            context.event.y = segment.y;
+            
+            connect.routes = routes;
+            
+            this.cropConnect(context, callback);
         },
 
+        cropConnect: _.debounce(function(context, callback) {
+            var connect = this.cached.connect,
+                routes = connect.routes;
+
+            var command, shape, cable, inter;
+            
+            if (context.index === 0) {
+                if (connect.source) {
+                    shape = connect.sourcePath;
+                }
+            } else {
+                if (connect.target) {
+                    shape = connect.targetPath;
+                }
+            }
+
+            if (shape) {
+                cable = Graph.path(Graph.util.points2path(routes));
+                inter = shape.intersection(cable, true);
+
+                if (inter.length) {
+                    routes[context.index] = inter[0];
+                }
+            }
+            
+            connect.waypoints = routes;
+
+            if (callback) {
+                command = Graph.util.points2path(routes);
+                callback({command: command});
+            }
+        }, 0),
+        
+        stopTrans: function(context) {
+            var connect, bending, points, changed, concised;
+            
+            if (context.trans == 'CONNECT') {
+                connect = this.cached.connect;
+                points = connect.waypoints;
+                
+                if (this.cached.connect.valid) {
+                    changed = true;
+                    
+                    this.source(connect.source);
+                    this.target(connect.target);
+                    
+                    this.fire('reroute', {
+                        source: connect.source,
+                        target: connect.target
+                    });
+
+                } else {
+                    points = connect.original.slice();
+                    changed = false;
+                }
+            } else if (context.trans == 'BENDING') {
+                bending = this.cached.bending;
+                points = bending.waypoints;
+                changed = true;
+            }
+            
+            if (changed) {
+                this.values.waypoints = Router.tidyRoutes(points);;
+            } else {
+                this.values.waypoints = points;
+            }
+            
+            this.commit();
+            
+            this.cached.connect = null;
+            this.cached.bending = null;
+        },
+        
         toString: function() {
             return 'Graph.router.Directed';
         }

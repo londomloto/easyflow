@@ -1,6 +1,10 @@
 
 (function(){
-
+    
+    var CLS_CONNECT_VALID = 'connect-valid',
+        CLS_CONNECT_INVALID = 'connect-invalid',
+        CLS_CONNECT_HOVER = 'connect-hover';
+    
     Graph.plugin.Network = Graph.extend(Graph.plugin.Plugin, {
 
         props: {
@@ -9,23 +13,141 @@
         },
 
         links: [],
-
+        
         cached: {
             bboxMatrix: null,
             pathMatrix: null
         },
+        
+        linking: {
+            valid: false,
+            router: null,
+            source: null,
+            target: null,
+            link: null,
+            pole: null
+        },
 
         constructor: function(vector, options) {
-            _.assign(this.props, options || {});
-            this.props.vector = vector.guid();
+            var me = this, guid = vector.guid();
             
+            _.assign(me.props, options || {});
+            
+            me.props.vector = guid;
             vector.addClass('graph-connectable');
+            
+            // setup link droppable
+            
+            var vendor = vector.interactable().vendor();
+            
+            vendor.dropzone({
+                accept: _.format('.{0}, .{1}', Graph.string.CLS_LINK_HEAD, Graph.string.CLS_LINK_TAIL),
+                overlap: .2
+            })
+            .on('dropdeactivate', function(e){
+                var v = Graph.registry.vector.get(e.target);
+                
+                if (v) {
+                    v.removeClass([CLS_CONNECT_VALID, CLS_CONNECT_INVALID, CLS_CONNECT_HOVER]);
+                }
+                me.invalidateTrans();
+            })
+            .on('dropactivate', function(e){
+                var v = Graph.registry.vector.get(e.target);
+                
+                if (v) {
+                    v.addClass(CLS_CONNECT_HOVER);
+                }
+                
+                me.invalidateTrans();
+            })
+            .on('dragenter', function(e){
+                var link = Graph.registry.link.get(e.relatedTarget);
+
+                if (link) {
+                    var pole = Graph.$(e.relatedTarget).data('pole');
+                    var valid, source, target;
+
+                    if (pole == 'head') {
+                        source = link.router.source();
+                        target = vector;
+                    } else {
+                        source = vector;
+                        target = link.router.target();
+                    }
+    
+                    valid  = source.connectable().canConnect(target.connectable(), link);
+                    
+                    if (valid) {
+                        vector.removeClass(CLS_CONNECT_INVALID);
+                        vector.addClass(CLS_CONNECT_VALID);
+                    } else {
+                        vector.removeClass(CLS_CONNECT_VALID);
+                        vector.addClass(CLS_CONNECT_INVALID);
+                    }
+                    
+                    _.assign(me.linking, {
+                        valid: valid,
+                        router: link.router,
+                        source: source,
+                        target: target,
+                        pole: pole
+                    });
+
+                    link.router.updateTrans('CONNECT', {
+                        valid: valid,
+                        source: source,
+                        target: target
+                    });
+                }
+            })
+            .on('dragleave', function(e){
+                var v = Graph.registry.vector.get(e.target);
+                if (v) {
+                    v.removeClass([CLS_CONNECT_VALID, CLS_CONNECT_INVALID]);
+                }
+                
+                me.linking.valid = false;
+                
+                if (me.linking.pole == 'head') {
+                    me.linking.router.updateTrans('CONNECT', {
+                        valid: false,
+                        target: null
+                    });    
+                } else {
+                    me.linking.router.updateTrans('CONNECT', {
+                        valid: false,
+                        source: null
+                    });
+                }
+                
+            })
+            .on('drop', function(e){
+                if (me.linking.valid) {
+                    if (me.linking.pole == 'head') {
+                        me.linking.router.updateTrans('CONNECT', {
+                            target: vector
+                        });
+                    } else {
+                        me.linking.router.updateTrans('CONNECT', {
+                            source: vector
+                        });
+                    }
+                }
+            });
+            
         },
 
         invalidate: function() {
             this.cached.bboxMatrix = null;
             this.cached.pathMatrix = null;
         },
+        
+        invalidateTrans: function() {
+            for (var name in this.linking) {
+                this.linking[name] = null;
+            }
+        },  
         
         bboxMatrix: function() {
             var matrix = this.cached.bboxMatrix;
@@ -143,6 +265,30 @@
             srcbox = refbox = null;
             
             return orient;
+        },
+        
+        isSource: function(link) {
+            return link.source().guid() == this.vector().guid();
+        },
+        
+        isTarget: function(link) {
+            return link.target().guid() == this.vector().guid();
+        },
+        
+        ///////// RULES /////////
+        
+        /**
+         * Can connect to target network
+         */
+        canConnect: function(network, link) {
+            var a = this.vector().guid(),
+                b = network.vector().guid();
+            
+            if (a != b) {
+                return true;
+            }
+
+            return false;
         }
 
     });

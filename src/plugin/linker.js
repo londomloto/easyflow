@@ -24,7 +24,8 @@
             source: null,
             start: null,
             target: null,
-            end: null
+            end: null,
+            visits: []
         },
 
         constructor: function(vector) {
@@ -115,6 +116,14 @@
                     target: null,
                     end: null
                 });
+                
+                if (this.linking.visits) {
+                    _.forEach(this.linking.visits, function(v){
+                        v.removeClass('connect-valid connect-invalid');
+                    });
+                }
+                
+                this.linking.visits = null;
             }
         },
 
@@ -154,21 +163,21 @@
         cropping: function(start, end) {
             var source = this.linking.source,
                 target = this.linking.target,
-                sample = new Graph.lang.Path([['M', start.x, start.y], ['L', end.x, end.y]]);
+                cable = new Graph.lang.Path([['M', start.x, start.y], ['L', end.x, end.y]]);
 
             var spath, scrop, tpath, tcrop;
 
             if (source) {
                 spath = source.connectable().pathinfo();
-                scrop = spath.intersection(sample, true);
+                scrop = spath.intersection(cable, true);
             }
 
             if (target) {
                 tpath = target.connectable().pathinfo();
-                tcrop = tpath.intersection(sample, true);
+                tcrop = tpath.intersection(cable, true);
             }
 
-            sample = spath = tpath = null;
+            cable = spath = tpath = null;
 
             return {
                 start: scrop ? scrop[0] : null,
@@ -210,8 +219,14 @@
                     this.build();
                 }
             } else {
+                
+                this.linking.visits = [];
+
                 if (vector.isConnectable()) {
                     var sbox, port;
+
+                    // track visit
+                    this.linking.visits.push(vector);
 
                     if ( ! this.linking.source) {
                         
@@ -234,13 +249,11 @@
 
                     this.linking.enabled = true;
                     this.linking.moveHandler = _.bind(this.onPointerMove, this, _, paper);
-                    this.linking.stopHandler = _.bind(this.onPointerStop, this, _, paper);
 
                     paper.addClass('linking');
 
                     vendor = paper.interactable().vendor();
                     vendor.on('move', this.linking.moveHandler);
-                    vendor.on('up', this.linking.stopHandler);
                 }
             }
         },
@@ -265,18 +278,23 @@
             x += tdx;
             y += tdy;
 
-            var current = layout.grabVector(e);
+            var current = layout.grabVector(e),
+                valid = false;
+
             var target, crop, tbox, port;
 
-            if (current && current.isConnectable() && current !== this.linking.source) {
-                if (current !== this.linking.target) {
-                    
-                    if (this.linking.target) {
-                        this.linking.target.removeClass('allowed');    
-                    }
+            if (current && current.isConnectable()) {
+                
+                if (this.linking.visits.indexOf(current.guid()) === -1) {
+                    this.linking.visits.push(current);
+                }
 
+                if (this.linking.source.connectable().canConnect(current.connectable())) {
+                    valid = true;
                     target = current;
-                    target.addClass('allowed');
+
+                    target.removeClass('connect-invalid');
+                    target.addClass('connect-valid');
                     
                     tbox = current.connectable().bbox();
                     port = tbox.center(true);
@@ -297,8 +315,19 @@
                     }
 
                     tbox = port = null;
+
+                } else {
+                    current.removeClass('connect-valid');
+                    current.addClass('connect-invalid');
                 }
-            } else {
+            }
+
+            if ( ! valid) {
+
+                if (this.linking.target) {
+                    this.linking.target.removeClass('connect-valid connect-invalid');
+                }
+
                 this.linking.target = null;
                 this.linking.end    = null;
 
@@ -315,10 +344,6 @@
                 }
             }
 
-        },
-
-        onPointerStop: function(e, paper) {
-            
         }
 
     });

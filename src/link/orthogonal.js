@@ -15,42 +15,58 @@
             }
 
             var points = this.cached.bendpoints,
+                linkid = me.guid(),
+                maxlen = points.length - 1,
                 controls = [];
 
-            _.forEach(points, function(dot){
-                var control, cursor, align, axis, x, y;
-
-                x = dot.x;
-                y = dot.y;
-
+            _.forEach(points, function(dot, i){
+                var control, cursor, align, axis, drag;
+                
                 control = (new Graph.svg.Image(
                     Graph.config.base + 'img/resize-control.png',
-                    x - 17 / 2,
-                    y - 17 / 2,
+                    dot.x - 17 / 2,
+                    dot.y - 17 / 2,
                     17,
                     17
                 ));
-
+                
                 control.selectable(false);
+                control.removeClass(Graph.string.CLS_VECTOR_IMAGE);
                 control.elem.group('graph-link');
-
-                align  = Graph.util.pointAlign(dot.start, dot.end);
-                axis   = align == 'v' ? 'y' : 'x';
-                cursor = axis  == 'x' ? 'ew-resize' : 'ns-resize';
-
-                control.draggable({
-                    axis: axis
-                });
+                control.elem.data(Graph.string.ID_LINK, linkid);
+                
+                drag = {};
+                axis = null;
+                cursor = 'default';
+                
+                if (i === 0) {
+                    control.addClass(Graph.string.CLS_LINK_TAIL);
+                    control.elem.data('pole', 'tail');
+                } else if (i === maxlen) {
+                    control.addClass(Graph.string.CLS_LINK_HEAD);
+                    control.elem.data('pole', 'head');
+                } else {
+                    align  = Graph.util.pointAlign(dot.start, dot.end);
+                    axis   = align == 'v' ? 'y' : 'x';
+                    cursor = axis  == 'x' ? 'ew-resize' : 'ns-resize';
                     
-
-                var trans = {
+                    drag = {axis: axis};
+                }
+                
+                var context = {
+                    
+                    trans: (i === 0 || i === maxlen) ? 'CONNECT' : 'BENDING',
+                    index: dot.index,
                     axis: axis,
-                    
                     cursor: cursor,
-
+                    point: {
+                        x: dot.x,
+                        y: dot.y
+                    },
+                    
                     ranges: {
-                        start: dot.from,
-                        end: dot.to
+                        start: dot.range[0],
+                        end:   dot.range[1]
                     },
                     
                     event: {
@@ -68,12 +84,14 @@
                         y: 0
                     }
                 };
-
+                
+                
+                control.draggable(drag);
                 control.cursor(cursor);
-
-                control.on('dragstart', _.bind(me.onControlStart, me, _, trans, control));
-                control.on('dragmove',  _.bind(me.onControlMove,  me, _, trans));
-                control.on('dragend',   _.bind(me.onControlEnd,   me, _, trans, control));
+                
+                control.on('dragstart', _.bind(me.onControlStart, me, _, context, control));
+                control.on('dragmove',  _.bind(me.onControlMove,  me, _, context));
+                control.on('dragend',   _.bind(me.onControlEnd,   me, _, context, control));
  
                 control.render(editor);
                 controls.push(control.guid());
@@ -83,13 +101,13 @@
             controls = null;
         },
 
-        onControlStart: function(e, trans, control) {
-            this.component('coat').cursor(trans.cursor);
-            this.router.initBending(trans);
+        onControlStart: function(e, context, control) {
+            this.component('coat').cursor(context.cursor);
+            this.router.initTrans(context);
             
             // snapping
-            var snaphor = trans.snap.hor,
-                snapver = trans.snap.ver;
+            var snaphor = context.snap.hor,
+                snapver = context.snap.ver;
                 
             control.draggable().snap([
                 function(x, y) {
@@ -114,23 +132,29 @@
             control.show();
         },
 
-        onControlMove: function(e, trans) {
+        onControlMove: function(e, context) {
             var me = this;
             
-            trans.delta.x += e.dx;
-            trans.delta.y += e.dy;
+            context.delta.x += e.dx;
+            context.delta.y += e.dy;
             
             var x1, y1, x2, y2, dx, dy;
             
-            x1 = trans.event.x;
-            y1 = trans.event.y;
+            x1 = context.event.x;
+            y1 = context.event.y;
             
-            me.router.bending(trans, function(result){
-                me.update(result.command);
-            });
+            if (context.trans == 'BENDING') {
+                me.router.bending(context, function(result){
+                    me.update(result.command);
+                });
+            } else {
+                me.router.connecting(context, function(result){
+                    me.update(result.command);
+                });
+            }
             
-            x2 = trans.event.x;
-            y2 = trans.event.y;
+            x2 = context.event.x;
+            y2 = context.event.y;
             
             dx = x2 - x1;
             dy = y2 - y1;
@@ -140,15 +164,12 @@
             e.originalData.dy = dy;
         },
 
-        onControlEnd: function(e, trans, control) {
+        onControlEnd: function(e, context, control) {
             this.component('coat').cursor('pointer');
-            this.router.stopBending();
-            
+            this.router.stopTrans(context);
             this.update(this.router.command());
-            
             this.invalidate();
             this.resumeControl();
-            
         }
 
     });

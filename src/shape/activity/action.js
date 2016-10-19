@@ -30,10 +30,10 @@
             block.editable();
             block.connectable({wiring: 'h:v'});
 
-            block.on('edit',    _.bind(me.onLabelEdit, me));
-            block.on('dragend', _.bind(me.onDragEnd, me));
-            block.on('resize',  _.bind(me.onResize, me));
-            block.on('remove',  _.bind(me.onRemove, me));
+            block.on('edit.shape',    _.bind(me.onLabelEdit, me));
+            block.on('dragend.shape', _.bind(me.onDragEnd, me));
+            block.on('resize.shape',  _.bind(me.onResize, me));
+            block.on('remove.shape',  _.bind(me.onRemove, me));
 
             label = (new Graph.svg.Text(cx, cy, me.props.label))
                 .clickable(false)

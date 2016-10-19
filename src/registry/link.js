@@ -1,27 +1,31 @@
 
 (function(){
 
+    var links = {};
+
     var Registry = Graph.extend({
 
         links: {},
-        
-        constructor: function() {},
+
+        constructor: function() {
+            this.links = links;
+        },
 
         register: function(link) {
             var id = link.guid();
-            this.links[id] = link;
+            links[id] = link;
         },
 
         unregister: function(link) {
             var id = link.guid();
-            if (this.links[id]) {
-                this.links[id] = null;
-                delete this.links[id];
+            if (links[id]) {
+                links[id] = null;
+                delete links[id];
             }
         },
 
         count: function() {
-            return _.keys(this.links).length;
+            return _.keys(links).length;
         },
 
         get: function(key) {
@@ -35,7 +39,7 @@
                 key = key.data(Graph.string.ID_LINK);
             }
 
-            return this.links[key];
+            return links[key];
         },
         
         /**
@@ -81,7 +85,7 @@
         },
         
         toArray: function() {
-            var links = this.links, keys = _.keys(links);
+            var keys = _.keys(links);
             return _.map(keys, function(k){
                 return links[k];
             });

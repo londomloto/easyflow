@@ -144,20 +144,20 @@
          */
         clazz.prototype.off = function(type, handler) {
             var part, fire, lsnr, rgex;
-
+            
             part = _.split(type, '.');
             fire = part.shift();
-            lsnr = fire ? (this.listeners[fire] || []) : [];
+            lsnr = fire ? (this.listeners[fire] || []).slice() : [];
 
             var cached = Graph.lookup('Regex.event', type);
-
+            
             if (cached.rgex) {
                 rgex = cached.rgex;
             } else {
-                rgex = new RegExp(_.escapeRegExp(type), 'gi');
+                rgex = new RegExp(_.escapeRegExp(type), 'i');
                 cached.rgex = rgex;
             }
-
+            
             if (lsnr.length) {
                 for (var i = lsnr.length - 1; i >= 0; i--) {
                     if (handler) {
@@ -190,6 +190,8 @@
             }
 
             rgex = null;
+            lsnr = null;
+            
             return this;
         };
 

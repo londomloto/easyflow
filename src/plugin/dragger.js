@@ -68,7 +68,7 @@
 
             me.initComponent();
 
-            vector.on('render', _.bind(me.onVectorRender, me));
+            vector.on('render.dragger', _.bind(me.onVectorRender, me));
             
             if (vector.props.rendered) {
                 me.setup();
@@ -421,7 +421,7 @@
         },
 
         onDragMove: function(e) {
-
+            
             var trans = this.trans,
                 paper = trans.paper,
                 vector = trans.vector,

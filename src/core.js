@@ -210,7 +210,10 @@
         CLS_VECTOR_ELLIPSE: 'graph-elem graph-elem-ellipse',
         CLS_VECTOR_POLYGON: 'graph-elem graph-elem-polygon',
         CLS_VECTOR_POLYLINE: 'graph-elem graph-elem-polyline',
-        CLS_VECTOR_VIEWPORT: 'graph-viewport'
+        CLS_VECTOR_VIEWPORT: 'graph-viewport',
+
+        CLS_LINK_HEAD: 'graph-link-head',
+        CLS_LINK_TAIL: 'graph-link-tail'
     };
 
     /**

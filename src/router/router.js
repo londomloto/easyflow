@@ -20,7 +20,8 @@
             segments: null,
             pathinfo: null,
             bendpoints: null,
-            bending: null
+            bending: null,
+            connect: null
         },
 
         constructor: function(domain, source, target, options) {
@@ -44,12 +45,20 @@
             return Graph.registry.vector.get(this.props.domain);
         },
 
-        source: function() {
-            return Graph.registry.vector.get(this.props.source);
+        source: function(source) {
+            if (source === undefined) {
+                return Graph.registry.vector.get(this.props.source);
+            }
+            this.props.source = source.guid();
+            return this;
         },
 
-        target: function() {
-            return Graph.registry.vector.get(this.props.target);
+        target: function(target) {
+            if (target === undefined) {
+                return Graph.registry.vector.get(this.props.target);
+            }
+            this.props.target = target.guid();
+            return this;
         },
 
         layout: function() {
@@ -132,29 +141,7 @@
             var points = this.cached.bendpoints;
 
             if ( ! points) {
-                var segments = this.pathinfo().curve().segments;
-                var segment, curve, length, point, x, y;
-
-                points = [];
-
-                for (var i = 0, ii = segments.length; i < ii; i++) {
-                    segment = segments[i];
-                    if (i === 0) {
-                        x = segment[1];
-                        y = segment[2];
-                    } else {
-                        curve = Graph.curve([['M', x, y], segment]);
-                        x = segment[5];
-                        y = segment[6];
-                        length = curve.length() / 2;
-                        point = curve.pointAt(curve.t(length), true);
-                        point.from = i - 1;
-                        point.to = i;
-
-                        points.push(point);
-                    }
-                }
-
+                points = (this.values.waypoints || []).slice();
                 this.cached.bendpoints = points;
             }
 
@@ -196,11 +183,7 @@
         repair: function(component, port) {
             
         },
-
-        reroute: function() {
-            return this.route();
-        },
-
+        
         relocate: function(dx, dy) {
             _.forEach(this.values.waypoints, function(p){
                 p.x += dx;
@@ -209,6 +192,28 @@
 
             this.commit();
             return this;
+        },
+
+        ///////// ROUTER TRANS /////////
+
+        initTrans: function(context) {
+
+        },
+
+        updateTrans: function(trans) {
+
+        },
+
+        bending: function() {
+
+        },
+
+        connecting: function() {
+
+        },
+
+        stopTrans: function(context) {
+
         }
         
     });
@@ -248,7 +253,7 @@
         };
     };
 
-    Router.possibleRepair = function(routes) {
+    Router.isRepairable = function(routes) {
         var count = routes.length;
         
         if (count < 3) {
@@ -265,11 +270,11 @@
         });
     };
 
-    Router.pointSegment = function(routes, point) {
+    Router.getSegmentIndex = function(routes, vertext) {
         var segment = 0;
 
         _.forEach(routes, function(p, i){
-            if (Graph.util.isPointOnLine(p, routes[i + 1], point)) {
+            if (Graph.util.isPointOnLine(p, routes[i + 1], vertext)) {
                 segment = i;
                 return false;
             }
@@ -287,7 +292,7 @@
         });
     };
 
-    Router.closestIntersection = function(routes, shape, offset) {
+    Router.getClosestIntersect = function(routes, shape, offset) {
         var cable = Graph.path(Graph.util.points2path(routes)),
             inter = shape.intersection(cable, true),
             distance = Infinity;
@@ -340,6 +345,15 @@
         clonedRoutes[1] = Router.repairBendpoint(clonedRoutes[1], oldport, newport);
         
         return clonedRoutes;
+    };
+
+    Router.tidyRoutes = function(routes) {
+        return _.filter(routes, function(p, i){
+            if (Graph.util.isPointOnLine(routes[i - 1], routes[i + 1], p)) {
+                return false;
+            }
+            return true;
+        });
     };
 
 }());

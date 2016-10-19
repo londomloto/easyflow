@@ -216,6 +216,9 @@
             return this;
         },
 
+        /**
+         * Get or set reactor plugin
+         */
         interactable: function(options) {
             if ( ! this.plugins.reactor) {
                 this.plugins.reactor = new Graph.plugin.Reactor(this, options);
@@ -223,6 +226,9 @@
             return this.plugins.reactor;
         },
 
+        /**
+         * Get or set animator plugin
+         */
         animable: function() {
             var me = this;
 
@@ -243,6 +249,9 @@
             return me.plugins.animator;
         },
         
+        /**
+         * Get or set resizer plugin
+         */
         resizable: function(config) {
             if ( ! this.plugins.resizer) {
                 this.plugins.resizer = new Graph.plugin.Resizer(this, config);
@@ -253,6 +262,9 @@
             return this.plugins.resizer;
         },
 
+        /**
+         * Get or set dragger plugin
+         */
         draggable: function(config) {
             if ( ! this.plugins.dragger) {
                 this.plugins.dragger = new Graph.plugin.Dragger(this, config);
@@ -266,6 +278,9 @@
             return this.plugins.dragger;
         },
 
+        /**
+         * Get or set panzoom plugin
+         */
         zoomable: function() {
             if ( ! this.plugins.panzoom) {
                 this.plugins.panzoom = new Graph.plugin.Panzoom(this);
@@ -274,6 +289,9 @@
             return this.plugins.panzoom;
         },
 
+        /**
+         * Get or set dropzone/dropper plugin
+         */
         droppable: function() {
             if ( ! this.plugins.dropper) {
                 this.plugins.dropper = new Graph.plugin.Dropper(this);
@@ -286,6 +304,9 @@
             return this.plugins.dropper;
         },
 
+        /**
+         * Get or set sortable plugin
+         */
         sortable: function(config) {
             if ( ! this.plugins.sorter) {
                 this.plugins.sorter = new Graph.plugin.Sorter(this, config);
@@ -293,6 +314,9 @@
             return this.plugins.sorter;
         },
 
+        /**
+         * Get or set network plugin
+         */
         connectable: function(config) {
             if ( ! this.plugins.network) {
                 this.plugins.network = new Graph.plugin.Network(this, config);
@@ -300,6 +324,9 @@
             return this.plugins.network;
         },
 
+        /**
+         * Get or set traversable state
+         */
         traversable: function(value) {
             if (value === undefined) {
                 return this.props.traversable;
@@ -308,6 +335,9 @@
             return this;
         },
 
+        /**
+         * Get or set selectable state
+         */
         selectable: function(value) {
             if (value === undefined) {
                 return this.props.selectable;
@@ -316,6 +346,9 @@
             return this;
         },
 
+        /**
+         * Get or set clickable state
+         */
         clickable: function(value) {
             var me = this;
 
@@ -332,6 +365,9 @@
             return this;
         },
 
+        /**
+         * Get or set label editor plugin
+         */
         editable: function(options) {
             var me = this;
             if ( ! this.plugins.editor) {
@@ -449,25 +485,17 @@
         },
 
         addClass: function(added) {
-            var classes = _.trim(
-                _.join(
-                    _.uniq(
-                        _.concat(
-                            _.split(this.attrs['class'], ' '),
-                            _.split(added, ' ')
-                        )
-                    ),
-                    ' '
-                )
-            );
-
+            var classes = _.chain(this.attrs['class']).split(' ').concat(_.split(added, ' ')).uniq().join(' ').trim().value();
             this.attr('class', classes);
             return this;
         },
 
         removeClass: function(removed) {
-            var classes = _.split(this.attrs['class'], ' ');
-            _.pullAll(classes, _.split(removed, ' '));
+            var classes = _.split(this.attrs['class'], ' '),
+                removal = _.isArray(removed) ? removed : _.split(removed, ' ');
+
+            _.pullAll(classes, removal);
+
             this.attr('class', _.join(classes, ' '));
             return this;
         },
@@ -538,6 +566,9 @@
             return size;
         },
 
+        /**
+         * Get absolute position
+         */
         offset: function() {
             var node = this.node(),
                 bbox = node.getBoundingClientRect();
@@ -554,6 +585,9 @@
             return offset;
         },
 
+        /**
+         * Get relative posisition to canvas
+         */
         position: function() {
             if ( ! this.cached.position) {
                 var node = this.node(),

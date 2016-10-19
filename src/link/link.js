@@ -8,7 +8,9 @@
             guid: null,
             rendered: false,
             selected: false,
-            label: ''
+            label: '',
+            source: null,
+            target: null
         },
 
         components: {
@@ -21,7 +23,12 @@
             bendpoints: null,
             controls: null
         },
-
+        
+        handlers: {
+            source: null,
+            target: null
+        },
+        
         router: null,
 
         constructor: function(router, options) {
@@ -35,44 +42,12 @@
             this.router = router;
 
             this.initComponent();
+            this.bindResource('source', router.source());
+            this.bindResource('target', router.target());
 
             this.router.on('route', _.bind(this.onRouterRoute, this));
-            this.router.on('routing', _.bind(this.onRouterRoute, this));
-
-            var source = router.source(),
-                target = router.target();
-
-            source.on({
-                resize: _.bind(this.onSourceResize, this),
-                rotate: _.bind(this.onSourceRotate, this)
-            });
-
-            // VERY EXPENSIVE!!!
-            if (source.isDraggable()) {
-                source.on('dragstart', _.bind(this.onSourceDragStart, this, _, source));
-                if ( ! source.draggable().ghost()) {
-                    source.on('dragmove', _.bind(this.onSourceDrag, this));
-                } else {
-                    source.on('dragend', _.bind(this.onSourceDragEnd, this));
-                }
-            }
+            this.router.on('reroute', _.bind(this.onRouterReroute, this));
             
-            target.on({
-                resize: _.bind(this.onTargetResize, this),
-                rotate: _.bind(this.onTargetRotate, this)
-            });
-
-            // VERY EXPENSIVE!!!
-            if (target.isDraggable()) {
-                target.on('dragstart', _.bind(this.onTargetDragStart, this, _, target));
-
-                if ( ! target.draggable().ghost()) {
-                    target.on('dragmove', _.bind(this.onTargetDrag, this));
-                } else {
-                    target.on('dragend', _.bind(this.onTargetDragEnd, this));
-                }
-            }
-
             Graph.registry.link.register(this);
         },
 
@@ -137,6 +112,58 @@
             comp.label = label.guid();
             comp.editor = editor.guid();
         },
+        
+        bindResource: function(type, resource) {
+            var router = this.router,
+                existing = this.props[type],
+                handlers = this.handlers[type];
+            
+            if (existing && handlers) {
+                existing = Graph.registry.vector.get(existing);
+                if (existing) {
+                    var name, ns;
+                    for (name in handlers) {
+                        ns = name + '.link';
+                        existing.off(ns, handlers[name]);
+                        ns = null;
+                    }
+                }
+            }
+            
+            handlers = {};
+
+            handlers.resize    = _.bind(getHandler(this, type, 'resize'), this);
+            handlers.rotate    = _.bind(getHandler(this, type, 'rotate'), this);
+            handlers.dragstart = _.bind(getHandler(this, type, 'dragstart'), this, _, resource);
+            handlers.dragmove  = _.bind(getHandler(this, type, 'dragmove'), this);
+            handlers.dragend   = _.bind(getHandler(this, type, 'dragend'), this);
+
+            this.handlers[type] = handlers;
+            this.props[type] = resource.guid();
+            
+            resource.on('resize.link', handlers.resize);
+            resource.on('rotate.link', handlers.rotate);
+            
+            // VERY EXPENSIVE!!!
+            if (resource.isDraggable()) {
+                resource.on('dragstart.link', handlers.dragstart);
+                if ( ! resource.draggable().ghost()) {
+                    resource.on('dragmove.link', handlers.dragmove);
+                } else {
+                    resource.on('dragend.link', handlers.dragend);
+                }
+            }
+
+            return this;
+        },
+
+        bindSource: function(source) {
+            return this.bindResource('source', source);
+        },
+
+        bindTarget: function(target) {
+            return this.bindResource('target', target);
+        },
 
         component: function(name) {
             if (name === undefined) {
@@ -144,7 +171,7 @@
             }
             return Graph.registry.vector.get(this.components[name]);
         },
-
+        
         invalidate: function() {
             this.cached.bendpoints = null;
         },
@@ -231,6 +258,18 @@
             var command = e.command;
             this.update(command);
         },
+        
+        onRouterReroute: function(e) {
+            var source = e.source,
+                target = e.target;
+
+            this.bindResource('source', source);
+            this.bindResource('target', target);
+            
+            // bring to front
+            var container = this.component().parent();
+            this.component().elem.appendTo(container.elem);
+        },
 
         onCoatEdit: function(e) {
             var label = this.component('label');
@@ -265,7 +304,7 @@
     
         },
 
-        onSourceDragStart: function(e, source) {
+        onSourceDragstart: function(e, source) {
             var lasso = this.component('coat').$collector;
             if ( ! source.$collector) {
                 if (lasso) {
@@ -274,17 +313,16 @@
             }
         },
 
-        onSourceDrag: function() {
+        onSourceDragmove: function() {
             this.router.repair('source');
         },
 
-        onSourceDragEnd: function(e) {
+        onSourceDragend: function(e) {
             var lasso = this.component('coat').$collector;
             if ( ! lasso) {
                 var port = this.router.tail();
                 port.x += e.dx;
                 port.y += e.dy;
-                
                 this.router.repair(this.router.source(), port);
             }
         },
@@ -302,7 +340,7 @@
             
         },
 
-        onTargetDragStart: function(e, target) {
+        onTargetDragstart: function(e, target) {
             var lasso = this.component('coat').$collector;
             if ( ! target.$collector) {
                 if (lasso) {
@@ -311,15 +349,14 @@
             }
         },
 
-        onTargetDrag: function() {
+        onTargetDragmove: function() {
             this.router.repair('target');
         },
 
-        onTargetDragEnd: function(e) {
+        onTargetDragend: function(e) {
             var lasso = this.component('coat').$collector;
             if ( ! lasso) {
                 var port = this.router.head();
-                
                 port.x += e.dx;
                 port.y += e.dy;
                     
@@ -341,5 +378,14 @@
     ///////// STATICS /////////
     
     Link.guid = 0;
+
+    ///////// HELPERS /////////
+    
+    function getHandler(scope, resource, handler) {
+        var name = 'on' + _.capitalize(resource) + _.capitalize(handler),
+            func = scope[name];
+        name = null;
+        return func;
+    }
 
 }());

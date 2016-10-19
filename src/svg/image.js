@@ -40,11 +40,11 @@
                 align = '';
 
             aspect = /(meet|slice)/.test(aspect) 
-                ? aspect.replace(/(.*)\s*(meet|slice)/gi, '$2')
+                ? aspect.replace(/(.*)\s*(meet|slice)/i, '$2')
                 : '';
 
             scale = _.defaultTo(scale, aspect);
-            value = value.replace(/s+/g, ' ').toLowerCase();
+            value = value.replace(/s+/, ' ').toLowerCase();
 
             switch(value) {
                 case 'top left':
