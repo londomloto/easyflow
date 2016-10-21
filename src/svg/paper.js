@@ -65,9 +65,13 @@
             me.utils.spotlight = new Graph.util.Spotlight(me);
             me.utils.hinter = null; // new Graph.util.Hinter(me);
             me.utils.toolpad = new Graph.util.Toolpad(me);
-
+            
             me.on('pointerdown', _.bind(me.onPointerDown, me));
             me.on('keynav', _.bind(me.onNavigation, me));
+
+            // subscribe topics
+            Graph.topic.subscribe('link/update', _.bind(me.listenLinkUpdate, me));
+            Graph.topic.subscribe('shape/draw',  _.bind(me.listenShapeDraw, me));
         },
 
         initLayout: function() {
@@ -124,8 +128,6 @@
             }1
             
             viewport.layout(options);
-            viewport.graph.layout.on('refresh', _.bind(this.onLayoutRefresh, this));
-
             return this;
         },
 
@@ -211,13 +213,15 @@
 
             source = Graph.isShape(source) ? source.hub() : source;
             target = Graph.isShape(target) ? target.hub() : target;
-            
             layout = this.layout();
             router = layout.createRouter(source, target, options);
             
             link = layout.createLink(router);
+            
             link.connect(start, end);
             link.render(this);
+
+            return link;
         },
 
         parse: function(json) {
@@ -250,25 +254,6 @@
 
         ///////// OBSERVERS /////////
         
-        onLayoutRefresh: function(e) {
-            var me = this,
-                viewport = this.viewport(),
-                snapping = this.layout().dragSnapping();
-            
-            viewport.cascade(function(v){
-                if (v !== viewport) {
-                    if (v.isDraggable()) {
-                        v.draggable().snap(snapping);    
-                    }
-
-                    if (v.isResizable()) {
-                        v.resizable().snap(snapping);
-                    }
-                }
-            });
-
-        },
-
         onPointerDown: function(e) {
             if (e.target === this.node()) {
                 var tool = this.tool().current();
@@ -295,7 +280,17 @@
 
                     break;
             }
-        }
+        },
+
+        ///////// TOPIC LISTENERS /////////
+        
+        listenLinkUpdate: _.debounce(function() {
+            this.layout().arrangeLinks();
+        }, 300),
+
+        listenShapeDraw: _.debounce(function() {
+            this.layout().arrangeShapes();
+        }, 1)
 
     });
 

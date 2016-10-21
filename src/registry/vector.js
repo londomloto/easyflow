@@ -1,14 +1,15 @@
 
 (function(){
     
-    var vectors = {};
+    var storage = {},
+        context = {};
     
     var Registry = Graph.extend({
         
-        vectors: {},
+        context: {},
 
         constructor: function() {
-            this.vectors = vectors;
+            this.context = context;
         },
 
         register: function(vector) {
@@ -34,25 +35,34 @@
                 // });
             }
 
-            vectors[id] = vector;
+            storage[id] = vector;
         },
 
         unregister: function(vector) {
             var id = vector.guid();
-            if (vectors[id]) {
-                vectors[id] = null;
-                delete vectors[id];
+            if (storage[id]) {
+                delete storage[id];
+            }
+
+            if (context[id]) {
+                delete context[id];
+            }
+        },
+
+        setContext: function(id, scope) {
+            if (storage[id]) {
+                context[id] = scope;
             }
         },
 
         count: function() {
-            return _.keys(vectors).length;
+            return _.keys(storage).length;
         },
 
         toArray: function() {
-            var keys = _.keys(vectors);
+            var keys = _.keys(storage);
             return _.map(keys, function(k){
-                return vectors[k];
+                return storage[k];
             });
         },
 
@@ -71,22 +81,22 @@
             } else if (key instanceof Graph.dom.Element) {
                 key = key.data(Graph.string.ID_VECTOR);
             }
-            return vectors[key];
+            return storage[key];
         },
 
         wipe: function(paper) {
             var pid = paper.guid();
 
-            for (var id in vectors) {
-                if (vectors.hasOwnProperty(id)) {
-                    if (vectors[id].tree.paper == pid) {
-                        delete vectors[id];
+            for (var id in storage) {
+                if (storage.hasOwnProperty(id)) {
+                    if (storage[id].tree.paper == pid) {
+                        delete storage[id];
                     }
                 }
             }
 
-            if (vectors[pid]) {
-                delete vectors[pid];
+            if (storage[pid]) {
+                delete storage[pid];
             }
         },
         

@@ -1,31 +1,41 @@
 
 (function(){
 
-    var links = {};
+    var storage = {},
+        context = {};
 
     var Registry = Graph.extend({
 
-        links: {},
+        context: {},
 
         constructor: function() {
-            this.links = links;
+            this.context = context;
         },
 
         register: function(link) {
             var id = link.guid();
-            links[id] = link;
+            storage[id] = link;
         },
 
         unregister: function(link) {
             var id = link.guid();
-            if (links[id]) {
-                links[id] = null;
-                delete links[id];
+            if (storage[id]) {
+                delete storage[id];
+            }
+
+            if (context[id]) {
+                delete context[id];
+            }
+        },
+
+        setContext: function(id, scope) {
+            if (storage[id]) {
+                context[id] = scope;
             }
         },
 
         count: function() {
-            return _.keys(links).length;
+            return _.keys(storage).length;
         },
 
         get: function(key) {
@@ -39,55 +49,23 @@
                 key = key.data(Graph.string.ID_LINK);
             }
 
-            return links[key];
+            return storage[key];
         },
-        
-        /**
-         * Synchronize with vector
-         */
-        synchronize: function(vector) {
-            /*var me = this;
 
-            if (me.count()) {
-                var links = vector.connectable().links().slice(),
-                    path1 = vector.bbox().clone().expand(10).pathinfo();
-
-                var path2;
-
-                // _.forEach(me.links, function(link){
-                //     if (_.indexOf(links, link) === -1) {
-                //         path2 = link.pathinfo();
-                //         if (path1.intersect(path2)) {
-                //             link.pristine = true;
-                //             links.push(link);
-                //         }
-                //     }
-                // });
-
-                if (links.length) {
-                    var q = $({}), f;
-                    _.forEach(links, function(link, i){
-                        f = (function(link){
-                            return function(next) {
-                                if (link.pristine || link.$intersect) {
-                                    link.refresh();
-                                } else {
-                                    link.refresh();
-                                }
-                                next();
-                            };
-                        }(link));
-                        q.queue(f);
-                    });
+        collect: function(scope) {
+            var links = [];
+            for (var id in context) {
+                if (context[id] == scope && storage[id]) {
+                    links.push(storage[id]);
                 }
-
-            }*/
+            }
+            return links;
         },
         
         toArray: function() {
-            var keys = _.keys(links);
+            var keys = _.keys(storage);
             return _.map(keys, function(k){
-                return links[k];
+                return storage[k];
             });
         },
 

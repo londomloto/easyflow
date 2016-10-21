@@ -3,6 +3,104 @@
 
     Graph.link.Orthogonal = Graph.extend(Graph.link.Link, {
         
+        update: function(command, silent) {
+            var convex, smooth, radius, routes, maxlen, segments;
+            
+            silent = _.defaultTo(silent, false);
+            
+            convex = this.cached.convex;
+            smooth = this.props.smooth;
+            
+            if (convex) {
+                
+                routes = this.router.waypoints().slice();
+                maxlen = routes.length - 1;
+
+                segments = [];
+                
+                _.forEach(routes, function(curr, i){
+                    var prev = curr,
+                        next = routes[i + 1];
+                        
+                    var item;
+                    
+                    if (i === 0) {
+                        item = ['M', curr.x, curr.y];
+                    } else {
+                        item = ['L', curr.x, curr.y];
+                    }
+                    
+                    segments.push(item);
+
+                    if (convex[i]) {
+                        _.forEach(convex[i], function(c){
+                            var conseg = Graph.util.convexSegment(c, prev, next);
+                            if (conseg) {
+                                segments.push(conseg[0], conseg[1]);
+                            }
+                        });
+                    }
+                });
+
+                command = Graph.util.segments2path(segments);
+            }
+            
+            if (smooth) {
+                radius = this.props.smootness || 6;
+                segments = segments || Graph.util.path2segments(command).slice();
+                
+                var item, prev, next, curr, i;
+                var bend;
+                
+                for (i = 0; i < segments.length; i++) {
+                    item = segments[i];
+                    next = segments[i + 1];
+                    
+                    bend = !!(item[0] == 'L' && next && next[0] != 'Q');
+                    
+                    if (bend) {
+                        curr = {
+                            x: item[item.length - 2],
+                            y: item[item.length - 1]
+                        };
+                        
+                        prev = segments[i - 1];
+                        
+                        if (prev && next) {
+                            var ss = Graph.util.smoothSegment(
+                                curr, 
+                                { x: prev[prev.length - 2], y: prev[prev.length - 1] },
+                                { x: next[next.length - 2], y: next[next.length - 1] },
+                                radius
+                            );
+                            
+                            if (ss) {
+                                segments.splice(i, 1, ss[0], ss[1]);
+                                i++;
+                            }
+                        }
+                    }
+                }
+                command = Graph.util.segments2path(segments);
+                // var p = Graph.path(command);
+                // this.router.source().paper().path(p).style('stroke', 'red');
+                
+            }
+
+            this.component('coat').attr('d', command).dirty(true);
+            this.component('path').attr('d', command);
+            
+            this.invalidate();
+            
+            if ( ! silent) {
+                
+                this.redraw();
+                
+                this.fire('update');
+                Graph.topic.publish('link/update');
+            }
+        },
+        
         renderControl: function() {
             var me = this, editor = me.component('editor');
 
@@ -130,6 +228,7 @@
             });
             
             control.show();
+            this.removeConvex();
         },
 
         onControlMove: function(e, context) {
@@ -145,14 +244,14 @@
             
             if (context.trans == 'BENDING') {
                 me.router.bending(context, function(result){
-                    me.update(result.command);
+                    me.update(result.command, true);
                 });
             } else {
                 me.router.connecting(context, function(result){
-                    me.update(result.command);
+                    me.update(result.command, true);
                 });
             }
-            
+
             x2 = context.event.x;
             y2 = context.event.y;
             
@@ -173,5 +272,5 @@
         }
 
     });
-
+    
 }());

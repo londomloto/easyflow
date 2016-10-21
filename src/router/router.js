@@ -74,13 +74,12 @@
             var head = _.last(this.values.waypoints);
             return head ? _.extend({}, head) : null;
         },
-
-        middle: function() {
+        
+        center: function() {
             var path = this.pathinfo(),
-                middle = path.pointAt(path.length() / 2, true);
-            
+                center = path.pointAt(path.length() / 2, true);
             path = null;
-            return middle;
+            return center;
         },
         
 

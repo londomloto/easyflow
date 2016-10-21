@@ -368,6 +368,9 @@
                 }
             });
             
+            this.cached.connect = null;
+            this.cached.bending = null;
+            
             if (context.trans == 'BENDING') {
                 this.cached.bending = {
                     source: source,
@@ -569,7 +572,7 @@
         cropBending: _.debounce(function(callback) {
             
             var bending = this.cached.bending,
-                routes = bending.routes,
+                routes  = bending.routes,
                 srcport = Router.porting(routes, bending.sourcePath, true),
                 tarport = Router.porting(routes, bending.targetPath),
                 cropped = routes.slice(srcport.index + 1, tarport.index);
@@ -723,9 +726,6 @@
             }
             
             this.commit();
-            
-            this.cached.connect = null;
-            this.cached.bending = null;
         },
         
         toString: function() {

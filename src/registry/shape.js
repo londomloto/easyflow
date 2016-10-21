@@ -1,37 +1,37 @@
 
 (function(){
 
-    var shapes = {};
+    var storage = {};
 
     var Registry = Graph.extend({
         
-        shapes: {},
+        storage: {},
 
         constructor: function() {
-            this.shapes = shapes;        
+            this.storage = storage;        
         },
 
         register: function(shape) {
             var id = shape.guid();
-            shapes[id] = shape;
+            storage[id] = shape;
         },
 
         unregister: function(shape) {
             var id = shape.guid();
-            if (shapes[id]) {
-                shapes[id] = null;
-                delete shapes[id];
+            if (storage[id]) {
+                storage[id] = null;
+                delete storage[id];
             }
         },
 
         count: function() {
-            return _.keys(shapes).length;
+            return _.keys(storage).length;
         },
 
         toArray: function() {
-            var keys = _.keys(shapes);
+            var keys = _.keys(storage);
             return _.map(keys, function(k){
-                return shapes[k];
+                return storage[k];
             });
         },
 
@@ -50,7 +50,7 @@
             } else if (key instanceof Graph.dom.Element) {
                 key = key.data(Graph.string.ID_SHAPE);
             }
-            return shapes[key];
+            return storage[key];
         },
 
         toString: function() {

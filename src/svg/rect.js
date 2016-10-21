@@ -14,7 +14,7 @@
 
         constructor: function(x, y, width, height, r) {
             var me = this;
-            r = _.defaultTo(r, 7);
+            r = _.defaultTo(r, 6);
 
             // me.$super('rect', {
             //     x: _.defaultTo(x, 0),

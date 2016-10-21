@@ -16,7 +16,8 @@
             },
 
             link: {
-                smooth: false
+                smooth: true,
+                smootness: 6
             }
         },
         
@@ -65,11 +66,6 @@
 
         },
 
-        refresh: function(vector) {
-            // vector = _.defaultTo(vector, this.view);
-            this.fire('refresh');
-        },
-
         grabVector: function(event) {
             return Graph.registry.vector.get(event.target);
         },
@@ -77,14 +73,21 @@
         grabLocation: function(event) {
             var x = event.clientX,
                 y = event.clientY,
-                m = this.view().matrix().clone().invert(),
-                p = {
-                    x: m.x(x, y),
-                    y: m.y(x, y)
+                offset = this.offset(),
+                matrix = this.view().matrix(),
+                invert = matrix.clone().invert(),
+                scale  = matrix.scale(),
+                location = {
+                    x: invert.x(x, y),
+                    y: invert.y(x, y)
                 };
 
-            m = null;
-            return p;
+            location.x -= offset.left / scale.x;
+            location.y -= offset.top / scale.y;
+
+            matrix = invert = null;
+
+            return location;
         },
 
         currentScale: function() {
@@ -117,6 +120,62 @@
             link    = Graph.factory(clazz, [router, options]);
 
             return link;
+        },
+
+        refresh: function(vector) {
+            this.fire('refresh');
+        },
+
+        arrangeLinks: function() {
+            var scope = this.view().paper().guid(),
+                links = Graph.registry.link.collect(scope);
+            
+            if (links.length) {
+                
+                var inspect = [];
+                
+                _.forEach(links, function(link){
+                    if (link.cached.convex) {
+                        inspect.push(link.guid());
+                    }
+                });
+                
+                // TODO: research for sweepline algorithm (pending)
+                
+                var sweeper = new Graph.util.Sweeplink(links),
+                    convex = sweeper.findConvex();
+                
+                var key, link, idx;
+                
+                for (key in convex) {
+                    link = Graph.registry.link.get(key);
+                    
+                    link.updateConvex(convex[key]);
+                    link.refresh(true);
+                    
+                    idx = _.indexOf(inspect, key);
+                    
+                    if (idx > -1) {
+                        inspect.splice(idx, 1);
+                    }
+                }
+                
+                if (inspect.length) {
+                    _.forEach(inspect, function(key){
+                        var link = Graph.registry.link.get(key);
+                        
+                        link.removeConvex();
+                        link.refresh(true);
+                    });
+                }
+                
+                sweeper.destroy();
+                sweeper = null;
+            }
+        },
+
+        arrangeShapes: function() {
+            
         }
         
     });

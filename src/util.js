@@ -8,6 +8,9 @@
     var REGEX_TRAN_STR = /((matrix|translate|rotate|scale|skewX|skewY)*\((\-?\d+\.?\d*e?\-?\d*[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029]*,?[\x09\x0a\x0b\x0c\x0d\x20\xa0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u202f\u205f\u3000\u2028\u2029]*)+\))+/g;
     var REGEX_TRAN_SUB = /[\w\.\-]+/g;
     var REGEX_POLY_STR = /(\-?[0-9.]+)\s*,\s*(\-?[0-9.]+)/g;
+    
+    var CONVEX_RADIUS  = 10;
+    var SMOOTH_RADIUS  = 6;
 
     /**
      * Legendre Gauss (Quadratic Curve)
@@ -267,6 +270,20 @@
             };
         },
         
+        /** 
+         * Move point `a` to `b` as far as distance 
+         */
+        movepoint: function(a, b, distance) {
+            var tr =  Graph.util.rad(Graph.util.theta(b, a)),
+                dx =  Math.cos(tr) * distance,
+                dy = -Math.sin(tr) * distance;
+            
+            a.x += dx;
+            a.y += dy;
+            
+            return a;
+        },
+        
         lineBendpoints: function(a, b, dir) {
             var points = [],
                 x1 = a.x,
@@ -390,6 +407,17 @@
             });
             return Graph.util.segments2path(segments);
         },
+        
+        path2points: function(command) {
+            var segments = Graph.util.path2segments(command);
+            return _.map(segments, function(s, i){
+                if (s[0] == 'M' || s[0] == 'L') {
+                    return {x: s[1], y: s[2]};
+                } else {
+                    return {x: s[5], y: s[6]};
+                }
+            });
+        },
 
         segments2path: function(segments) {
             return _.join(segments || [], ',').replace(REGEX_PATH_CMD, '$1');
@@ -435,7 +463,7 @@
                 }
             });
             
-            cached.segments = segments;
+            cached.segments = _.cloneDeep(segments);
             return segments;
         },
 
@@ -739,7 +767,72 @@
             }
 
             return count ? nres : ares;
+        },
+        
+        convexSegment: function(point, prev, next, radius) {
+            if ( ! prev || ! next || ! point) {
+                return null;
+            }
+            
+            var d1 = Graph.util.pointDistance(point, prev),
+                d2 = Graph.util.pointDistance(point, next);
+                
+            radius = radius || CONVEX_RADIUS;
+            
+            if (d1 > radius && d2 > radius) {
+                
+                var c1 = Graph.util.movepoint({x: point.x, y: point.y}, prev, -radius / 2),
+                    c2 = Graph.util.movepoint({x: point.x, y: point.y}, next, -radius / 2),
+                    dr = Graph.util.pointAlign(prev, next, radius / 2);
+                
+                var cp;
+                
+                if (dr == 'h') {
+                    cp = {
+                        x: point.x - radius, 
+                        y: point.y
+                    };
+                } else {
+                    c1.y = prev.y;
+                    c2.y = next.y;
+                    cp = {
+                        x: point.x, 
+                        y: point.y - radius
+                    };
+                }
+                
+                return [
+                    ['L', c1.x, c1.y],
+                    ['Q', cp.x, cp.y, c2.x, c2.y]
+                ];
+            }
+            
+            return null;
+        },
+        
+        smoothSegment: function(point, prev, next, radius) {
+            if ( ! prev || ! next || ! point) {
+                return null;
+            }
+            
+            var d1 = Graph.util.pointDistance(point, prev),
+                d2 = Graph.util.pointDistance(point, next);
+                
+            radius = radius || SMOOTH_RADIUS;
+            
+            if (d1 > radius && d2 > radius) {
+                var c1 = Graph.util.movepoint({x: point.x, y: point.y}, prev, -radius),
+                    c2 = Graph.util.movepoint({x: point.x, y: point.y}, next, -radius);
+                    
+                return [
+                    ['L', c1.x, c1.y],
+                    ['Q', point.x, point.y, c2.x, c2.y]
+                ]
+            }
+            
+            return null;
         }
+        
     };
 
 }());

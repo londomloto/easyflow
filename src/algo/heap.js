@@ -1,87 +1,82 @@
 
-(function(){
+(function(){    
 
-    var Heap = Graph.lang.Heap = Graph.extend({
+    var Heap = Graph.algo.Heap = function(comparison) {
+        this.comparison = _.defaultTo(comparison, defcmp);
+        this.nodes = [];
+    };  
 
-        comparison: null,
+    Heap.prototype.constructor = Heap;
 
-        nodes: [],
+    Heap.prototype.push = function(val) {
+        return heappush(this.nodes, val, this.comparison);
+    };
 
-        constructor: function(cmp) {
-            this.comparison = _.defaultTo(cmp, defcmp); 
-        },
+    Heap.prototype.pop = function() {
+        return heappop(this.nodes, this.comparison);
+    };
 
-        push: function(val) {
-            return heappush(this.nodes, val, this.comparison);
-        },
+    Heap.prototype.peek = function() {
+        return this.nodes[0];
+    };
 
-        pop: function() {
-            return heappop(this.nodes, this.comparison);
-        },
+    Heap.prototype.contains = function(val) {
+        return this.nodes.indexOf(val) !== -1;
+    };
 
-        peek: function() {
-            return this.nodes[0];
-        },
+    Heap.prototype.largest = function(n) {
+        n = _.defaultTo(n, 1);
+        return largest(this.nodes, n, this.comparison);
+    };
 
-        contains: function(val) {
-            return this.nodes.indexOf(val) !== -1;
-        },
+    Heap.prototype.smallest = function(n) {
+        n = _.defaultTo(n, 1);
+        return smallest(this.nodes, n, this.comparison);
+    };
 
-        largest: function(n) {
-            n = _.defaultTo(n, 1);
-            return largest(this.nodes, n, this.comparison);
-        },
+    Heap.prototype.replace = function(val) {
+        return heapreplace(this.nodes, val, this.comparison);
+    };
 
-        smallest: function(n) {
-            n = _.defaultTo(n, 1);
-            return smallest(this.nodes, n, this.comparison);
-        },
+    Heap.prototype.pushpop = function(val) {
+        return heappushpop(this.nodes, val, this.comparison);
+    };
 
-        replace: function(val) {
-            return heapreplace(this.nodes, val, this.comparison);
-        },
+    Heap.prototype.heapify = function() {
+        return heapify(this.nodes, this.comparison);
+    };
 
-        pushpop: function(val) {
-            return heappushpop(this.nodes, val, this.comparison);
-        },
+    Heap.prototype.update = function(val) {
+        return heapupdate(this.nodes, val, this.comparison);
+    };
 
-        heapify: function() {
-            return heapify(this.nodes, this.comparison);
-        },
+    Heap.prototype.clear = function() {
+        this.nodes = [];
+    };
 
-        update: function(val) {
-            return heapupdate(this.nodes, val, this.comparison);
-        },
+    Heap.prototype.isEmpty = function() {
+        return this.nodes.length === 0;
+    };
 
-        clear: function() {
-            this.nodes = [];
-        },
+    Heap.prototype.size = function() {
+        return this.nodes.length;
+    };
 
-        isEmpty: function() {
-            return this.nodes.length === 0;
-        },
+    Heap.prototype.clone = function() {
+        var heap;
+        
+        heap = new Heap();
+        heap.nodes = _.cloneDeep(this.nodes);
 
-        size: function() {
-            return this.nodes.length;
-        },
+        return heap;
+    };
 
-        clone: function() {
-            var heap;
-            
-            heap = new Heap();
-            heap.nodes = _.cloneDeep(this.nodes);
+    Heap.prototype.toArray = function() {
+        return _.cloneDeep(this.nodes);
+    };
 
-            return heap;
-        },
+    ///////// HELPERS /////////
 
-        toArray: function() {
-            return _.cloneDeep(this.nodes);
-        }
-
-    });
-
-    ///////// HELPER /////////
-    
     function defcmp(a, b) {
         return a === b ? 0 : (a < b ? -1 : 1);
     }
@@ -298,5 +293,5 @@
 
         return shiftdown(array, startpos, pos, cmp);
     }
-    
+
 }());

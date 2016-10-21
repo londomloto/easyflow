@@ -107,6 +107,43 @@
         }
         return array;
     };  
+    
+    /**
+     *  Bisector
+     */
+    _.bisector = function(f) {
+        return {
+            left: function(a, x, lo, hi) {
+                if (arguments.length < 3) lo = 0;
+                if (arguments.length < 4) hi = a.length;
+                while (lo < hi) {
+                    var mid = lo + hi >>> 1;
+                    if (f.call(a, a[mid], mid) < x) lo = mid + 1; else hi = mid;
+                }
+                return lo;
+            },
+            right: function(a, x, lo, hi) {
+                if (arguments.length < 3) lo = 0;
+                if (arguments.length < 4) hi = a.length;
+                while (lo < hi) {
+                    var mid = lo + hi >>> 1;
+                    if (x < f.call(a, a[mid], mid)) hi = mid; else lo = mid + 1;
+                }
+                return lo;
+            }
+        };
+    };
+    
+    /** 
+     *  Sorter
+     */
+    _.ascendingKey = function(key) {
+        return typeof key == 'function' ? function (a, b) {
+            return key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : key(a) >= key(b) ? 0 : NaN;
+        } : function (a, b) {
+            return a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : a[key] >= b[key] ? 0 : NaN;
+        };
+    };
 
     _.isIE = function() {
         var na = global.navigator,
@@ -399,6 +436,7 @@
      * Expand namespaces
      */
     Graph.ns('Graph.lang');
+    Graph.ns('Graph.algo');
     Graph.ns('Graph.dom');
     Graph.ns('Graph.collection');
     Graph.ns('Graph.registry');

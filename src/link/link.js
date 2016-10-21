@@ -9,6 +9,9 @@
             rendered: false,
             selected: false,
             label: '',
+            labelDistance: null,
+            labelX: null,
+            labelY: null,
             source: null,
             target: null
         },
@@ -21,7 +24,8 @@
 
         cached: {
             bendpoints: null,
-            controls: null
+            controls: null,
+            convex: null
         },
         
         handlers: {
@@ -58,7 +62,7 @@
             block = (new Graph.svg.Group())
                 .addClass('graph-link')
                 .selectable(false);
-
+                
             block.elem.data(Graph.string.ID_LINK, this.props.guid);
 
             coat = (new Graph.svg.Path())
@@ -78,14 +82,16 @@
             
             coat.editable({
                 width: 150,
-                height: 80
+                height: 80,
+                offset: 'pointer'
             });
 
-            coat.on('select',    _.bind(this.onCoatSelect, this));
-            coat.on('deselect',  _.bind(this.onCoatDeselect, this));
-            coat.on('dragstart', _.bind(this.onCoatDragStart, this));
-            coat.on('dragend',   _.bind(this.onCoatDragEnd, this));
-            coat.on('edit',      _.bind(this.onCoatEdit, this));
+            coat.on('select.link', _.bind(this.onCoatSelect, this));
+            coat.on('deselect.link', _.bind(this.onCoatDeselect, this));
+            coat.on('dragstart.link', _.bind(this.onCoatDragStart, this));
+            coat.on('dragend.link', _.bind(this.onCoatDragEnd, this));
+            coat.on('edit.link', _.bind(this.onCoatEdit, this));
+            coat.on('beforeedit.link', _.bind(this.onCoatBeforeEdit, this));
 
             path = (new Graph.svg.Path())
                 .removeClass(Graph.string.CLS_VECTOR_PATH)
@@ -97,11 +103,21 @@
 
             path.elem.data(Graph.string.ID_LINK, this.props.guid);
 
-            label = (new Graph.svg.Text(0, 0, this.props.label))
+            label = (new Graph.svg.Text(0, 0, ''))
+                .addClass('graph-link-label')
                 .selectable(false)
-                .clickable(false)
+                // .attr('text-anchor', 'left')
                 .render(block);
+            
+            label.draggable({ghost: true});
+            
+            label.on('render.link', _.bind(this.onLabelRender, this));
+            label.on('dragend.link', _.bind(this.onLabelDragend, this));
 
+            // enable label doubletap
+            var labelVendor = label.interactable().vendor();
+            labelVendor.on('doubletap', _.bind(this.onLabelDoubletap, this));
+                
             editor = (new Graph.svg.Group())
                 .selectable(false)
                 .render(block);
@@ -177,7 +193,14 @@
         },
 
         render: function(container) {
+            var paper;
+
             this.component().render(container);
+            paper = container.paper();
+
+            if (paper) {
+                Graph.registry.link.setContext(this.guid(), paper.guid());
+            }
         },
 
         id: function() {
@@ -192,34 +215,100 @@
             this.router.route();
         },
         
-        update: function(command) {
+        update: function(command, silent) {
+            
+            silent = _.defaultTo(silent, false);
+            
             this.component('coat').attr('d', command).dirty(true);
             this.component('path').attr('d', command);
             this.invalidate();
-            this.redraw();
+            
+            if ( ! silent) {
+                this.redraw();
+                this.fire('update');
+                Graph.topic.publish('link/update');
+            }
+        },
+        
+        refresh: function(silent) {
+            var command = this.router.command();
+            this.update(command, silent);
         },
 
+        updateConvex: function(convex) {
+            this.cached.convex = convex;
+        },
+        
+        removeConvex: function() {
+            this.cached.convex = null;
+        },
+        
         redraw: function() {
-            
             // TODO: update label position
             
             if (this.props.label) {
                 var label = this.component('label'),
-                    middle = this.router.middle();
-                    
-                var p = Graph.util.perpendicular(middle.start, middle.end, 15);
-
+                    bound = label.bbox().toJson(),
+                    distance = this.props.labelDistance || .5,
+                    scale = this.router.layout().currentScale(),
+                    path = this.router.pathinfo(),
+                    dots = path.pointAt(distance * path.length(), true),
+                    align = Graph.util.pointAlign(dots.start, dots.end, 10);
+                
+                if (align == 'h') {
+                    dots.x += ((10 + bound.width / 2) / scale.x);
+                } else {
+                    dots.y -= ((10 + bound.height / 2) / scale.y);
+                }
+                
                 label.attr({
-                    x: p.to.x, 
-                    y: p.to.y
+                    x: dots.x,
+                    y: dots.y
                 });
+                
+                path = null;
+                dots = null;
+
+                label.dirty(true);
             }
             
+        },
+        
+        label: function(text, x, y) {
+            var path, distance, point, align;
+            
+            if (text === undefined) {
+                return this.props.label;
+            }
+
+            this.props.label = text;
+            
+            if (x !== undefined && y !== undefined) {
+                path = this.router.pathinfo();
+                point = path.nearest({x: x, y: y});
+                distance = point.distance / path.length();
+            } else if (_.isNull(this.props.labelDistance)) {
+                path = this.router.pathinfo();
+                distance = 0.5;
+                point = path.pointAt(path.length() / 2, true);
+            }
+            
+            if (point) {
+                this.props.labelDistance = distance;
+                path = point = null;
+            }
+            
+            this.component('label').write(text);
+            this.component('coat').data('text', text);
+            
+            this.redraw();
+            return this;
         },
 
         select: function() {
             this.props.selected = true;
             this.component('block').addClass('selected');
+            this.sendToFront();
             this.resumeControl();
         },
 
@@ -248,6 +337,11 @@
             this.component('editor').elem.detach();
         },
 
+        sendToFront: function() {
+            var container = this.component().parent();
+            this.component().elem.appendTo(container.elem);
+        },
+
         toString: function() {
             return 'Graph.link.Link';
         },
@@ -265,18 +359,55 @@
 
             this.bindResource('source', source);
             this.bindResource('target', target);
+            this.sendToFront();
+        },
+        
+        onLabelRender: function(e) {
+            if (this.props.label) {
+                this.label(this.props.label);
+            }
+        },
+        
+        onLabelDragend: function(e) {
+            var label = this.component('label'),
+                matrix = label.matrix(),
+                x = label.attrs.x,
+                y = label.attrs.y,
+                p = {
+                    x: matrix.x(x, y),
+                    y: matrix.y(x, y)
+                }
             
-            // bring to front
-            var container = this.component().parent();
-            this.component().elem.appendTo(container.elem);
+            label.attr({
+                x: p.x,
+                y: p.y
+            });
+            
+            // update label distance
+            var path = this.router.pathinfo(),
+                near = path.nearest(p);
+            
+            this.props.labelDistance = near.distance / path.length();
+            
+            label.reset();
+            
+            matrix = path = null;
+        },
+
+        onLabelDoubletap: function(e) {
+            var coat = this.component('coat');
+            coat.editable().startEdit(e);
+        },
+
+        onCoatBeforeEdit: function(e) {
+            this.component('label').hide();
+            this.component().addClass('editing');
         },
 
         onCoatEdit: function(e) {
-            var label = this.component('label');
-            label.write(e.text);
-            
-            this.props.label = label;
-            this.redraw();
+            this.component().removeClass('editing');
+            this.component('label').show();
+            this.label(e.text, e.left, e.top);
         },
 
         onCoatSelect: function(e) {
@@ -311,6 +442,9 @@
                     lasso.decollect(this.component('coat'));
                 }
             }
+
+            // remove convex
+            this.cached.convex = null;
         },
 
         onSourceDragmove: function() {
@@ -342,11 +476,15 @@
 
         onTargetDragstart: function(e, target) {
             var lasso = this.component('coat').$collector;
+
             if ( ! target.$collector) {
                 if (lasso) {
                     lasso.decollect(this.component('coat'));
                 }
             }
+
+            // remove convex
+            this.cached.convex = null;
         },
 
         onTargetDragmove: function() {

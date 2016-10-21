@@ -80,6 +80,7 @@
             });
 
             me.props.text = text;
+            me.cached.bbox = null;
         },
 
         addSpan: function(text) {
@@ -190,7 +191,7 @@
 
         pathinfo: function() {
             var size = this.dimension();
-
+            
             return new Graph.lang.Path([
                 ['M', size.x, size.y], 
                 ['l', size.width, 0], 

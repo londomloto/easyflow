@@ -14,7 +14,7 @@
             } else if (_.isArray(command)) {
                 segments = _.cloneDeep(command);
             } else {
-                segments = Graph.util.path2segments(command);
+                segments = _.cloneDeep(Graph.util.path2segments(command));
             }
 
             this.segments = segments;
@@ -727,12 +727,17 @@
         nearest: function(point) {
             var length  = this.length(),
                 tolerance = 20,
-                bestdist = Infinity;
+                bestdist = Infinity,
+                taxicab = Graph.util.taxicab;
 
             var best, bestlen, currpoint, currdist, i;
-
+            
+            if (Graph.isPoint(point)) {
+                point = point.toJson();
+            }
+            
             for (i = 0; i < length; i += tolerance) {
-                currpoint = this.pointAt(i);
+                currpoint = this.pointAt(i, true);
                 currdist  = taxicab(currpoint, point);
 
                 if (currdist < bestdist) {
@@ -747,11 +752,11 @@
             var prev, next, prevlen, nextlen, prevdist, nextdist;
             
             while(tolerance > .5) {
-                if ((prevlen = bestlen - tolerance) >= 0 && (prevdist = taxicab((prev = this.pointAt(prevlen)), point)) < bestdist) {
+                if ((prevlen = bestlen - tolerance) >= 0 && (prevdist = taxicab((prev = this.pointAt(prevlen, true)), point)) < bestdist) {
                     best = prev;
                     bestlen = prevlen;
                     bestdist = prevdist;
-                } else if ((nextlen = bestlen + tolerance) <= length && (nextdist = taxicab((next = this.pointAt(nextlen)), point)) < bestdist) {
+                } else if ((nextlen = bestlen + tolerance) <= length && (nextdist = taxicab((next = this.pointAt(nextlen, true)), point)) < bestdist) {
                     best = next;
                     bestlen = nextlen;
                     bestdist = nextdist;
@@ -760,7 +765,7 @@
                 }
             }
 
-            best.props.distance = bestlen;
+            best.distance = bestlen;
             return best;
         },  
 
@@ -850,7 +855,7 @@
         }
 
         ! ( segment[0] in tq) && (attr.qx = attr.qy = null);
-
+        
         switch (segment[0]) {
             case 'M':
                 attr.X = segment[1];
@@ -877,12 +882,12 @@
                     attr.qx = attr.x;
                     attr.qy = attr.y;
                 }
-                path = ['C'].concat(quad2curve(attr.x, attr.y, attr.qx, attr.qy, segment[1], segment[2]));
+                segment = ['C'].concat(quad2curve(attr.x, attr.y, attr.qx, attr.qy, segment[1], segment[2]));
                 break;
             case 'Q':
                 attr.qx = segment[1];
                 attr.qy = segment[2];
-                path = ['C'].concat(quad2curve(attr.x, attr.y, segment[1], segment[2], segment[3], segment[4]));
+                segment = ['C'].concat(quad2curve(attr.x, attr.y, segment[1], segment[2], segment[3], segment[4]));
                 break;
             case 'L':
                 segment = ['C'].concat(line2curve(attr.x, attr.y, segment[1], segment[2]));
@@ -1054,12 +1059,6 @@
             }
             return result;
         }
-    }
-
-    function taxicab(point1, point2) {
-        var dx = point1.props.x - point2.props.x,
-            dy = point1.props.y - point2.props.y;
-        return dx * dx + dy * dy;
     }
 
     function intersection(path1, path2, count) {

@@ -373,12 +373,15 @@
             if ( ! this.plugins.editor) {
                 this.plugins.editor = new Graph.plugin.Editor(this, options);
                 this.plugins.editor.on({
+                    beforeedit: function(e){
+                        me.fire(e);
+                    },
                     edit: function(e) {
                         me.fire(e);
                     }
                 });
             }
-            return this;
+            return this.plugins.editor;
         },
 
         id: function() {
@@ -722,11 +725,16 @@
                     me.props.rendered = true;
                     me.fire('render');
 
+                    // update registry context
+                    Graph.registry.vector.setContext(me.guid(), me.tree.paper);
+
                     me.cascade(function(c){
                         if (c !== me && ! c.props.rendered) {
                             c.props.rendered = true;
                             c.tree.paper = me.tree.paper;
                             c.fire('render');
+
+                            Graph.registry.vector.setContext(c.guid(), me.tree.paper);
                         }
                     });
                 }

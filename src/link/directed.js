@@ -128,11 +128,11 @@
             
             if (context.trans == 'BENDING') {
                 me.router.bending(context, function(result){
-                    me.update(result.command);
+                    me.update(result.command, true);
                 });
             } else {
                 me.router.connecting(context, function(result){
-                    me.update(result.command);
+                    me.update(result.command, true);
                 });
             }
             

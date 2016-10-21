@@ -25,6 +25,15 @@ text, tspan {
        -moz-font-smoothing: grayscale;
 }
 
+polyline,
+polygon,
+ellipse,
+circle,
+path,
+rect {
+    stroke-width: 2;
+}
+
 .graph-paper {
     
 }
@@ -63,14 +72,12 @@ text, tspan {
 .graph-elem-path {
     fill: none;
     stroke: #000000;
-    stroke-width: 2;
     stroke-linecap: butt;
     /*shape-rendering: crispEdges;*/
 }
 
 .graph-elem-rect {
     stroke: #000000;
-    stroke-width: 2;
     fill: #ffffff;
     /*shape-rendering: crispEdges;*/
 }
@@ -78,14 +85,12 @@ text, tspan {
 .graph-elem-polyline,
 .graph-elem-polygon {
     stroke: #000000;
-    stroke-width: 2;
     fill: #ffffff;
 }
 
 .graph-elem-circle,
 .graph-elem-ellipse {
     stroke: #000000;
-    stroke-width: 2;
     fill: #ffffff;
 }
 
@@ -142,8 +147,8 @@ text, tspan {
 
 .graph-dragger .graph-dragger-helper {
     fill: rgba(255, 255, 255, 0);
-    stroke: #000;
-    stroke-width: 1;
+    stroke: #FFA500;
+    stroke-width: 2;
     stroke-dasharray: 5 3;
 }
 
@@ -175,6 +180,40 @@ text, tspan {
 .graph-rubberband.visible {
     /*opacity: .3;*/
 }
+
+/** zoombox */
+.graph-zoom-toolbox {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 38px;
+    background: #fafafa none repeat scroll 0 0;
+    border: 1px solid #ccc;
+    border-radius: 2px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.graph-zoom-toolbox a {
+    display: block;
+    width: 36px;
+    height: 36px;
+    color: #555555;
+    font-size: 24px;
+    text-align: center;
+    line-height: 36px;
+}
+
+.graph-zoom-toolbox a:hover {
+    background: #fff;
+}
+
+.graph-zoom-toolbox .splitter {
+    height: 1px;
+    /*margin-left: 5px;
+    margin-right: 5px;*/
+    background: #ccc;
+}
+
 
 /** dropzone */
 .graph-dropzone {
@@ -234,12 +273,20 @@ text, tspan {
     cursor: pointer;
 }
 
+.graph-link.editing .graph-link-path {
+    stroke: #FFA500;
+}
+
 .graph-link-coat {
     stroke: rgba(255, 255, 255, 0);
     fill: none;
     stroke-width: 20;
     cursor: pointer;
     stroke-linecap: round;
+}
+
+.graph-link-label {
+    cursor: pointer;
 }
 
 .graph-link-edit {
@@ -266,6 +313,8 @@ text, tspan {
 .graph-link-bend {
 
 }
+
+
 
 /** ================= AUXILIARY ================= **/
 

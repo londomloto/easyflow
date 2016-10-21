@@ -6,6 +6,7 @@
         props: {
             panEnabled: false,
             zoomEnabled: true,
+            showToolbox: true,
             vector: null
         },
 
@@ -22,6 +23,10 @@
             zoom: 1,
             origin: null,
             range: {min: 0.2, max: 4}
+        },
+
+        components: {
+            toolbox: null
         },
 
         panning: {
@@ -51,20 +56,66 @@
                 zoom: scale
             });
 
+            me.initComponent(vector);
+
             // use native engine
             vendor.on('wheel', _.bind(me.onMouseWheel, me, _, vector, viewport));
             vendor.on('down', _.bind(me.onPointerDown, me, _, vector, viewport));
 
             if (vector.props.rendered) {
                 me.revalidate(vector);
+
+                if (me.props.showToolbox) {
+                    me.components.toolbox.appendTo(vector.container());
+                }
             } else {
                 vector.on('render', function(){
                     me.revalidate(vector);
+
+                    if (me.props.showToolbox) {
+                        me.components.toolbox.appendTo(vector.container());
+                    }
                 });
             }
 
             vendor = null;
             vector = null;
+        },
+
+        initComponent: function(vector) {
+            var me = this;
+            var container, toolbox;
+
+            if (me.props.showToolbox) {
+                container = vector.container();
+
+                toolbox = me.components.toolbox = Graph.$('<div class="graph-zoom-toolbox">');
+                toolbox.html(
+                    '<div>' + 
+                        '<a data-tool="zoom-reset" href="#"><i class="ion-pinpoint"></i></a>'+
+                        '<div class="splitter"></div>'+
+                        '<a data-tool="zoom-in" href="#"><i class="ion-android-add"></i></a>'+
+                        '<div class="splitter"></div>'+
+                        '<a data-tool="zoom-out" href="#"><i class="ion-android-remove"></i></a>'+
+                    '</div>'
+                );
+
+                toolbox.on('click', '[data-tool]', function(e){
+                    e.preventDefault();
+                    var tool = Graph.$(this).data('tool');
+                    switch(tool) {
+                        case 'zoom-reset':
+                            me.zoomReset();
+                            break;
+                        case 'zoom-in':
+                            me.zoomIn();
+                            break;
+                        case 'zoom-out':
+                            me.zoomOut();
+                            break;
+                    }
+                });
+            }
         },
 
         revalidate: function(vector) {
@@ -90,7 +141,42 @@
             this.props.panEnabled = false;
         },
 
+        zoomReset: function() {
+            var viewport = this.vector().viewport();
+            var matrix;
+
+            this.zooming.zoom = 1;
+            this.zooming.scale = 1;
+
+            viewport.reset();
+
+            matrix = Graph.matrix();
+            matrix.translate(.5, .5);
+
+            viewport.attr('transform', matrix.toString());
+            viewport.graph.matrix = matrix;
+        },
+
+        zoomIn: function() {
+            var paper = this.vector(),
+                viewport = paper.viewport(),
+                direction = 0.1,
+                origin = viewport.bbox().center(true);
+
+            this.zoom(paper, viewport, direction, origin);
+        },
+
+        zoomOut: function() {
+            var paper = this.vector(),
+                viewport = paper.viewport(),
+                direction = -0.1,
+                origin = viewport.bbox().center(true);
+
+            this.zoom(paper, viewport, direction, origin);
+        },
+
         zoom: function(paper, viewport, direction, origin) {
+            console.log(direction);
 
             var range = this.zooming.range,
                 currentZoom = this.zooming.zoom,

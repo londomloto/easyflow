@@ -260,13 +260,11 @@
 
         onPointerMove: function(e, paper) {
             var layout = paper.layout(),
-                offset = layout.offset(),
                 start = this.linking.start,
-                coord = layout.grabLocation(e),
-                scale = layout.currentScale();
+                coord = layout.grabLocation(e);
 
-            var x = coord.x - (offset.left / scale.x),
-                y = coord.y - (offset.top  / scale.y);
+            var x = coord.x,
+                y = coord.y;
 
             // add threshold
             var rad = Graph.util.rad(Graph.util.theta( start, {x: x, y: y} )),
