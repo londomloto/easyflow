@@ -6,9 +6,36 @@ Web based workflow desiner (GUI)
 
 ## Vector API
 
+#### Graph(ready)
+
+Dom ready wrapper.
+
+```javascript
+Graph(function(){
+	// create paper
+    var paper = Graph.paper().render('#div');
+    
+    // draw some vector
+    var path = paper.path('M 0 0 L 100 100 L 100 200 L 0 200 Z');
+    var rect = paper.rect(0, 0, 100, 100);
+    var circle = paper.circle(30, 30, 30);
+    var ellipse = paper.ellipse(30, 30, 30, 30);
+    var polygon = paper.polygon('0,0 100,100 100,200 0,200');
+    
+    // manipulate
+    rect.rotate(45).scale(1.2).commit();
+    polygon.transform('translate(100,100) scale(1.2) rotate(45)');
+    
+    // animate
+    circle.animable().animate({cx: 200, cy: 200}, 1000, 'bounce');
+    
+    // etc...
+});
+```
+
 #### Graph.paper([width = 800 [, height = 600]])
 
-Create new paper
+Create new paper.
 
 ```javascript
 var paper = Graph.paper(800, 600).render('#div');
