@@ -51,7 +51,7 @@
     Graph.cached = {};
 
     Graph.config = {
-        base: 'easyflow/',
+        base: './',
         svg: {
             version: '1.1'
         },
@@ -284,15 +284,18 @@
     Graph.defer = function() {
         return $.Deferred();
     };
-    
+
+    Graph.when = $.when;
+
     /**
      * Expand namespaces
      */
     Graph.ns('Graph.lang');
-    Graph.ns('Graph.dom');
     Graph.ns('Graph.collection');
     Graph.ns('Graph.registry');
     Graph.ns('Graph.data');
+    Graph.ns('Graph.diagram');
+    Graph.ns('Graph.popup');
     
 
     /**

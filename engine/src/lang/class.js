@@ -225,7 +225,7 @@
             if (cached.rgex) {
                 rgex = cached.rgex;
             } else {
-                rgex = new RegExp(_.escapeRegExp(type), 'gi');
+                rgex = new RegExp(_.escapeRegExp(type), 'i');
                 cached.rgex = rgex;
             }
 
@@ -242,6 +242,7 @@
             }
 
             rgex = null;
+            return event;
         };
 
         return clazz;

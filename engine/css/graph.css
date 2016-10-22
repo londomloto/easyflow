@@ -32,70 +32,38 @@ circle,
 path,
 rect {
     stroke-width: 2;
+    stroke: #000000;
+}
+
+polyline,
+polygon,
+ellipse,
+circle,
+rect {
+    fill: #ffffff;
 }
 
 .graph-paper {
     
 }
 
-.graph-elem:not(.graph-paper) {
-    
-}
-
 /** ================= VECTOR ================= **/
 
-.graph-paper {}
-.graph-axis .x,
-.graph-axis .y {
+.graph-origin .x,
+.graph-origin .y,
+.graph-origin .t {
     fill: #cccccc;
     stroke-width: 0;
     pointer-events: none;
-}
-
-.graph-axis .t {
-    fill: #cccccc;
-    stroke-width: 0;
-    pointer-events: none;
-}
-
-.graph-axis .x {
-    height: 2;
-    width: 30
-}
-
-.graph-axis .y {
-    height: 30;
-    width: 2
 }
 
 .graph-elem-line,
 .graph-elem-path {
     fill: none;
-    stroke: #000000;
     stroke-linecap: butt;
-    /*shape-rendering: crispEdges;*/
-}
-
-.graph-elem-rect {
-    stroke: #000000;
-    fill: #ffffff;
-    /*shape-rendering: crispEdges;*/
-}
-
-.graph-elem-polyline,
-.graph-elem-polygon {
-    stroke: #000000;
-    fill: #ffffff;
-}
-
-.graph-elem-circle,
-.graph-elem-ellipse {
-    stroke: #000000;
-    fill: #ffffff;
 }
 
 .graph-elem-text tspan {
-    /*stroke: #000000;*/
     stroke-width: .05;
     fill: #000000;
 }
@@ -103,18 +71,13 @@ rect {
 /** ================= PLUGINS ================= **/
 
 .graph-resizer {
-    /*display: none;*/
-}
-
-.graph-resizer.visible {
-    /*display: inline;*/
+    
 }
 
 .graph-resizer .graph-resizer-helper {
     fill: none;
     stroke: #3E7CF7;
     stroke-width: 1;
-    /*stroke: #000000;*/
     pointer-events: none;
     stroke-dasharray: 5 3;
 }
@@ -141,8 +104,7 @@ rect {
 
 
 .graph-dragger {
-    /*visibility: hidden;*/
-    /*cursor: move;*/
+    
 }
 
 .graph-dragger .graph-dragger-helper {
@@ -150,14 +112,6 @@ rect {
     stroke: #FFA500;
     stroke-width: 2;
     stroke-dasharray: 5 3;
-}
-
-.graph-dragger.visible {
-    /*visibility: visible;*/
-}
-
-.graph-dragger.visible .graph-dragger-helper {
-    
 }
 
 .graph-elem.dragging {
@@ -175,10 +129,6 @@ rect {
     background: #99ccff;
     border: #0077ff solid 1px;
     opacity: .3;
-}
-
-.graph-rubberband.visible {
-    /*opacity: .3;*/
 }
 
 /** zoombox */
@@ -242,13 +192,7 @@ rect {
 
 /** network */
 .graph-connectable {
-    /*visibility: hidden;*/
-    /*opacity: 0;*/
-}
-
-.graph-connectable.visible {
-    /*visibility: visible;*/
-    /*opacity: 1;*/
+    
 }
 
 .graph-connectable.connect-invalid.connect-hover,
@@ -290,45 +234,39 @@ rect {
 }
 
 .graph-link-edit {
-    /*display: none;*/
+    
 }
 
 .graph-link.selected .graph-link-edit {
-    /*display: inline;*/
+    
 }
 
 .graph-link.selected .graph-link-path {
-    /*stroke: #FFFCAD;*/
     stroke: #007DFC;
 }
 
 .graph-link-head {
-
+    
 }
 
 .graph-link-tail {
-
+    
 }
 
 .graph-link-bend {
 
 }
 
-
-
 /** ================= AUXILIARY ================= **/
 
 /** SPOTLIGHT */
 .graph-util-spotlight {
-    /*display: none;*/
+    
 }
-.graph-util-spotlight.visible {
-    /*display: inline;*/
-}
+
 .graph-util-spotlight > line {
     stroke: orange;
     stroke-width: 1;
-    /*stroke-dasharray: 5 3;*/
     fill: none;
     stroke-linecap: butt;
 }
@@ -336,7 +274,6 @@ rect {
 /** HINTER */
 .graph-util-hinter > line {
     stroke: #007DFC;
-    /*stroke-width: 1;*/
     fill: none;
     stroke-linecap: butt;
     display: none;
@@ -346,54 +283,9 @@ rect {
     display: inline;
 }
 
-/** port */
-.graph-util-port {
-    cursor: crosshair;
-}
-
-.graph-util-port-slot {
-    fill: rgba(255, 255, 255, 0);
-    stroke-width: 0;
-    stroke: #000000;
-    cursor: pointer;
-}
-
-.graph-util-port-core {
-    fill: #000000;
-    fill: #007DFC;
-}
-
-.graph-util-port-slot:hover {
-    fill: rgba(255, 64, 129, .3);
-}
-
-.graph-util-port.drop-enter .graph-util-port-slot {
-    fill: rgba(26, 221, 133, .3);
-}
-
-.graph-util-port.drop-active .graph-util-port-core {
-    fill: red;
-}
-
-
-/** connector */
-.graph-util-connector-wrap {
-    stroke: rgba(255, 255, 255, 0);
-    /*stroke: #30D0C6;*/
-    fill: none;
-    stroke-width: 9;
-    cursor: pointer;
-    stroke-linecap: round;
-}
-
-.graph-util-connector-core {
-    stroke: #333;
-    stroke-width: 1;
-    stroke-linecap: butt;
-}
-
 /** linker */
 .graph-linker {}
+
 .graph-linker-path {
     stroke-width: 2;
     stroke: #000000;
@@ -424,4 +316,27 @@ rect {
     border: solid 1px #ccc;
     border-radius: 4px;
     overflow: auto;
+}
+
+/** popup */
+.graph-popup-backdrop {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0,0,0,.1);
+    z-index: 999998;
+}
+.graph-popup-dialog {
+    position: absolute;
+    min-width: 380px;
+    top: 0;
+    left: 0;
+    z-index: 999999;
+    background: #fff;
+    padding: 20px;
+    color: #555;
+    border-radius: 2px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }

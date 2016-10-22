@@ -1,17 +1,19 @@
 
 (function(){
 
-    Graph.data.Rules = Graph.extend({
+    Graph.diagram.Command = Graph.extend({
         
+        history: [],
+
         add: function() {
             
         },
 
-        has: function() {
+        undo: function() {
             
         },
 
-        can: function() {
+        redo: function() {
 
         }
 

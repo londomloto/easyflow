@@ -1,3 +1,4 @@
+
 *, *::before, *::after {
     box-sizing: border-box;
 }
@@ -10,58 +11,14 @@ html, body {
 }
 
 body {
-    /*background-color: #4B4F6C;*/
     color: #fff;
     font-family: "Segoe UI";
     overflow: hidden;
 }
 
-.e-page {
-    /*width: 2000px;
-    height: 1000px;*/
-    width: 100%;
-    height: 100%;
-    position: relative;
-    border-bottom: solid 1px #4A4D6E;
-    background-color: #fafafa;
-    /*background-image: url(grid.png);*/
-    overflow: hidden;
+.e-hidden {
+    display: none;
 }
-
-/*.e-page:before,
-.e-page:after {
-    content: '';
-    display: block;
-    position: absolute;
-}
-
-.e-page:before {
-    width: 1px;
-    top: 0;
-    bottom: 0;
-    left: 50%;
-}
-
-.e-page:before {
-    background-image: linear-gradient(#4A4D6E 30%, rgba(255,255,255,0) 0%);
-    background-position: right;
-    background-size: 1px 3px;
-    background-repeat: repeat-y;
-}
-
-.e-page:after {
-    height: 1px;
-    left: 0;
-    right: 0;
-    top: 50%;
-}
-
-.e-page:after {
-    background-image: linear-gradient(to right, #4A4D6E 30%, rgba(255,255,255,0) 0%);
-    background-position: bottom;
-    background-size: 3px 1px;
-    background-repeat: repeat-x;
-}*/
 
 .e-bg-cyan {
     background-color: #30D0C6;
@@ -139,7 +96,7 @@ body {
 }
 
 .e-workspace {
-    /*background-color: #f0f0f0;*/
+    
 }
 
 .e-workspace h1,
@@ -149,12 +106,9 @@ body {
 }
 
 .e-header {
-    /*background-color: #fff;*/
-    /*box-shadow: 0 2px 2px rgba(0,0,0,.4);*/
     height: 70px;
     position: relative;
     z-index: 2;
-    /*border-bottom: solid 1px #434665;*/
 }
 .e-logo {}
 .e-logo-text {
@@ -162,6 +116,16 @@ body {
     text-align: center;
     margin: 15px 0 !important;
     color: #fff;
+}
+
+/** page */
+.e-page {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    border-bottom: solid 1px #4A4D6E;
+    background-color: #fafafa;
+    overflow: hidden;
 }
 
 /** accordion */
@@ -196,7 +160,6 @@ body {
 }
 
 .e-accordion .e-pane .e-pane-body {
-    /*height: 300px;*/
     overflow: auto;
     overflow-x: hidden;
     display: none;
@@ -221,26 +184,25 @@ body {
     cursor: pointer;
 }
 
-.e-stencil-item line {
+.e-stencil-item line,
+.e-stencil-item rect,
+.e-stencil-item polygon,
+.e-stencil-item circle {
     stroke-width: 2;
     stroke: #30D0C6;
 }
 
 .e-stencil-item rect,
 .e-stencil-item polygon {
-    stroke-width: 2;
-    stroke: #30D0C6;
     fill: rgba(255, 255, 255, 0);
 }
 
 .e-stencil-item rect.full {
-    fill: #FF4081;
     stroke-width: 0;
+    fill: #FF4081;
 }
 
 .e-stencil-item circle {
-    stroke-width: 2;
-    stroke: #30D0C6;
     fill: rgba(255, 255, 255, 0);
 }
 
@@ -266,25 +228,17 @@ body {
     stroke: #FF4081;
 }
 
-.e-stencil-item:hover .graph-elem-rect.full,
-.e-stencil-item:hover .graph-elem-circle.full {
-    fill: #FF4081;
-}
-
 /** toolbar */
 .e-toolbar {
     text-align: right;
     margin-top: 10px;
     padding: 5px;
-    /*border-top: solid 1px #f4f4f4;*/
 }
 
 .e-toolbar a {
     display: inline-block;
     width: 40px;
     height: 40px;
-    /*border: solid 1px #696B8A;*/
-    /*background-color: #f4f4f4;*/
     border-radius: 50%;
     text-align: center;
     line-height: 36px;
@@ -298,7 +252,6 @@ body {
     background-color: #555;
 }
 
-
 .e-toolbar a.active,
 .e-toolbar a.active:hover {
     color: #fff;
@@ -311,4 +264,15 @@ body {
     margin: 0;
     font-size: 14px;
     color: #4A4D6E;
+}
+
+/** dialog */
+.e-dialog {
+    
+}
+
+.e-dialog h3,
+.e-dialog p {
+    padding: 0;
+    margin: 0
 }

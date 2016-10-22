@@ -82,23 +82,20 @@
                 .selectable(false);
 
             viewport.props.viewport = true;
+            
             this.components.viewport = viewport.guid();
 
             if (this.props.showOrigin) {
-                // add axis sign
-                var gs, ys, as, ts;
+                var origin = Graph.$(
+                    '<g class="graph-origin">' + 
+                        '<rect class="x" rx="1" ry="1" x="-16" y="-2" height="2" width="30"></rect>' + 
+                        '<rect class="y" rx="1" ry="1" x="-2" y="-16" height="30" width="2"></rect>' + 
+                        '<text class="t" x="-40" y="-10">(0, 0)</text>' + 
+                    '</g>'
+                );
                 
-                gs = Graph.$('<g/>').appendTo(viewport.elem);
-                ys = Graph.$('<rect/>').appendTo(gs);
-                as = Graph.$('<rect/>').appendTo(gs);
-                ts = Graph.$('<text/>').appendTo(gs).text('(0, 0)');
-
-                gs.attr({'class': 'graph-axis'});
-                as.attr({'class': 'x', rx: 1, ry: 1, x: -16, y:  -2, height:  2, width: 30});
-                ys.attr({'class': 'y', rx: 1, ry: 1, x:  -2, y: -16, height: 30, width: 2});
-                ts.attr({'class': 't', x: -40, y: -10});
-
-                gs = as = ys = ts = null;
+                origin.appendTo(viewport.elem);
+                origin = null;
             }
 
             // render viewport
@@ -283,9 +280,9 @@
             }
         },
 
-        saveAsImage: function(name) {
+        saveAsImage: function(filename) {
             var exporter = new Graph.data.Exporter(this);
-            exporter.exportPNG();
+            exporter.exportPNG(filename);
             exporter = null;
         },
 
