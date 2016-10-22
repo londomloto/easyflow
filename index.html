@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Easyflow - Diagram Editor</title>
-    <link rel="stylesheet" type="text/css" href="../graph/css/graph.css">
-    <link rel="stylesheet" type="text/css" href="../graph/css/shape.css">
+    
+    <link rel="stylesheet" type="text/css" href="assets/vendor/graph/css/graph.css">
+    <link rel="stylesheet" type="text/css" href="assets/vendor/graph/css/shape.css">
+
     <link rel="stylesheet" type="text/css" href="assets/vendor/ionicons/ionicons.css">
     <link rel="stylesheet" type="text/css" href="assets/vendor/bpmn/bpmn.css">
     <link rel="stylesheet" type="text/css" href="assets/css/easyflow.css">
@@ -112,98 +114,98 @@
     </section>
     <!-- END OF CREATE DIALOG -->
 
-    <script src="../graph/vendor/lodash/lodash.js"></script>
-    <script src="../graph/vendor/jquery/jquery.js"></script>
-    <script src="../graph/vendor/interact/interact.js"></script>
+    <script src="assets/vendor/graph/vendor/lodash/lodash.js"></script>
+    <script src="assets/vendor/graph/vendor/jquery/jquery.js"></script>
+    <script src="assets/vendor/graph/vendor/interact/interact.js"></script>
     
-    <script src="../graph/src/poly.js"></script>
-    <script src="../graph/src/core.js"></script>
-    <script src="../graph/src/util.js"></script>
+    <script src="assets/vendor/graph/src/poly.js"></script>
+    <script src="assets/vendor/graph/src/core.js"></script>
+    <script src="assets/vendor/graph/src/util.js"></script>
     
-    <script src="../graph/src/lang/error.js"></script>
-    <script src="../graph/src/lang/event.js"></script>
-    <script src="../graph/src/lang/class.js"></script>
-    <script src="../graph/src/lang/point.js"></script>
-    <script src="../graph/src/lang/line.js"></script>
-    <script src="../graph/src/lang/curve.js"></script>
-    <script src="../graph/src/lang/bbox.js"></script>
-    <script src="../graph/src/lang/path.js"></script>
-    <script src="../graph/src/lang/matrix.js"></script>
+    <script src="assets/vendor/graph/src/lang/error.js"></script>
+    <script src="assets/vendor/graph/src/lang/event.js"></script>
+    <script src="assets/vendor/graph/src/lang/class.js"></script>
+    <script src="assets/vendor/graph/src/lang/point.js"></script>
+    <script src="assets/vendor/graph/src/lang/line.js"></script>
+    <script src="assets/vendor/graph/src/lang/curve.js"></script>
+    <script src="assets/vendor/graph/src/lang/bbox.js"></script>
+    <script src="assets/vendor/graph/src/lang/path.js"></script>
+    <script src="assets/vendor/graph/src/lang/matrix.js"></script>
 
-    <script src="../graph/src/collection/point.js"></script>
-    <script src="../graph/src/collection/vector.js"></script>
+    <script src="assets/vendor/graph/src/collection/point.js"></script>
+    <script src="assets/vendor/graph/src/collection/vector.js"></script>
 
-    <script src="../graph/src/dom/element.js"></script>
+    <script src="assets/vendor/graph/src/dom/element.js"></script>
 
-    <script src="../graph/src/svg/vector.js"></script>
-    <script src="../graph/src/svg/ellipse.js"></script>
-    <script src="../graph/src/svg/circle.js"></script>
-    <script src="../graph/src/svg/rect.js"></script>
-    <script src="../graph/src/svg/path.js"></script>
-    <script src="../graph/src/svg/polyline.js"></script>
-    <script src="../graph/src/svg/polygon.js"></script>
-    <script src="../graph/src/svg/group.js"></script>
-    <script src="../graph/src/svg/text.js"></script>
-    <script src="../graph/src/svg/image.js"></script>
-    <script src="../graph/src/svg/line.js"></script>
-    <script src="../graph/src/svg/paper.js"></script>
+    <script src="assets/vendor/graph/src/svg/vector.js"></script>
+    <script src="assets/vendor/graph/src/svg/ellipse.js"></script>
+    <script src="assets/vendor/graph/src/svg/circle.js"></script>
+    <script src="assets/vendor/graph/src/svg/rect.js"></script>
+    <script src="assets/vendor/graph/src/svg/path.js"></script>
+    <script src="assets/vendor/graph/src/svg/polyline.js"></script>
+    <script src="assets/vendor/graph/src/svg/polygon.js"></script>
+    <script src="assets/vendor/graph/src/svg/group.js"></script>
+    <script src="assets/vendor/graph/src/svg/text.js"></script>
+    <script src="assets/vendor/graph/src/svg/image.js"></script>
+    <script src="assets/vendor/graph/src/svg/line.js"></script>
+    <script src="assets/vendor/graph/src/svg/paper.js"></script>
 
-    <script src="../graph/src/registry/vector.js"></script>
-    <script src="../graph/src/registry/link.js"></script>
-    <script src="../graph/src/registry/shape.js"></script>
+    <script src="assets/vendor/graph/src/registry/vector.js"></script>
+    <script src="assets/vendor/graph/src/registry/link.js"></script>
+    <script src="assets/vendor/graph/src/registry/shape.js"></script>
 
-    <script src="../graph/src/layout/layout.js"></script>
+    <script src="assets/vendor/graph/src/layout/layout.js"></script>
     
-    <script src="../graph/src/router/router.js"></script>
-    <script src="../graph/src/router/directed.js"></script>
-    <script src="../graph/src/router/orthogonal.js"></script>
+    <script src="assets/vendor/graph/src/router/router.js"></script>
+    <script src="assets/vendor/graph/src/router/directed.js"></script>
+    <script src="assets/vendor/graph/src/router/orthogonal.js"></script>
 
-    <script src="../graph/src/link/link.js"></script>
-    <script src="../graph/src/link/directed.js"></script>
-    <script src="../graph/src/link/orthogonal.js"></script>
+    <script src="assets/vendor/graph/src/link/link.js"></script>
+    <script src="assets/vendor/graph/src/link/directed.js"></script>
+    <script src="assets/vendor/graph/src/link/orthogonal.js"></script>
 
-    <script src="../graph/src/util/spotlight.js"></script>
-    <script src="../graph/src/util/hinter.js"></script>
-    <script src="../graph/src/util/toolpad.js"></script>
-    <script src="../graph/src/util/sweeplink.js"></script>
+    <script src="assets/vendor/graph/src/util/spotlight.js"></script>
+    <script src="assets/vendor/graph/src/util/hinter.js"></script>
+    <script src="assets/vendor/graph/src/util/toolpad.js"></script>
+    <script src="assets/vendor/graph/src/util/sweeplink.js"></script>
 
-    <script src="../graph/src/plugin/plugin.js"></script>
-    <script src="../graph/src/plugin/definer.js"></script>
-    <script src="../graph/src/plugin/reactor.js"></script>
-    <script src="../graph/src/plugin/transformer.js"></script>
-    <script src="../graph/src/plugin/animator.js"></script>
-    <script src="../graph/src/plugin/resizer.js"></script>
-    <script src="../graph/src/plugin/collector.js"></script>
-    <script src="../graph/src/plugin/dragger.js"></script>
-    <script src="../graph/src/plugin/dropper.js"></script>
-    <script src="../graph/src/plugin/sorter.js"></script>
-    <script src="../graph/src/plugin/network.js"></script>
-    <script src="../graph/src/plugin/history.js"></script>
-    <script src="../graph/src/plugin/panzoom.js"></script>
-    <script src="../graph/src/plugin/linker.js"></script>
-    <script src="../graph/src/plugin/toolmanager.js"></script>
-    <script src="../graph/src/plugin/pencil.js"></script>
-    <script src="../graph/src/plugin/editor.js"></script>
+    <script src="assets/vendor/graph/src/plugin/plugin.js"></script>
+    <script src="assets/vendor/graph/src/plugin/definer.js"></script>
+    <script src="assets/vendor/graph/src/plugin/reactor.js"></script>
+    <script src="assets/vendor/graph/src/plugin/transformer.js"></script>
+    <script src="assets/vendor/graph/src/plugin/animator.js"></script>
+    <script src="assets/vendor/graph/src/plugin/resizer.js"></script>
+    <script src="assets/vendor/graph/src/plugin/collector.js"></script>
+    <script src="assets/vendor/graph/src/plugin/dragger.js"></script>
+    <script src="assets/vendor/graph/src/plugin/dropper.js"></script>
+    <script src="assets/vendor/graph/src/plugin/sorter.js"></script>
+    <script src="assets/vendor/graph/src/plugin/network.js"></script>
+    <script src="assets/vendor/graph/src/plugin/history.js"></script>
+    <script src="assets/vendor/graph/src/plugin/panzoom.js"></script>
+    <script src="assets/vendor/graph/src/plugin/linker.js"></script>
+    <script src="assets/vendor/graph/src/plugin/toolmanager.js"></script>
+    <script src="assets/vendor/graph/src/plugin/pencil.js"></script>
+    <script src="assets/vendor/graph/src/plugin/editor.js"></script>
     
-    <script src="../graph/src/shape/shape.js"></script>
-    <script src="../graph/src/shape/activity/start.js"></script>
-    <script src="../graph/src/shape/activity/final.js"></script>
-    <script src="../graph/src/shape/activity/action.js"></script>
-    <script src="../graph/src/shape/activity/router.js"></script>
-    <script src="../graph/src/shape/activity/fork.js"></script>
-    <script src="../graph/src/shape/activity/join.js"></script>
-    <script src="../graph/src/shape/activity/lane.js"></script>
+    <script src="assets/vendor/graph/src/shape/shape.js"></script>
+    <script src="assets/vendor/graph/src/shape/activity/start.js"></script>
+    <script src="assets/vendor/graph/src/shape/activity/final.js"></script>
+    <script src="assets/vendor/graph/src/shape/activity/action.js"></script>
+    <script src="assets/vendor/graph/src/shape/activity/router.js"></script>
+    <script src="assets/vendor/graph/src/shape/activity/fork.js"></script>
+    <script src="assets/vendor/graph/src/shape/activity/join.js"></script>
+    <script src="assets/vendor/graph/src/shape/activity/lane.js"></script>
 
-    <script src="../graph/src/data/exporter.js"></script>
-    <script src="../graph/src/data/importer.js"></script>
+    <script src="assets/vendor/graph/src/data/exporter.js"></script>
+    <script src="assets/vendor/graph/src/data/importer.js"></script>
 
-    <script src="../graph/src/diagram/diagram.js"></script>
-    <script src="../graph/src/diagram/command.js"></script>
-    <script src="../graph/src/diagram/modeler.js"></script>
-    <script src="../graph/src/diagram/parser.js"></script>
-    <script src="../graph/src/diagram/rules.js"></script>
+    <script src="assets/vendor/graph/src/diagram/diagram.js"></script>
+    <script src="assets/vendor/graph/src/diagram/command.js"></script>
+    <script src="assets/vendor/graph/src/diagram/modeler.js"></script>
+    <script src="assets/vendor/graph/src/diagram/parser.js"></script>
+    <script src="assets/vendor/graph/src/diagram/rules.js"></script>
     
-    <script src="../graph/src/popup/dialog.js"></script>
+    <script src="assets/vendor/graph/src/popup/dialog.js"></script>
     
     <script src="app/index.js"></script>
 
