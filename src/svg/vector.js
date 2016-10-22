@@ -821,7 +821,7 @@
                 this.elem.remove();
                 this.elem = null;
             }
-
+            
             Graph.registry.vector.unregister(this);
             
             this.fire('remove');

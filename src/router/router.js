@@ -213,6 +213,12 @@
 
         stopTrans: function(context) {
 
+        },
+
+        destroy: function() {
+            for (var key in this.cached) {
+                this.cached[key] = null;
+            }
         }
         
     });

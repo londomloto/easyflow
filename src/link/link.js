@@ -19,7 +19,9 @@
         components: {
             block: null,
             coat: null,
-            path: null
+            path: null,
+            label: null,
+            editor: null
         },
 
         cached: {
@@ -92,6 +94,7 @@
             coat.on('dragend.link', _.bind(this.onCoatDragEnd, this));
             coat.on('edit.link', _.bind(this.onCoatEdit, this));
             coat.on('beforeedit.link', _.bind(this.onCoatBeforeEdit, this));
+            coat.on('remove.link', _.bind(this.onCoatRemove, this));
 
             path = (new Graph.svg.Path())
                 .removeClass(Graph.string.CLS_VECTOR_PATH)
@@ -429,6 +432,10 @@
             this.update(this.router.command());
         },
 
+        onCoatRemove: function(e) {
+            this.destroy();
+        },
+
         ///////// OBSERVERS /////////
         
         onSourceRotate: function() {
@@ -509,6 +516,67 @@
             port.y += e.translate.dy;
             
             this.router.repair(this.router.target(), port);
+        },
+
+        destroy: function() {
+            var me = this;
+            var prop;
+
+            // remove label
+            me.component('label').remove();
+
+            // remove vertexs
+            if (me.cached.controls) {
+                _.forEach(me.cached.controls, function(id){
+                    var c = Graph.registry.vector.get(id);
+                    c && c.remove();
+                });
+                me.cached.controls = null;
+            }
+
+            // remove editor
+            me.component('editor').remove();
+
+            // remove path
+            me.component('path').remove();
+
+            // remove block
+            me.component('block').remove();
+            
+            for (prop in me.components) {
+                me.components[prop] = null;
+            }
+
+            // unbind resource
+            _.forEach(['source', 'target'], function(res){
+                var handlers = me.handlers[res],
+                    resource = me.router[res]();
+                
+                var key, ns;
+
+                if (handlers && resource) {
+                    for (key in handlers) {
+                        ns = key + '.link';
+                        resource.off(ns, handlers[key]);
+                    }
+                }
+                
+                handlers = null;
+            });
+
+            // clear cache
+            for (prop in me.cached) {
+                me.cached[prop] = null;
+            }
+
+            me.router.destroy();
+            me.router = null;
+
+            // unregister
+            Graph.registry.link.unregister(me);
+            
+            // publish
+            Graph.topic.publish('link/remove');
         }
 
     });

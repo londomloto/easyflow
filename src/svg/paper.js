@@ -24,7 +24,7 @@
             focusable: false,
 
             rendered: false,
-            showAxis: true,
+            showOrigin: true,
             zoomable: true
         },
 
@@ -71,6 +71,7 @@
 
             // subscribe topics
             Graph.topic.subscribe('link/update', _.bind(me.listenLinkUpdate, me));
+            Graph.topic.subscribe('link/remove', _.bind(me.listenLinkRemove, me));
             Graph.topic.subscribe('shape/draw',  _.bind(me.listenShapeDraw, me));
         },
 
@@ -83,14 +84,14 @@
             viewport.props.viewport = true;
             this.components.viewport = viewport.guid();
 
-            if (this.props.showAxis) {
+            if (this.props.showOrigin) {
                 // add axis sign
                 var gs, ys, as, ts;
                 
-                gs = Graph.$('<g>').appendTo(viewport.elem);
-                ys = Graph.$('<rect>').appendTo(gs);
-                as = Graph.$('<rect>').appendTo(gs);
-                ts = Graph.$('<text>').appendTo(gs).text('(0, 0)');
+                gs = Graph.$('<g/>').appendTo(viewport.elem);
+                ys = Graph.$('<rect/>').appendTo(gs);
+                as = Graph.$('<rect/>').appendTo(gs);
+                ts = Graph.$('<text/>').appendTo(gs).text('(0, 0)');
 
                 gs.attr({'class': 'graph-axis'});
                 as.attr({'class': 'x', rx: 1, ry: 1, x: -16, y:  -2, height:  2, width: 30});
@@ -282,11 +283,28 @@
             }
         },
 
+        saveAsImage: function(name) {
+            var exporter = new Graph.data.Exporter(this);
+            exporter.exportPNG();
+            exporter = null;
+        },
+
+        /**
+         * save workspace
+         */
+        save: function() {
+
+        },
+
         ///////// TOPIC LISTENERS /////////
         
         listenLinkUpdate: _.debounce(function() {
             this.layout().arrangeLinks();
         }, 300),
+        
+        listenLinkRemove: _.debounce(function(){
+            this.layout().arrangeLinks();
+        }, 10),
 
         listenShapeDraw: _.debounce(function() {
             this.layout().arrangeShapes();

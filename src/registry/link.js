@@ -19,6 +19,7 @@
 
         unregister: function(link) {
             var id = link.guid();
+            
             if (storage[id]) {
                 delete storage[id];
             }

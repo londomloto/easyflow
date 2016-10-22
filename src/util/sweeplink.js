@@ -262,8 +262,8 @@
             return bisect(array, key(d));
         };
 
-        array.key = function(_) {
-            key = _;
+        array.key = function(f) {
+            key = f;
             return array;
         };
 

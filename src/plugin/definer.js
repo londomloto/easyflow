@@ -17,7 +17,7 @@
         constructor: function(vector) {
             this.props.vector = vector.guid();
 
-            this.components.holder = Graph.$('<defs>');
+            this.components.holder = Graph.$('<defs/>');
             this.components.holder.prependTo(vector.elem);
 
             if (vector.isPaper()) {
@@ -31,8 +31,8 @@
                 return this.definitions[id];
             }
 
-            var marker = Graph.$('<marker>');
-            var path = Graph.$('<path>');
+            var marker = Graph.$('<marker/>');
+            var path = Graph.$('<path/>');
 
             // marker.attr({
             //     id: id,

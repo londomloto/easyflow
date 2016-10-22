@@ -140,7 +140,7 @@
                     }
                 });
                 
-                // TODO: research for sweepline algorithm (pending)
+                // TODO: research for sweepline algorithm
                 
                 var sweeper = new Graph.util.Sweeplink(links),
                     convex = sweeper.findConvex();

@@ -2,6 +2,8 @@
 
 Web based workflow desiner (GUI)
 
+![alt tag](screenshoot.png "Easyflow Editor")
+
 ## Vector API
 
 #### Graph.paper([width = 800 [, height = 600]])

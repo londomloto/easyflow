@@ -88,7 +88,7 @@
 
             text = _.defaultTo(text, '');
 
-            span = Graph.$('<tspan>');
+            span = Graph.$('<tspan/>');
             span.text(text);
 
             me.elem.append(span);
@@ -191,7 +191,7 @@
 
         pathinfo: function() {
             var size = this.dimension();
-            
+
             return new Graph.lang.Path([
                 ['M', size.x, size.y], 
                 ['l', size.width, 0], 

@@ -1,7 +1,9 @@
 
 (function(_, $){
     
-    var REGEX_SVG_BUILDER = /^<(svg|g|rect|text|path|line|tspan|circle|polygon|defs|marker)>/i;
+    var REGEX_SVG_BUILDER = /^<(svg|g|rect|text|path|line|tspan|circle|polygon|defs|marker)/i;
+
+    var domParser;
 
     var E = Graph.dom.Element = function(elem) {
         this.query = $(elem);
@@ -245,21 +247,38 @@
     function prepare(selector) {
         if (_.isString(selector)) {
             if (REGEX_SVG_BUILDER.test(selector)) {
-                var dummy = $(selector),
-                    type = dummy[0].tagName.toLowerCase(),
-                    node = document.createElementNS(Graph.config.xmlns.svg, type);
-                
-                if (type == 'svg') {
-                    node.setAttribute('xmlns', Graph.config.xmlns.svg);
-                    node.setAttribute('xmlns:xlink', Graph.config.xmlns.xlink);
-                    node.setAttribute('version', Graph.config.svg.version);
-                }
-
-                dummy = null;
-                return node;    
+                return parseSVG(selector);
             }
         }
         return selector;
+    }
+
+    function parseSVG(string) {
+        var namespace, fragment, svgdoc, element;
+
+        if (domParser === undefined) {
+            try {
+                domParser = new DOMParser();
+            } catch(e){
+                domParser = null;
+            }
+        }
+
+        if (domParser) {
+            namespace = Graph.config.xmlns.svg;
+            
+            fragment  = '';
+            fragment += '<g xmlns="'+ namespace +'">';
+            fragment += string;
+            fragment += '</g>';
+
+            svgdoc = domParser.parseFromString(fragment, 'text/xml');
+            element = svgdoc.documentElement.childNodes[0];
+            
+            svgdoc = fragment = null;
+        }
+
+        return element || null;
     }
     
 }(_, jQuery));

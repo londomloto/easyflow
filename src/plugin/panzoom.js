@@ -176,8 +176,6 @@
         },
 
         zoom: function(paper, viewport, direction, origin) {
-            console.log(direction);
-
             var range = this.zooming.range,
                 currentZoom = this.zooming.zoom,
                 zoomType = direction > 0 ? 'in' : 'out',
