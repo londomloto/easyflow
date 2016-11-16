@@ -1,0 +1,3 @@
+[submodule "public/assets/vendor/graph"]
+	path = public/assets/vendor/graph
+	url = D:/server/dev/github/graph
