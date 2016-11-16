@@ -1,1 +1,4 @@
 
+[submodule "public/assets/vendor/graph"]
+	path = public/assets/vendor/graph
+	url = https://github.com/londomloto/graph.git
