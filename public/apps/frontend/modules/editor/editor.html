@@ -1,0 +1,79 @@
+<section class="e-workspace e-vbox">
+    <header class="e-header e-hbox">
+        <aside class="e-aside-sm e-bg-cyan">
+            <a data-ng-click="goHome()" href="javascript:;" class="e-logo-text">easyflow<sup>&reg;</sup></a>    
+        </aside>
+        <section>
+            <div class="e-title hidden-sm hidden-xs">
+                <h4>{{ diagram.name }}</h4>
+                <p>{{ diagram.description }}</p>
+            </div>
+            <div class="e-toolbar">
+                <a href="javascript:;" data-ng-click="goHome()" title="Kembali ke halaman portal"><i class="ion-ios-home-outline"></i></a>
+            </div>
+            <div class="e-toolbar">
+                <a href="javascript:;" data-ng-if="user" data-ng-click="createDiagram()" title="New diagram"><i class="ion-android-add"></i></a>
+                <a href="javascript:;" data-ng-if="user" data-ng-click="updateDiagram()" title="Save diagram"><i class="ion-android-done"></i></a>
+            </div>
+            <div class="e-toolbar">
+                <a href="#" data-tool="panzoom" title="Activate hand tool"><i class="bpmn-icon-hand-tool"></i></a>
+                <a href="#" data-tool="collector" title="Activate lasso tool"><i class="bpmn-icon-lasso-tool"></i></a>
+                <a href="#" data-tool="linker" title="Activate link tool"><i class="bpmn-icon-connection-multi"></i></a>
+                <a href="#" data-util="trash" title="Delete selection"><i class="bpmn-icon-trash"></i></a>
+                
+                <a href="javascript:;" data-util="export" title="Save as Image"><i class="ion-ios-printer-outline"></i></a>
+                <a href="javascript:;" data-util="config" title="Editor config"><i class="ion-ios-gear-outline"></i></a>
+            </div>
+
+            <div class="e-clearfix"></div>
+        </section>
+    </header>
+    <section>
+        <section class="e-hbox stretch">
+            <aside class="e-aside-sm e-bg-dark">
+                <div class="e-accordion">
+                    <div class="e-pane active">
+                        <div class="e-pane-body">
+                            <div id="pallet" data-graphpallet class="e-pallet"></div>
+                        </div>
+                    </div>
+                </div>
+            </aside>    
+            <section>
+                <section class="e-vbox">
+                    <section class="e-center">
+                        <div id="page" data-grapheditor class="e-page"></div>
+                    </section>
+                </section>
+            </section>
+        </section>
+        
+    </section>
+    
+</section>
+
+<div data-ui-modal="create-diagram" class="modal fade" data-backdrop="static" data-keyboard="false" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>Buat diagram baru</h4>
+            </div>
+            <div class="modal-body">
+                <form name="form1" novalidate>
+                    <div class="form-group">
+                        <label>Nama diagram</label>
+                        <input ng-model="diagram.name" type="text" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Keterangan singkat</label>
+                        <textarea ng-model="diagram.description"  class="form-control"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button ng-click="addDiagram()" type="submit" class="btn btn-primary btn-submit">Tambahkan</button>
+                <button ng-click="hideModal('create-diagram')" class="btn btn-default btn-close">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>

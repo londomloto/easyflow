@@ -1,0 +1,92 @@
+
+
+<h3>Data Pribadi</h3>
+<p>Gunakan form berikut untuk melengkapi profil Anda.</p>
+<br>
+
+<div ng-show="form1.$submitted && form1.$invalid" class="alert alert-dismissible alert-danger">
+    <button type="button" class="close" data-dismiss="alert">×</button>
+    <strong>Oops!</strong>
+    <a href="javascript:void(0)" class="alert-link">Beberapa inputan tidak benar</a>, silahkan periksa kembali.
+</div>
+
+<form name="form1" novalidate>
+    <div class="form-group">
+        <label class="control-label" for="cf-input-1">Nama lengkap</label>
+        <input ng-model="user.fullname" name="user_fullname" class="form-control" id="cf-input-1" type="text" required>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label" for="cf-input-2">Jenis Kelamin</label>
+        <input ng-model="user.sex" class="form-control" id="cf-input-2" type="text">
+    </div>
+
+    <div class="form-group">
+        <label class="control-label" for="cf-input-3">Pekerjaan</label>
+        <input ng-model="user.job_title" class="form-control" id="cf-input-3" type="text">
+    </div>
+
+    <div class="form-group">
+        <label class="control-label" for="cf-input-4">Keterangan</label>
+        <input ng-model="user.bio" class="form-control" id="cf-input-4" type="text">
+    </div>
+
+    <div class="form-group is-fileinput">
+        <label class="control-label" for="cf-input-5">Upload Foto</label>
+        <input id="cf-input-5" data-ui-file="userfile" on-set="setAvatar()" type="file">
+        <input readonly="" class="form-control" placeholder="" type="text">
+    </div>
+    <div ng-show="user.avatar" class="form-group">
+        <div class="checkbox">
+            <label>
+                <input ng-model="user.noavatar" type="checkbox"> Hapus foto saat ini  ( {{ user.avatar_name }} ) ?
+            </label>
+        </div>
+    </div>
+
+    <div class="form-group label-floating">
+        <button type="submit" ng-click="saveProfile()" class="btn btn-raised btn-primary btn-lg">
+            Simpan perubahan
+        </button>
+    </div>
+</form>
+
+<hr>
+
+<h3>Data Akun</h3>
+<p>Gunakan form berikut untuk merubah password saat ini atau menghapus akun Anda.</p>
+<br>
+
+<form name="form2" novalidate>
+
+    <div ng-show="form2._pass2.$error.verify" class="alert alert-dismissible alert-danger">
+        <button type="button" class="close" data-dismiss="alert">×</button>
+        <strong>Oops!</strong>
+        Password tidak cocok
+    </div>
+
+    <div class="form-group">
+        <label class="control-label" for="cf-input-6">Akun email</label>
+        <p><strong>{{ user.email }}</strong></p>
+    </div>
+
+    <div class="form-group">
+        <label class="control-label" for="cf-input-7">Kata sandi</label>
+        <input class="form-control" id="cf-input-7" type="password" name="_pass1" ng-model="pass1">
+    </div>
+
+    <div class="form-group">
+        <label class="control-label" for="cf-input-8">Konfirmasi kata sandi</label>
+        <input class="form-control" id="cf-input-8" type="password" name="_pass2" ng-model="pass2">
+    </div>
+
+    <div class="form-group label-floating">
+        <button type="submit" ng-click="saveAccount()" class="btn btn-raised btn-primary btn-lg">Simpan perubahan</button>
+        <a href="javascript:;" ng-click="removeAccount()" class="btn btn-lg btn-danger">Hapus akun saya<div class="ripple-container"></div></a>
+    </div>
+</form>
+
+<div data-ui-confirm="remove-account-confirm"
+     data-title="Konfirmasi"
+     data-message="Anda yakin akan menghapus akun Anda?">
+</div>

@@ -1,0 +1,63 @@
+<nav class="navbar navbar-default navbar-custom">
+    <div class="container">
+        
+        <div class="navbar-header" data-ng-include="'/public/apps/frontend/templates/brand.html'"></div>
+
+        <div class="collapse navbar-collapse" id="app-navbar">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a ui-sref="home"><i class="ion-android-arrow-back"></i> Kembali ke halaman depan</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container-fluid -->
+</nav>
+
+<!-- Contact Section -->
+<section id="tutorial-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <h2>Tutorial</h2>
+                <hr class="star-primary">
+            </div>
+        </div>
+
+        <div style="height: 100px;"></div>
+        
+        <div data-ng-repeat="item in tutorials" class="row tutorial-item">
+            <div data-ng-if="$index % 2 == 0">
+                <div class="col-sm-6">
+                    <h4>{{ item.title }}</h4>
+                    <p>{{ item.description }}</p>
+                </div>
+                <div class="col-sm-6">
+                    <video data-ui-video data-source="{{ item.video_url }}" 
+                           data-poster="{{ item.poster_url }}"
+                           data-type="{{ item.video_type }}" class="video-js vjs-default-skin"></video>
+                </div>    
+            </div>
+
+            <div data-ng-if="$index % 2 != 0">
+                <div class="col-sm-6">
+                    <video data-ui-video data-source="{{ item.video_url }}" 
+                           data-poster="{{ item.poster_url }}"
+                           data-type="{{ item.video_type }}" class="video-js vjs-default-skin"></video>
+                </div>
+                <div class="col-sm-6">
+                    <h4>{{ item.title }}</h4>
+                    <p>{{ item.description }}</p>
+                </div>    
+            </div>
+            
+        </div>
+
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="text-center" data-ng-include src="'/public/apps/frontend/templates/footer.html'">
+    
+</footer>

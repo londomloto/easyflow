@@ -1,0 +1,50 @@
+
+<nav class="navbar navbar-default navbar-custom">
+    <div class="container">
+        
+        <div class="navbar-header" data-ng-include="'/public/apps/frontend/templates/brand.html'"></div>
+
+        <div class="collapse navbar-collapse" id="app-navbar">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a ui-sref="home"><i class="ion-android-arrow-back"></i> Kembali ke halaman depan</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+    <!-- /.container-fluid -->
+</nav>
+
+<section id="profile-section">
+    <div class="row">
+        <div class="col-lg-10 col-lg-offset-1">
+            <div class="row">
+                <aside class="side-section col-xs-3">
+                    <nav id="side-nav" >
+                        <ul>
+                            <li><a ui-sref-active="active" ui-sref="profile.home"><i class="ion-home"></i>&nbsp;&nbsp;Halaman Profile</a></li>
+                            <li><a ui-sref-active="active" ui-sref="profile.edit"><i class="ion-edit"></i>&nbsp;&nbsp;Edit Profile</a></li>
+                            <li><a ui-sref-active="active" ui-sref="profile.diagram"><i class="ion-erlenmeyer-flask"></i>&nbsp;&nbsp;Katalog Diagram</a></li>
+                            <li class="divider"></li>
+                            <li><a href="javascript:void(0)" ng-click="logout()"><i class="ion-power"></i>&nbsp;&nbsp;Keluar</a></li>
+                        </ul>
+                    </nav>
+
+                </aside>
+                <section class="content-section col-xs-9" ui-view>
+                    
+                </section>
+            </div>
+            
+        </div>
+    </div>
+    
+</section>
+
+
+
+<!-- Footer -->
+<footer class="text-center" data-ng-include src="'/public/apps/frontend/templates/footer.html'">
+    
+</footer>

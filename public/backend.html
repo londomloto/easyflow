@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="app">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimal-ui" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Admin</title>
+
+    <link rel="stylesheet" type="text/css" href="/public/assets/vendor/pace/pace.css">
+    <link rel="stylesheet" type="text/css" href="/public/assets/vendor/animate/animate.min.css">
+    <link rel="stylesheet" type="text/css" href="/public/assets/vendor/roboto/roboto.css">
+    <link rel="stylesheet" type="text/css" href="/public/assets/vendor/ionicons/ionicons.css">
+    <link rel="stylesheet" type="text/css" href="/public/assets/vendor/bootstrap/v4/css/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="/public/assets/vendor/bootstrap/v3/css/snackbar.css">
+    <link rel="stylesheet" type="text/css" href="/public/assets/css/backend.css">
+
+</head>
+<body>
+
+    <div class="app" id="app" data-ui-view></div>
+    
+    <script>
+        window.paceOptions = {
+            document: true,
+            eventLag: true,
+            restartOnPushState: true,
+            restartOnRequestAfter: true,
+            ajax: {
+                trackMethods: [ 'POST','GET']
+            }
+        };
+    </script>
+
+    <script src="/public/assets/vendor/pace/pace.min.js"></script>
+    <script src="/public/assets/vendor/lodash/lodash.js"></script>
+    <script src="/public/assets/vendor/jquery/jquery.js"></script>
+    <script src="/public/assets/vendor/tether/tether.min.js"></script>
+    <script src="/public/assets/vendor/bootstrap/v4/js/bootstrap.js"></script>
+    <script src="/public/assets/vendor/bootstrap/v3/js/snackbar.js"></script>
+
+    <script src="/public/assets/vendor/angular/angular.js"></script>
+    <script src="/public/assets/vendor/ui-router/angular-ui-router.js"></script>
+    <script src="/public/assets/vendor/oclazyload/oclazyload.js"></script>
+
+    <!-- CORE MODULE -->
+    <script src="/public/apps/core/core.module.js"></script>
+    <script src="/public/apps/core/core.constant.js"></script>
+    <script src="/public/apps/core/core.provider.js"></script>
+    <script src="/public/apps/core/core.filter.js"></script>
+    <!-- END CORE MODULE -->
+
+    <!-- APP MODULE -->
+    <script src="/public/apps/backend/app.module.js"></script>
+    <script src="/public/apps/backend/app.constant.js"></script>
+    <script src="/public/apps/backend/app.config.js"></script>
+    <script src="/public/apps/backend/app.provider.js"></script>
+    <script src="/public/apps/backend/app.directive.js"></script>
+
+    <script id="body-files"></script>
+</body>
+</html>

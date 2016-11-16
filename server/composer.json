@@ -1,0 +1,11 @@
+{
+    "autoload": {
+        "psr-4": {
+            "Sys\\": "system/",
+            "App\\": "application/"
+        }
+    },
+    "require": {
+        "firebase/php-jwt": "^4.0"
+    }
+}

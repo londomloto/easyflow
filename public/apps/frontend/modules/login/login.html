@@ -1,0 +1,91 @@
+
+<nav class="navbar navbar-default navbar-custom">
+    <div class="container">
+        
+        <div class="navbar-header" data-ng-include="'/public/apps/frontend/templates/brand.html'"></div>
+
+        <div class="collapse navbar-collapse" id="app-navbar">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a ui-sref="home"><i class="ion-android-arrow-back"></i> Kembali ke halaman depan</a>
+                </li>
+            </ul>
+        </div>
+        
+    </div>
+    
+</nav>
+
+<!-- Contact Section -->
+<section id="login-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <h2>Login</h2>
+                <hr class="star-primary">
+                <br>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-6 b-r">
+                <p class="text-center">Login dengan email</p>
+                <hr>
+                <div ng-show="form.$submitted && form.$invalid" class="alert alert-dismissible alert-danger">
+                    <button type="button" class="close" data-dismiss="alert">×</button>
+                    <strong>Oops!</strong>
+                    <a href="javascript:void(0)" class="alert-link">Beberapa inputan tidak benar</a>, silahkan periksa kembali.
+                </div>
+
+                <div ng-show="message" class="alert alert-dismissible alert-danger">
+                    <button type="button" class="close" data-dismiss="alert">×</button>
+                    <strong>Oops!</strong>
+                    {{ message }}
+                </div>
+
+                <form name="form" novalidate>
+
+                    <div class="row control-group">
+                        <div class="col-xs-12 form-group">
+                            <label class="control-label" for="cf-input-1">Alamat email</label>
+                            <input class="form-control" ng-model="email" name="email" id="cf-input-1" type="email" required>
+                        </div>
+                    </div>
+
+                    <div class="row control-group">
+                        <div class="col-xs-12 form-group">
+                            <label class="control-label" for="cf-input-2">Kata sandi</label>
+                            <input class="form-control" ng-model="passwd" name="passwd" id="cf-input-2" type="password" required>
+                        </div>
+                    </div>
+                    <div class="row control-group">
+                        <div class="col-xs-12 form-group">
+                            <p>Lupa kata sandi Anda? <a ui-sref="forgot">Klik di sini untuk mendapatkannya kembali</a></p> 
+                        </div>
+                    </div>
+                    <br>
+                    <div class="row">
+                        <div class="col-xs-12 form-group">
+                            <button type="submit" ng-click="login()" class="btn btn-raised btn-primary btn-lg">Login</button>
+                            <a ui-sref="register" class="btn btn-link btn-lg">Belum terdaftar ? <strong>klik di sini</strong></a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="col-sm-6">
+                <p class="text-center">Login dengan akun sosial media</p> 
+                <hr>
+                <div class="text-center">
+                    <button data-google-login data-callback="socialLogin" class="btn btn-raised btn-lg btn-social btn-google"><i class="ion-social-google"></i> Login dengan Google</button>
+                    <p>atau</p>
+                    <button data-facebook-login data-callback="socialLogin" class="btn btn-raised btn-lg btn-social btn-facebook"><i class="ion-social-facebook"></i> Login dengan Facebook</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="text-center" data-ng-include src="'/public/apps/frontend/templates/footer.html'">
+    
+</footer>

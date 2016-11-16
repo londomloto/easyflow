@@ -1,0 +1,43 @@
+<div class="padding">
+    <div class="row">
+        <div class="col-md-3 push-md-9">
+            <div class="box">
+                <div class="box-header">Pencarian</div>
+                <div class="box-body">
+                    <form>
+                        <div class="form-group">
+                            <label>Nama Lengkap</label>
+                            <input type="text" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Alamat Email</label>
+                            <input type="text" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Jenis Kelamin</label>
+                            <input type="text" class="form-control">
+                        </div>
+                        <button class="btn btn-fw primary">Cari Pengguna</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9 pull-md-3">
+            <div class="row">
+                
+                <div data-ng-repeat="user in users" class="col-xs-6 col-sm-4 col-md-3">
+                    <div class="box p-a-xs">
+                        <a href="#">
+                            <img data-ng-src="{{ user.avatar | thumbnail:'user':190:190 }}" alt="" class="img-responsive">   
+                        </a>
+                        <div class="p-a-sm">
+                            <a data-ui-sref="main.user.edit({id: user.id})" class="text-ellipsis">{{ user.fullname }}</a>
+                            <small class="text-muted">{{ user.email }}</small>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>

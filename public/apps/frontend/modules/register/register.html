@@ -1,0 +1,70 @@
+
+<nav class="navbar navbar-default navbar-custom">
+    <div class="container">
+        <div class="navbar-header" data-ng-include="'/public/apps/frontend/templates/brand.html'"></div>
+
+        <div class="collapse navbar-collapse" id="app-navbar">
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a ui-sref="home"><i class="ion-android-arrow-back"></i> Kembali ke halaman depan</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+</nav>
+
+<section id="register-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <h2>Daftar</h2>
+                <hr class="star-primary">
+                <br>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2">
+
+                <div ng-show="form.$submitted && form.$invalid" class="alert alert-dismissible alert-danger">
+                    <button type="button" class="close" data-dismiss="alert">×</button>
+                    <strong>Oops!</strong>
+                    <a href="javascript:void(0)" class="alert-link">Beberapa inputan tidak benar</a>, silahkan periksa kembali.
+                </div>
+
+                <form name="form" novalidate>
+                    <div class="row control-group">
+                        <div class="form-group">
+                            <label class="control-label" for="cf-input-1">Nama lengkap</label>
+                            <input class="form-control" ng-model="fullname" ng-model-options="{ updateOn: 'blur' }" name="fullname" id="cf-input-1" type="text" required>
+                        </div>
+                    </div>
+
+                    <div class="row control-group">
+                        <div class="form-group">
+                            <label class="control-label" for="cf-input-2">Alamat email</label>
+                            <input class="form-control" ng-model="email" ng-model-options="{ updateOn: 'blur' }" name="email" id="cf-input-2" type="email" required>
+                        </div>
+                    </div>
+
+                    <div class="row control-group">
+                        <div class="form-group">
+                            <label class="control-label" for="cf-input-3">Kata sandi</label>
+                            <input class="form-control" ng-model="passwd" ng-model-options="{ updateOn: 'blur' }" name="passwd" id="cf-input-3" type="password" required>
+                        </div>
+                    </div>
+
+                    <br>
+                    <div class="row">
+                        <div class="form-group">
+                            <button type="submit" ng-click="register()" class="btn btn-raised btn-primary btn-lg">Daftar sekarang</button>
+                            <a ui-sref="login" class="btn btn-link btn-lg">Sudah punya akun ? <strong>login sekarang</strong></a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="text-center" data-ng-include="'/public/apps/frontend/templates/footer.html'"></footer>
