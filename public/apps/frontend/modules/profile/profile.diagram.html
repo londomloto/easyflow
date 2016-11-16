@@ -7,8 +7,6 @@
         </div>
         <div class="clear-fix"></div>
         <h3>Katalog Diagram ({{ diagrams.length }})</h3>
-
-        
     </div>
 </div>
 
@@ -35,11 +33,11 @@
 <div data-ui-lightbox=".lightbox-item" data-trigger="lightbox" class="row">
     
     <div data-ng-repeat="item in diagrams" data-repeat-done="triggerLightbox()">
-        <div data-ng-if="$index % 3 == 0" class="clearfix"></div>
-        <div class="col-sm-4">
+        <div data-ng-if="$index % 2 == 0" class="clearfix"></div>
+        <div class="col-sm-6">
             <div class="thumbnail">
                 <div class="cover">
-                    <img alt="." data-ng-src="{{ item.cover | thumbnail:'user/diagram':242:200 }}" class="img-responsive">
+                    <img alt="." data-ng-src="{{ item.cover | thumbnail:'user/diagram':362:200 }}" class="img-responsive">
                     <a class="zoom lightbox-item" href="{{ item.cover_url }}">
                         <span><i class="ion-android-search"></i></span>
                     </a>    

@@ -27,6 +27,7 @@ h6 {
   font-family: "Montserrat", "Helvetica Neue", Helvetica, Arial, sans-serif;
   text-transform: uppercase;
   font-weight: 700;
+  margin-top: 10px;
 }
 hr.star-light,
 hr.star-primary {
@@ -498,6 +499,7 @@ footer .footer-below {
 
 .thumbnail {
   border-radius: 0;
+  padding: 0;
 }
 
 .thumbnail .cover {
@@ -505,12 +507,11 @@ footer .footer-below {
 }
 
 .thumbnail .cover img {
-  border: solid 1px #eee;
+  border-bottom: solid 1px #dfdfdf;
 }
 
 .thumbnail .footer {
   border-top: solid 1px #dfdfdf;
-  margin: 0 -4px -4px -4px;
 }
 
 .thumbnail .footer .row {
@@ -572,6 +573,10 @@ footer .footer-below {
   opacity: 1;
 }
 
+.thumbnail .caption {
+  padding: 15px;
+}
+
 .thumbnail .caption h4,
 .thumbnail .caption p {
   text-transform: none;
@@ -579,6 +584,7 @@ footer .footer-below {
 
 .thumbnail .caption h4 {
   margin-bottom: 5px;
+  margin-top: 0;
 }
 
 .thumbnail .caption .label {
@@ -657,7 +663,6 @@ body.tutorial .navbar-custom {
 }
 
 #profile-section .content-section {
-  border-left: solid 1px #eee;
   min-height: 1024px;
   margin-bottom: 20px;
   padding: 0 25px;

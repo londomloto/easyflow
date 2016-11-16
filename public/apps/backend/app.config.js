@@ -34,6 +34,11 @@
                 name: 'user.module',
                 files: ['/public/apps/backend/modules/user/user.module.js'],
                 insertBefore: '#body-files'
+            },
+            {
+                name: 'tutorial.module',
+                files: ['/public/apps/backend/modules/tutorial/tutorial.module.js'],
+                insertBefore: '#body-files'
             }
         ]);
 
@@ -51,7 +56,7 @@
             },
             'main.home': {
                 url: '/home',
-                title: 'Home',
+                breadcrumb: 'Home',
                 templateUrl: '/public/apps/backend/modules/home/home.html',
                 controller: 'HomeController as homeCtl',
                 resolve: {
@@ -62,7 +67,6 @@
             },
             'main.dashboard': {
                 url: '/dashboard',
-                title: 'Dashboard',
                 templateUrl: '/public/apps/backend/modules/dashboard/dashboard.html',
                 controller: 'DashboardController as dashboardCtl',
                 resolve: {
@@ -71,9 +75,13 @@
                     }
                 }
             },
+            'main.role': {
+                url: '/role',
+                breadcrumb: 'Hak Akses'
+            },
             'main.user': {
                 url: '/user',
-                title: 'Data Pengguna',
+                breadcrumb: 'Pengguna',
                 templateUrl: '/public/apps/backend/modules/user/user.html',
                 controller: 'UserController as userCtl',
                 resolve: {
@@ -84,7 +92,7 @@
             },
             'main.user.edit': {
                 url: '/edit/:id',
-                title: 'Edit Pengguna',
+                breadcrumb: 'Sunting',
                 views: {
                     '@main': {
                         templateUrl: '/public/apps/backend/modules/user/edit.html',
@@ -92,9 +100,43 @@
                     }
                 }
             },
+            'main.admin': {
+                url: '/admin',
+                breadcrumb: 'Administrator'
+            },
+            'main.tutorial': {
+                url: '/tutorial',
+                breadcrumb: 'Tutorial',
+                templateUrl: '/public/apps/backend/modules/tutorial/tutorial.html',
+                controller: 'TutorialController as tutorialCtl',
+                resolve: {
+                    dependencies: function(loader) {
+                        return loader.load(['tutorial.module']);
+                    }
+                }
+            },
+            'main.tutorial.add': {
+                url: '/add',
+                breadcrumb: 'Tambah',
+                views: {
+                    '@main': {
+                        templateUrl: '/public/apps/backend/modules/tutorial/add.html',
+                        controller: 'AddTutorialController as addTutorialCtl'
+                    }
+                }
+            },
+            'main.tutorial.edit': {
+                url: '/edit/:id',
+                breadcrumb: 'Sunting',
+                views: {
+                    '@main': {
+                        templateUrl: '/public/apps/backend/modules/tutorial/edit.html',
+                        controller: 'EditTutorialController as editTutorialCtl'
+                    }
+                }
+            },
             'login': {
                 url: '/login',
-                title: 'Login',
                 style: 'login',
                 templateUrl: '/public/apps/backend/modules/login/login.html',
                 controller: 'LoginController as loginCtl',

@@ -9,33 +9,39 @@
         <div flex class="hide-scroll">
             <nav class="scroll nav-light">
                 <ul class="nav">
-                    <li class="nav-header hidden-folded">
-                        <small class="text-muted">BERANDA</small>
-                    </li>
+                    <li class="nav-header hidden-folded"><small class="text-muted">BERANDA</small></li>
                     <li>
-                        <a ui-sref="main.dashboard">
+                        <a data-ui-sref="main.dashboard">
                             <span class="nav-icon"><i class="ion-stats-bars"></i></span>
                             <span class="nav-text">Dashboard</span>
                         </a>
                     </li>
-                    <li class="nav-header hidden-folded">
-                        <small class="text-muted">ADMIN &amp; PENGGUNA</small>
+                    <li class="nav-header hidden-folded"><small class="text-muted">ADMIN &amp; PENGGUNA</small></li>
+                    <li>
+                        <a data-ui-sref="main.role">
+                            <span class="nav-icon"><i class="ion-locked"></i></span>
+                            <span class="nav-text">Hak Akses</span>
+                        </a>
                     </li>
                     <li>
-                        <a ui-sref="main.user">
+                        <a data-ui-sref="main.user">
+                            <span class="nav-icon"><i class="ion-code"></i></span>
+                            <span class="nav-text">Kapabilitas</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a data-ui-sref="main.user">
                             <span class="nav-icon"><i class="ion-android-contact"></i></span>
-                            <span class="nav-text">Data Pengguna</span>
+                            <span class="nav-text">Pengguna</span>
                         </a>
                     </li>
                     <li>
-                        <a href="dashboard.html" >
+                        <a data-ui-sref="main.admin">
                             <span class="nav-icon"><i class="ion-android-person"></i></span>
-                            <span class="nav-text">Data Admin</span>
+                            <span class="nav-text">Administrator</span>
                         </a>
                     </li>
-                    <li class="nav-header hidden-folded">
-                        <small class="text-muted">DIAGRAM</small>
-                    </li>
+                    <li class="nav-header hidden-folded"><small class="text-muted">DIAGRAM</small></li>
                     <li>
                         <a href="dashboard.html" >
                             <span class="nav-icon"><i class="ion-erlenmeyer-flask"></i></span>
@@ -48,13 +54,11 @@
                             <span class="nav-text">Data Publikasi</span>
                         </a>
                     </li>
-                    <li class="nav-header hidden-folded">
-                        <small class="text-muted">TUTORIAL</small>
-                    </li>
+                    <li class="nav-header hidden-folded"><small class="text-muted">HALAMAN (BLOG)</small></li>
                     <li>
-                        <a href="dashboard.html" >
+                        <a data-ui-sref="main.tutorial" >
                             <span class="nav-icon"><i class="ion-easel"></i></span>
-                            <span class="nav-text">Data Tutorial</span>
+                            <span class="nav-text">Tutorial</span>
                         </a>
                     </li>
                 </ul>
@@ -71,7 +75,18 @@
             <a data-toggle="modal" data-target="#aside" class="navbar-item pull-left hidden-lg-up">
                 <i class="ion-navicon-round"></i>
             </a>
-            <div class="navbar-item pull-left h5">{{ state.title }}</div>
+            <ul data-breadcrumbs class="nav navbar-nav pull-left">
+                <li class="nav-item nav-breadcrumb">
+                    <a href="javascript:;" class="nav-link clear text-md text-muted">
+                        <i class="ion-home"></i>
+                    </a>
+                </li>
+                <li data-ng-repeat="breadcrumb in breadcrumbs" class="nav-item nav-breadcrumb">
+                    <a data-ui-sref="{{ breadcrumb.stateName }}" class="nav-link clear" data-ng-class="breadcrumb.class">
+                        {{ breadcrumb.text }}
+                    </a>
+                </li>
+            </ul>
             <ul class="nav navbar-nav pull-right">
                 <li class="nav-item dropdown pos-stc-xs">
                     <a class="nav-link" href data-toggle="dropdown">
@@ -90,5 +105,5 @@
             </ul>
         </div>
     </div>
-    <div data-ui-view class="app-body" id="view">
+    <div data-ui-view class="app-body" id="view"></div>
 </div>

@@ -3,7 +3,8 @@
 
     angular
         .module('app', [
-            'core'
+            'core',
+            'ui.router.breadcrumbs'
         ])
         .controller('AppController', AppController)
         .run(run);
