@@ -1,0 +1,40 @@
+<div class="padding">
+    <div class="row">
+        <div class="col-sm-7">
+            <div class="row">
+
+                <div data-ng-repeat="item in tutorials"> 
+                    <div data-ng-if="$index % 2 == 0" class="clearfix"></div>
+                    <div class="col-sm-6">
+                        <div class="box">
+                            <div class="item">
+                                <div class="item-overlay active p-a">
+                                    <a href="javascript:;" class="pull-left text-u-c label label-md info">{{ item.video_type }}</a>
+                                </div>
+                                <img data-ng-src="{{ item.poster | thumbnail:'tutorial':279:279 }}" class="w-full">
+                            </div>
+                            <div class="p-a">
+                                <div class="m-b h-2x"><a href="" class="_800">{{ item.title }}</a></div>
+                                <p class="h-3x">{{ item.description }}</p>
+                                <div>
+                                    <a data-ui-sref="main.tutorial.edit({id: item.id})" class="btn btn-xs white">Sunting</a>
+                                    <a data-ng-click="removeTutorial(item)" href="javascript:;" class="btn btn-xs text-danger">Hapus</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>    
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <a data-ui-sref="main.tutorial.add" class="md-btn md-fab md-fab-bottom-right pos-fix red">
+        <i class="ion-plus i-24 text-white"></i>
+    </a>
+
+</div>
+
+<div data-ui-confirm="remove-tutorial"
+     data-title="Konfirmasi"
+     data-message="Anda yakin akan menghapus tutorial ini?"></div>
