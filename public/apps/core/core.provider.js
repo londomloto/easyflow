@@ -19,6 +19,8 @@
         function factory($rootScope, $http, API_URL) {
             var service = { 
                 get: get,
+                del: del,
+                put: put,
                 post: post
             };
 
@@ -40,6 +42,25 @@
                     
                 }
                 return $http.get(API_URL + path);
+            }
+
+            function del(path, data, options) {
+                options = _.extend({
+                    url: API_URL + path,
+                    method: 'DELETE'
+                }, options || {});
+
+                if (data) {
+                    options.headers = options.headers || {};
+                    options.headers['Content-Type'] = 'application/json;charset=utf-8';
+                    options.data = data;
+                }
+
+                return $http(options);
+            }
+
+            function put(path) {
+                $http.put(API_URL + path);
             }
 
             function post(path, data, options) {

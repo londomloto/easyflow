@@ -100,7 +100,7 @@ class Auth extends \Sys\Core\Module {
 
                 $data['user']->avatar = $avatar;
                 $data['user']->avatar_name = $avatarName;
-                $data['user']->avatar_url = $this->uri->getBaseUrl().'public/upload/avatar/'.$avatar;
+                $data['user']->avatar_url = $this->url->getBaseUrl().'public/upload/avatar/'.$avatar;
 
                 $this->session->set('user', $data['user']);
             }

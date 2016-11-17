@@ -10,11 +10,15 @@
     /** @ngInject */
     function config(routerProvider, loaderProvider) {
 
-        ///////////////////////////////////////
-        /// MODULES
-        ///////////////////////////////////////
-
         loaderProvider.register([
+            {
+                name: 'tutorial.styles',
+                files: [
+                    '/public/assets/vendor/videojs/video-js.min.css',
+                    '/public/assets/css/backend-tutorial.css'
+                ],
+                insertBefore: '#header-files'
+            },
             {
                 name: 'login.module',
                 files: ['/public/apps/backend/modules/login/login.module.js'],
@@ -37,7 +41,10 @@
             },
             {
                 name: 'tutorial.module',
-                files: ['/public/apps/backend/modules/tutorial/tutorial.module.js'],
+                files: [
+                    '/public/assets/vendor/videojs/video.min.js',
+                    '/public/apps/backend/modules/tutorial/tutorial.module.js'
+                ],
                 insertBefore: '#body-files'
             }
         ]);
@@ -111,7 +118,10 @@
                 controller: 'TutorialController as tutorialCtl',
                 resolve: {
                     dependencies: function(loader) {
-                        return loader.load(['tutorial.module']);
+                        return loader.load([
+                            'tutorial.styles',
+                            'tutorial.module'
+                        ]);
                     }
                 }
             },

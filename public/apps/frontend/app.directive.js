@@ -4,8 +4,6 @@
     angular
         .module('app')
         .directive('uiTitle', uiTitleDirective)
-        .directive('uiFile', uiFileDirective)
-        .directive('dialog', dialogDirective)
         .directive('uiLightbox', uiLightboxDirective)
         .directive('uiModal', uiModalDirective)
         .directive('uiConfirm', uiConfirmDirective);
@@ -142,77 +140,7 @@
             });
         }
     }
-
-    function dialogDirective() {
-        var directive = {
-            restrict: 'A',
-            link: link,
-            controller: DialogController
-        };
-
-        return directive;
-
-        function link(scope, element, attrs, ctrl) {
-            scope.$watch('dialog.state', function(state){
-                if (state == 'opened') {
-                    element.modal('show');
-                } else {
-                    element.modal('hide');
-                }
-            });
-        }
-
-        /** @ngInject */
-        function DialogController($scope, theme) {
-            $scope.dialog = {
-                state: 'closed',
-                title: 'Dialog',
-                message: '',
-                onclose: null,
-                onopen: null
-            };
-
-            $scope.dialog.open = function(title, message, onclose) {
-                _.assign($scope.dialog, {
-                    state: 'opened',
-                    title: title,
-                    message: message,
-                    onclose: onclose
-                });
-            };
-
-            $scope.dialog.close = function(button) {
-                $scope.dialog.state = 'closed';
-                if ($scope.dialog.onclose) {
-                    $scope.dialog.onclose(button);
-                }
-            };  
-
-            // hook dialog to theme
-            theme.dialog = $scope.dialog;
-        }
-        
-    }
-
-    /** @ngInject */
-    function uiFileDirective($parse) {
-        var directive = {
-            link: link
-        };
-
-        return directive;
-
-        function link(scope, element, attrs) {
-            var model = $parse(attrs.uiFile);
-
-            element.on('change', function(){
-                scope.$apply(function(){
-                    model.assign(scope, element[0].files[0]);
-                });
-            });
-        }
-    }
-
+    
     /** @ngInject */
     function uiLightboxDirective() {
         var directive = {

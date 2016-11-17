@@ -14,7 +14,7 @@ class User extends \Sys\Core\Module {
                 'success' => TRUE,
                 'data' => NULL
             );
-
+            
             $user = $this->db->fetchOne("SELECT {$columns} FROM user WHERE id = ?", array($id));
             $user = self::secure($user);
 
@@ -160,14 +160,10 @@ class User extends \Sys\Core\Module {
     
     ///////// API's /////////
     
-    public static function findByToken($token) {
-        return self::getDefault()->db->fetchOne("SELECT * FROM user WHERE access_token = ?", array($token));
-    }
-
     public static function columns() {
         return 'id,email,fullname,sex,job_title,bio,avatar,avatar_name,role,access_token,register_date,last_login,last_ip';
     }
-
+    
     public static function secure($user) {
         if ($user) {
             unset(

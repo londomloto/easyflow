@@ -63,7 +63,7 @@ class Service {
         }
 
         if ( ! $found) {
-            throw new \Exception("Service '" . $this->_name . "' tidak ditemukan");
+            throw new ServiceException("Service '" . $this->_name . "' tidak ditemukan");
         }
 
         if ($this->_shared) {

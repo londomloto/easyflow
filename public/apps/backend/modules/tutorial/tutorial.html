@@ -1,24 +1,26 @@
 <div class="padding">
     <div class="row">
-        <div class="col-sm-7">
+        <div class="col-sm-12">
             <div class="row">
 
                 <div data-ng-repeat="item in tutorials"> 
-                    <div data-ng-if="$index % 2 == 0" class="clearfix"></div>
-                    <div class="col-sm-6">
+                    <div data-ng-if="$index % 3 == 0" class="clearfix"></div>
+                    <div class="col-sm-4">
                         <div class="box">
-                            <div class="item">
-                                <div class="item-overlay active p-a">
+                            <div class="item tutorial-item">
+                                <div class="item-overlay active p-a" style="z-index: 2">
                                     <a href="javascript:;" class="pull-left text-u-c label label-md info">{{ item.video_type }}</a>
                                 </div>
-                                <img data-ng-src="{{ item.poster | thumbnail:'tutorial':279:279 }}" class="w-full">
+                                <video data-ui-video data-source="{{ item.video_url }}" 
+                                       data-poster="{{ item.poster_url }}"
+                                       data-type="{{ item.video_type }}" class="video-js vjs-default-skin"></video>
                             </div>
                             <div class="p-a">
                                 <div class="m-b h-2x"><a href="" class="_800">{{ item.title }}</a></div>
                                 <p class="h-3x">{{ item.description }}</p>
                                 <div>
-                                    <a data-ui-sref="main.tutorial.edit({id: item.id})" class="btn btn-xs white">Sunting</a>
-                                    <a data-ng-click="removeTutorial(item)" href="javascript:;" class="btn btn-xs text-danger">Hapus</a>
+                                    <a data-ui-sref="main.tutorial.edit({id: item.id})" class="btn btn-md white">Sunting</a>
+                                    <a data-ng-click="removeTutorial(item)" href="javascript:;" class="btn btn-md text-danger">Hapus</a>
                                 </div>
                             </div>
                         </div>

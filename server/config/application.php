@@ -22,7 +22,7 @@ return array(
     /**
      * Default path
      */
-    'default' => 'user',
+    'default' => 'site',
 
     /**
      * Ekstensi url
@@ -49,7 +49,7 @@ return array(
      * Security setting
      */
     'security' => array(
-        'secret_key' => 'dM0m8TVFtwxcKiMFJ2hA2o+eo7RH2kr7amiLsIOQxVJ+S29VtWjzS1M7mUlR8dtNyuwFNMOAC6+LZtv7c2PhJg=='
+        'server_key' => 'dM0m8TVFtwxcKiMFJ2hA2o+eo7RH2kr7amiLsIOQxVJ+S29VtWjzS1M7mUlR8dtNyuwFNMOAC6+LZtv7c2PhJg=='
     ),
 
     /**
@@ -61,6 +61,14 @@ return array(
         'locking' => TRUE,
         'max_attempts' => 3,
         'timeout' => 120
+    ),
+
+    /**
+     * Authorization
+     */
+    'role' => array(
+        'role_table' => 'role',
+        'user_table' => 'user'
     ),
 
     /**

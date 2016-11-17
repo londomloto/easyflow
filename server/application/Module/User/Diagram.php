@@ -27,7 +27,7 @@ class Diagram extends \Sys\Core\Module {
                 $diagrams = $this->db->fetchAll("SELECT * FROM diagram WHERE user_id = ?", array($user->id));
             }
             
-            $baseCoverUrl = $this->uri->getBaseUrl().'public/diagram/';
+            $baseCoverUrl = $this->url->getBaseUrl().'public/diagram/';
 
 
             foreach($diagrams as $diagram) {
@@ -67,7 +67,7 @@ class Diagram extends \Sys\Core\Module {
             if ($this->uploader->upload()) {
                 $upload = $this->uploader->getResult();
                 $post['cover'] = $upload['file_name'];
-                $post['cover_url'] = $this->uri->getBaseUrl().'public/diagram/'.$upload['file_name'];
+                $post['cover_url'] = $this->url->getBaseUrl().'public/diagram/'.$upload['file_name'];
             }
         } else {
             $post = $this->request->getInput();

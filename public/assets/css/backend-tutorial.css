@@ -1,0 +1,19 @@
+/** TUTORIAL */
+.tutorial-item {
+    
+}
+
+.tutorial-item .video-js {
+    height: 200px;
+    width: 100%;
+}
+
+.video-js .vjs-big-play-button {
+    width: 50px;
+    height: 50px;
+    left: 50%;
+    top: 50%;
+    border-radius: 50%;
+    margin-left: -25px;
+    margin-top: -25px;
+}

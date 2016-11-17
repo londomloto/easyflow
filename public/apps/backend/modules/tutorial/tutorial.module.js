@@ -19,7 +19,12 @@
         $scope.removeTutorial = function(tutorial) {
             theme.showConfirm('remove-tutorial').then(function(action){
                 if (action) {
+                    
+                    var data = angular.copy(tutorial);
 
+                    api.del('/tutorial/' + tutorial.id, data).then(function(response){
+                        console.log(response);
+                    });
                 }
             });
         };
@@ -46,16 +51,30 @@
     function EditTutorialController($scope, router, theme, api) {
         var id = router.getParam('id');
         $scope.edit = {};
+        $scope.video = null;
+        $scope.videoName = null;
 
         if (id) {
             api.get('/tutorial/find/' + id).then(function(response){
                 $scope.edit = response.data.data;
             });
         }
+
+        $scope.onSelectVideo = function(video) {
+            $scope.videoName = video;
+        };
         
         $scope.saveTutorial = function() {
-            var data = angular.copy($scope.edit);
-            api.post('/tutorial/update', data).then(function(response){
+            var data = angular.copy($scope.edit),
+                opts = {};
+
+            if ($scope.video) {
+                opts.upload = [
+                    {key: 'userfile', file: $scope.video}
+                ];
+            }
+
+            api.post('/tutorial/update', data, opts).then(function(response){
                 if (response.data.success) {
                     theme.toast('Data berhasil disimpan');    
                 }

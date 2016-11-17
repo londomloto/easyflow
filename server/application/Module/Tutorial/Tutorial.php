@@ -5,7 +5,7 @@ class Tutorial extends \Sys\Core\Module {
 
     public function findAction($id = NULL) {
         $id = intval($id);
-        $baseVideoUrl = $this->uri->getBaseUrl().'public/tutorial/';
+        $baseVideoUrl = $this->url->getBaseUrl().'public/tutorial/';
 
         if ($id) {
             $result = array(
@@ -62,7 +62,23 @@ class Tutorial extends \Sys\Core\Module {
     }
 
     public function updateAction() {
-        $post = $this->request->getInput();
+        if ($this->request->hasFiles()) {
+            $post = $this->request->getPost();
+
+            $this->uploader->setup(array(
+                'path' => PUBPATH.'tutorial/',
+                'type' => 'mp4'
+            ));
+
+            if ($this->uploader->upload()) {
+                $upload = $this->uploader->getResult();
+                $post['video'] = $upload['file_name'];
+                $post['video_type'] = $upload['file_type'];
+            }
+        } else {
+            $post = $this->request->getInput();    
+        }
+
         $result = array(
             'success' => FALSE
         );
@@ -71,6 +87,26 @@ class Tutorial extends \Sys\Core\Module {
 
         $this->response->responseJson();
         return $result;
+    }
+
+    public function deleteAction($id) {
+        $post = $this->request->getInput();
+
+        // delete poster
+        if (isset($post['poster']) && ! empty($post['poster'])) {
+            \Sys\Helper\File::delete(PUBPATH.'tutorial/'.$post['poster']);
+        }
+
+        // delete video
+        if (isset($post['video']) && ! empty($post['video'])) {
+            \Sys\Helper\File::delete(PUBPATH.'tutorial/'.$post['video']);   
+        }
+
+        if ( ! $this->db->delete('tutorial', array('id' => $id))) {
+            throw new \Exception('Gagal menghapus tutorial');
+        }
+
+        $this->response->send204();
     }
 
     public function thumbnailAction($image, $width = 96, $height = 96) {

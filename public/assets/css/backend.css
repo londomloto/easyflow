@@ -93,7 +93,7 @@ sup {
 .label {
   display: inline-block;
   padding: 0.25em 0.5em;
-  font-size: 75%;
+  font-size: 76%;
   line-height: 1;
   text-align: center;
   white-space: nowrap;
@@ -101,7 +101,7 @@ sup {
   font-weight: bold;
   background-color: #b8b8b8;
   color: #fff;
-  border-radius: .2rem; }
+  border-radius: .1rem; }
   .label.no-bg {
     background-color: transparent;
     color: inherit; }

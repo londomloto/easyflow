@@ -5,13 +5,15 @@ return array(
         'label' => 'Administrasi',
         'caps' => array(
             'manage_site' => TRUE,
-            'manage_user' => TRUE
+            'manage_user' => TRUE,
+
+            'delete_tutorial' => TRUE
         )
     ),
     'user' => array(
         'label' => 'User',
         'caps' => array(
-            
+            'delete_tutorial' => TRUE
         )
     ),
     'guest' => array(

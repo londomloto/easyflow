@@ -9,21 +9,142 @@ class Application implements IApplication {
     protected $_databases;
     protected $_modules;
     protected $_config;
+    protected $_environment;
 
     protected static $_default;
 
     public function __construct() {
+
         $this->_services  = array();
         $this->_modules   = array();
         $this->_databases = array();
+        $this->_environment = 'development';
 
         if ( ! self::$_default) {
             self::$_default = $this;
         }
+
+        set_error_handler(array($this, 'handleError'));
+        set_exception_handler(array($this, 'handleException'));
+
     }
 
     public static function getDefault() {
         return self::$_default;
+    }
+
+    public function isDevelopment() {
+        return $this->_environment == 'development';
+    }
+
+    public function isProduction() {
+        return ! $this->isDevelopment();
+    }
+
+    public function handleError($errno, $errstr, $errfile, $errline) {
+
+        $fatal = in_array(
+            $errno, 
+            array(
+                E_ERROR, 
+                E_CORE_ERROR, 
+                E_COMPILE_ERROR,
+                E_USER_ERROR
+            )
+        ) ? TRUE : FALSE;
+
+        if ($fatal) {
+            $content = NULL;
+
+            if ( ! ob_get_level()) {
+                ob_start();
+            }
+
+            $content = ob_get_contents();
+            ob_end_clean();
+
+            header('HTTP/1.1 500 Internal Server Error');
+            
+            if ( ! is_null($content)) {
+                echo $content;
+            }
+
+            if ($this->isDevelopment()) {
+                $data = array(
+                    'name' => 'Fatal Error',
+                    'file' => $errfile,
+                    'line' => $errline,
+                    'message' => $errstr
+                );
+
+                extract($data);
+                include(SYSPATH.'Template/error.php');
+            }
+
+        } else {
+            if ($this->isDevelopment()) {
+                $name = 'Error';
+
+                switch($errno) {
+                    case E_WARNING: 
+                    case E_COMPILE_WARNING:
+                    case E_USER_WARNING:
+                        $name = 'Warning'; 
+                        break;
+                    case E_NOTICE: 
+                    case E_USER_NOTICE:
+                        $name = 'Notice'; 
+                        break;
+                    case E_DEPRECATED:
+                    case E_USER_DEPRECATED:
+                        $name = 'Deprectaed';
+                        break;
+                }
+
+                echo "<br><b>$name</b>: $errstr in <b>$errfile</b> on line <b>$errline</b><br>";
+            }
+            
+        }
+
+    }
+
+    public function handleException($exception) {
+
+        $content = NULL;
+        
+        if ( ! ob_get_level()) {
+            ob_start();
+        }
+
+        $content = ob_get_contents();
+        ob_end_clean();
+
+        $data = array();
+
+        switch(TRUE) {
+            case $exception instanceof ServiceException:
+            case $exception instanceof \Sys\Service\DispatcherException:
+                header('HTTP/1.1 404 Not Found');
+                break;
+            default:
+                header('HTTP/1.1 500 Internal Server Error');
+                break;
+        }
+
+        if ( ! is_null($content)) {
+            echo $content;
+        }
+
+        if ($this->isDevelopment()) {
+            $data['name'] = get_class($exception);
+            $data['message'] = $exception->getMessage();
+            $data['file'] = $exception->getFile();
+            $data['line'] = $exception->getLine();
+            $data['trace'] = $exception->getTrace();
+
+            extract($data);
+            include(SYSPATH.'Template/exception.php');
+        }
     }
 
     protected function _initConfig() {
@@ -47,12 +168,16 @@ class Application implements IApplication {
 
     protected function _initService() {
         // register some services
-        $this->addService('response', 'Sys\Core\Response', TRUE);
-        $this->addService('request', 'Sys\Core\Request', TRUE);
-        $this->addService('session', 'Sys\Core\Session', TRUE);
-        $this->addService('security', 'Sys\Core\Security', TRUE);
-        $this->addService('uri', 'Sys\Core\URI', TRUE);
-        $this->addService('uploader', 'Sys\Library\Uploader', TRUE);
+        $this->addService('response', 'Sys\Service\Response', TRUE);
+        $this->addService('request', 'Sys\Service\Request', TRUE);
+        $this->addService('session', 'Sys\Service\Session', TRUE);
+        $this->addService('security', 'Sys\Service\Security', TRUE);
+        $this->addService('dispatcher', 'Sys\Service\Dispatcher', TRUE);
+        $this->addService('url', 'Sys\Service\URL', TRUE);
+
+        $this->addService('uploader', 'Sys\Service\Uploader', TRUE);
+        $this->addService('role', 'Sys\Service\Role', TRUE);
+        $this->addService('auth', 'Sys\Service\Auth', TRUE);
 
         // start session
         $this->getService('session')->start();
@@ -176,16 +301,18 @@ class Application implements IApplication {
     }
 
     public function getService($name) {
-        $service  = $this->_services[$name];
-        $instance = NULL;
+        if (isset($this->_services[$name])) {
+            $service  = $this->_services[$name];
+            $instance = NULL;
 
-        if ($service) {
-            $instance = $service->resolve(array($this));
+            if ($service) {
+                return $service->resolve(array($this));
+            } else {
+                throw new ServiceException("Service {$name} tidak ditemukan");
+            }
         } else {
-            throw new \Exception("Service {$name} tidak ditemukan");
+            throw new ServiceException("Service {$name} tidak ditemukan");
         }
-
-        return $instance;
     }
 
     public function getModules() {
@@ -198,20 +325,16 @@ class Application implements IApplication {
     public function handle() {
         $res = $this->getService('response');
         $req = $this->getService('request');
-        $uri = $this->getService('uri');
+        $dis = $this->getService('dispatcher');
+        $url = $this->getService('url');
         $cfg = $this->getConfig()->application;
 
-        $uri->parse();
+        $url->parse();
 
-        $segments = $uri->getSegments();
-        
-        // $segments = array_pad($segments, 1, '');
-        // $module   = array_shift($segments);
+        $segments = $url->getSegments();
 
-        if ($uri->getPath() == '/') {
+        if ($url->getPath() == '/') {
             $segments = explode('/', $cfg->default);
-            // $segments = array_pad($segments, 1, '');
-            // $module   = array_shift($segments);    
         }
         
         $module = FALSE;
@@ -220,7 +343,7 @@ class Application implements IApplication {
 
         if (count($segments) == 1) {
             $module = isset($this->_modules[$segments[0]]) ? $segments[0] : FALSE;
-            $action = 'index';
+            $action = $req->getDefaultHandler();
             $params = array();
         } else {
             $params = array();
@@ -237,10 +360,16 @@ class Application implements IApplication {
                 }
             }
 
-            $action = array_shift($params);
+            $paramsSize = count($params);
 
-            if (empty($action)) {
-                $action = 'index';
+            if ($paramsSize) {
+                if ( ! is_numeric($params[$paramsSize - 1])) {
+                    $action = array_shift($params);
+                } else {
+                    $action = $req->getDefaultHandler();
+                }
+            } else {
+                $action = $req->getDefaultHandler();
             }
 
         }
@@ -256,27 +385,44 @@ class Application implements IApplication {
                     $action = $action.'Action';
                     array_shift($segments);
                 } else {
-                    throw new \Exception("Fungsi {$resolver->getDefinition()}::{$action}Action() tidak didefinisikan", 1);
+                    throw new \Sys\Service\DispatcherException("Fungsi {$resolver->getDefinition()}::{$action}Action() tidak ditemukan");
                 }
-
+                
                 ob_start();
                 $retval  = call_user_func_array(array($instance, $action), $params);
                 $content = ob_get_contents();
                 ob_end_clean();
 
                 $res->setContent($content);
-                $res->setReturnedValue($retval);
+                $res->setReturn($retval);
+                
             } else {
-                throw new \Exception("Module `{$module}` tidak ditemukan");
+                throw new \Sys\Service\DispatcherException("Module `{$module}` tidak ditemukan");
             }
         } else {
-            throw new \Exception("Module `{$module}` tidak ditemukan");
-        }
+            throw new \Sys\Service\DispatcherException("Module tidak ditemukan");
+        }  
 
         return $res;
     }
 
-    public function start() {
+    public function start($environment = 'development') {
+        
+        $this->_environment = $environment;
+
+        // uncaughet exception/error ?
+        switch ($environment) {
+            case 'development':
+                error_reporting(E_ALL);
+                ini_set('display_errors', 1);
+                break;
+
+            case 'production':
+                error_reporting(0);
+                ini_set('display_errors', 0);
+                break;
+        }
+
         $this->_initConfig();
         $this->_initService();
         $this->_initDatabase();

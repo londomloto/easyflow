@@ -3,31 +3,38 @@ namespace Sys\Core;
 
 abstract class Module extends Component {
 
-    protected static $_default;
+    protected static $_default = NULL;
+    protected static $_initialied = array();
+
+    protected static $_authenticatedMethods = array();
+    protected static $_authorizedMethods = array();
 
     public function __construct(IApplication $app) {
         parent::__construct($app);
-        
-        $services = array(
-            'role' => 'Sys\Library\Role',
-            'auth' => 'Sys\Library\Auth'
-        );
 
-        foreach($services as $name => $defs) {
-            $this->addService($name, $defs, TRUE);
-            $this->getResolver($name)->resolve(array($app));
+        $class = get_class($this);
+
+        if ( ! isset(self::$_initialied[$class])) {
+            self::$_initialied[$class] = TRUE;
+            $this->initialize();
         }
 
         if ( ! self::$_default) {
             self::$_default = $this;    
-        }   
+        }
+
     }
 
-    /**
-     * Get shared module over application
-     */
-    public static function getDefault() {
-        return self::$_default;
+    public function initialize() {
+
+    }
+
+    public function authenticateMethods($methods) {
+
+    }
+
+    public function authorizeMethods($methods) {
+
     }
 
     public function __get($name) {
@@ -35,7 +42,7 @@ abstract class Module extends Component {
         $prop = '_'.$name;
 
         if ( ! isset($this->{$prop})) {
-            $services = array('request', 'response', 'session', 'security', 'uploader','auth','role','uri');
+            $services = array('request', 'response', 'session', 'security', 'uploader', 'auth', 'role', 'url');
 
             if (in_array($name, $services)) {
                 // check in service
@@ -51,23 +58,38 @@ abstract class Module extends Component {
         return $this->{$prop};
     }
 
-    public function getAction($id = NULL) {
+    /**
+     * HTTP GET
+     */
+    public function findAction($id = NULL) {
 
     }
 
+    /**
+     * HTTP POST
+     */
     public function postAction() {
 
     }
 
+    /**
+     * HTTP PUT
+     */
     public function putAction($id) {
 
     }
 
+    /**
+     * HTTP DELETE
+     */
     public function deleteAction($id) {
         
     }
 
-    ///////// OBSERVER /////////
-    
-    public function onConstruct() {}
+    /**
+     * Get shared module over application
+     */
+    public static function getDefault() {
+        return self::$_default;
+    }
 }

@@ -1,6 +1,7 @@
 
 (function(){
     angular
-        .module('app');
+        .module('app')
+        .constant('APP_KEY', '');
         
 }());
