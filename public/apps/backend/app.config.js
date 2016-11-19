@@ -14,31 +14,31 @@
             {
                 name: 'tutorial.styles',
                 files: [
-                    '/public/assets/vendor/videojs/video-js.min.css',
-                    '/public/assets/css/backend-tutorial.css'
+                    'assets/vendor/videojs/video-js.min.css',
+                    'assets/css/backend-tutorial.css'
                 ],
                 insertBefore: '#header-files'
             },
             {
                 name: 'login.module',
-                files: ['/public/apps/backend/modules/login/login.module.js'],
+                files: ['apps/backend/modules/login/login.module.js'],
                 insertBefore: '#body-files'
             },
             {
                 name: 'dashboard.module',
-                files: ['/public/apps/backend/modules/dashboard/dashboard.module.js'],
+                files: ['apps/backend/modules/dashboard/dashboard.module.js'],
                 insertBefore: '#body-files'
             },
             {
                 name: 'user.module',
-                files: ['/public/apps/backend/modules/user/user.module.js'],
+                files: ['apps/backend/modules/user/user.module.js'],
                 insertBefore: '#body-files'
             },
             {
                 name: 'tutorial.module',
                 files: [
-                    '/public/assets/vendor/videojs/video.min.js',
-                    '/public/apps/backend/modules/tutorial/tutorial.module.js'
+                    'assets/vendor/videojs/video.min.js',
+                    'apps/backend/modules/tutorial/tutorial.module.js'
                 ],
                 insertBefore: '#body-files'
             }
@@ -63,7 +63,7 @@
         routerProvider.register({
             'main': {
                 url: '/main',
-                templateUrl: '/public/apps/backend/modules/main/main.html',
+                templateUrl: 'apps/backend/modules/main/main.html',
                 abstract: true
                 // authenticate: true
             },
@@ -71,7 +71,7 @@
                 url: '/dashboard',
                 breadcrumb: 'Dashboard',
                 authenticate: true,
-                templateUrl: '/public/apps/backend/modules/dashboard/dashboard.html',
+                templateUrl: 'apps/backend/modules/dashboard/dashboard.html',
                 controller: 'DashboardController as dashboardCtl',
                 resolve: {
                     dependencies: function(loader) {
@@ -88,7 +88,7 @@
                 url: '/user',
                 breadcrumb: 'Pengguna',
                 authenticate: true,
-                templateUrl: '/public/apps/backend/modules/user/user.html',
+                templateUrl: 'apps/backend/modules/user/user.html',
                 controller: 'UserController as userCtl',
                 resolve: {
                     dependencies: function(loader) {
@@ -102,7 +102,7 @@
                 authenticate: true,
                 views: {
                     '@main': {
-                        templateUrl: '/public/apps/backend/modules/user/edit.html',
+                        templateUrl: 'apps/backend/modules/user/edit.html',
                         controller: 'UserEditController as userEditCtl'
                     }
                 }
@@ -116,7 +116,7 @@
                 url: '/tutorial',
                 breadcrumb: 'Tutorial',
                 authenticate: true,
-                templateUrl: '/public/apps/backend/modules/tutorial/tutorial.html',
+                templateUrl: 'apps/backend/modules/tutorial/tutorial.html',
                 controller: 'TutorialController as tutorialCtl',
                 resolve: {
                     dependencies: function(loader) {
@@ -133,7 +133,7 @@
                 authenticate: true,
                 views: {
                     '@main': {
-                        templateUrl: '/public/apps/backend/modules/tutorial/add.html',
+                        templateUrl: 'apps/backend/modules/tutorial/add.html',
                         controller: 'AddTutorialController as addTutorialCtl'
                     }
                 }
@@ -144,7 +144,7 @@
                 authenticate: true,
                 views: {
                     '@main': {
-                        templateUrl: '/public/apps/backend/modules/tutorial/edit.html',
+                        templateUrl: 'apps/backend/modules/tutorial/edit.html',
                         controller: 'EditTutorialController as editTutorialCtl'
                     }
                 }
@@ -152,7 +152,7 @@
             'login': {
                 url: '/login',
                 style: 'login',
-                templateUrl: '/public/apps/backend/modules/login/login.html',
+                templateUrl: 'apps/backend/modules/login/login.html',
                 controller: 'LoginController as loginCtl',
                 resolve: {
                     dependencies: function(loader) {

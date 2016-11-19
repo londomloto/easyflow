@@ -4,6 +4,7 @@
     angular
         .module('core')
         .provider('api', apiProvider)
+        .provider('url', urlProvider)
         .provider('site', siteProvider)
         .provider('auth', authProvider)
         .provider('router', routerProvider)
@@ -82,13 +83,105 @@
     }
 
     /** @ngInject */
-    function loaderProvider($ocLazyLoadProvider) {
-        var provider = this;
+    function urlProvider() {
+        var provider = this,
+            options = {
+                base: null
+            };
 
         provider.$get = factory;
+        provider.setup = setup;
+        provider.getBaseUrl = getBaseUrl;
+
+        init();
+
+        function init() {
+            // setup default base
+            if (_.isNull(options.base)) {
+                var parser = document.createElement('a');
+                var base = '';
+
+                parser.setAttribute('href', '');
+
+                base += parser.protocol + '//';
+                base += parser.host;
+                base += parser.pathname;
+
+                options.base = base;
+
+                parser = null;
+            }
+
+        }
+
+        function setup(config) {
+            _.assign(options, config || {});
+        }
+
+        function getBaseUrl() {
+            return options.base || '/';
+        }
+
+        function getRootUrl() {
+            var root = '/';
+            if (options.base) {
+                if (/admin\/$/.test(options.base)) {
+                    root = options.base.replace(/admin\/$/, '');
+                } else {
+                    root = options.base;
+                }
+            }
+            return root;
+        }
+
+        /** @ngInject */
+        function factory(SERVICE) {
+            var service = {
+                getBaseUrl: getBaseUrl,
+                getServiceUrl: getServiceUrl
+            };
+
+            var SVC_URL;
+
+            return service;
+
+            function getServiceUrl() {
+                if ( ! SVC_URL) {
+                    if (/^http/.test(SERVICE.URL)) {
+                        SVC_URL = SERVICE.URL;
+                    } else {
+                        SVC_URL  = getRootUrl();
+                        SVC_URL += SERVICE.URL.replace(/(^\/|\/$)/g, '');
+                    }
+                }
+                return SVC_URL;
+            }
+        }
+    }
+
+    /** @ngInject */
+    function loaderProvider($ocLazyLoadProvider, urlProvider) {
+        var provider = this,
+            options = {};
+
+        var baseUrl = urlProvider.getBaseUrl();
+
+        provider.$get = factory;
+        provider.setup = setup;
         provider.register = register;
 
+
+        function setup(config) {
+            _.assign(options, config || {});
+        }
+
         function register(modules) {
+            // _.forEach(modules, function(mod){
+            //     mod.files = _.map((mod.files || []), function(f){
+            //         return baseUrl + f;
+            //     });
+            // });
+
             $ocLazyLoadProvider.config({
                 modules: modules
             });
@@ -121,7 +214,7 @@
         }
 
         /** @ngInject */
-        function factory($rootScope, $http, $q, router, theme, SERVICE, HTTP_STATUS) {
+        function factory($rootScope, $http, $q, router, theme, url, SERVICE, HTTP_STATUS) {
             var service = { 
                 get: get,
                 del: del,
@@ -129,8 +222,8 @@
                 post: post
             };
 
-            var url = SERVICE.URL.replace(/\/$/, '');
-
+            var BASE_URL = url.getServiceUrl();
+                
             return service;
 
             function get(path, data, options) {
@@ -149,7 +242,7 @@
                 }
 
                 options = _.extend({
-                    url: url + path,
+                    url: BASE_URL + path,
                     method: 'GET'
                 }, options || {});
 
@@ -158,7 +251,7 @@
 
             function del(path, data, options) {
                 options = _.extend({
-                    url: url + path,
+                    url: BASE_URL + path,
                     method: 'DELETE'
                 }, options || {});
 
@@ -173,7 +266,7 @@
 
             function put(path, data, options) {
                 options = _.extend({
-                    url: url + path,
+                    url: BASE_URL + path,
                     data: data,
                     method: 'PUT'
                 });
@@ -185,7 +278,7 @@
                 var regularPost = false;
 
                 options = _.extend({
-                    url: url + path,
+                    url: BASE_URL + path,
                     data: data,
                     method: 'POST'
                 }, options || {});

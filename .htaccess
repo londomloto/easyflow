@@ -4,7 +4,9 @@
     RewriteCond %{REQUEST_URI} !(/$|\.) 
     RewriteRule (.*) %{REQUEST_URI}/ [L,R=301]
     
-    RewriteCond $1 ^(admin)
+    RewriteRule ^(admin\/|\/)?(apps|assets)(.*) public/$2/$3 [L]
+
+    RewriteCond $1 ^admin/?
     RewriteRule ^(.*)$ public/backend.html [L]
 
     RewriteCond $1 !^(public)

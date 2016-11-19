@@ -9,11 +9,11 @@
         .filter('dateformat', dateformatFilter);
 
     /** @ngInject */
-    function thumbnailFilter($rootScope, SERVICE) {
-        var url = SERVICE.URL.replace(/\/$/, '');
-
+    function thumbnailFilter($rootScope, url) {
+        var BASE_URL = url.getServiceUrl();
+        
         return function(image, path, width, height) {
-            return url + path + 'thumbnail/' + image + '/' + width + '/' + height;
+            return BASE_URL + path + 'thumbnail/' + image + '/' + width + '/' + height;
         }
     }
 
