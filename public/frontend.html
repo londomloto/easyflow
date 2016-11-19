@@ -1,82 +1,82 @@
-<!DOCTYPE html>
-<html lang="en" ng-app="app" ng-controller="AppController as appctl">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="{{ site.description }}">
-    <meta name="author" content="{{ site.author }}">
+    <!DOCTYPE html>
+    <html lang="en" data-ng-app="app" data-ng-controller="AppController as appctl">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="{{ site.description }}">
+        <meta name="author" content="{{ site.author }}">
 
-    <title data-ui-title>Easyflow</title>
+        <title data-ui-title>Easyflow</title>
 
-    <link rel="stylesheet" type="text/css" href="assets/vendor/pace/pace.css">
-    <link rel="stylesheet" type="text/css" href="assets/vendor/ionicons/ionicons.css">
-    <link rel="stylesheet" type="text/css" href="assets/vendor/roboto/roboto.css">
-    <link rel="stylesheet" type="text/css" href="assets/vendor/montserrat/fonts.css">
-    <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap/v3/css/bootstrap.css">
-    <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap/v3/css/ripples.css">
-    <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap/v3/css/material.css">
-    <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap/v3/css/snackbar.css">
-    <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap/v3/css/bootstrap-social.css">
-    <link rel="stylesheet" type="text/css" href="assets/css/frontend.css">
+        <link rel="stylesheet" type="text/css" href="assets/vendor/pace/pace.css">
+        <link rel="stylesheet" type="text/css" href="assets/vendor/ionicons/ionicons.css">
+        <link rel="stylesheet" type="text/css" href="assets/vendor/roboto/roboto.css">
+        <link rel="stylesheet" type="text/css" href="assets/vendor/montserrat/fonts.css">
+        <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap/v3/css/bootstrap.css">
+        <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap/v3/css/ripples.css">
+        <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap/v3/css/material.css">
+        <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap/v3/css/snackbar.css">
+        <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap/v3/css/bootstrap-social.css">
+        <link rel="stylesheet" type="text/css" href="assets/css/frontend.css">
 
-    <script id="header-files"></script>
-    
-</head>
-<body class="{{ state.style }}" ng-cloak>
+        <script id="header-files"></script>
+        
+    </head>
+    <body class="{{ state.style }}" data-ng-cloak>
 
-    <div data-ui-view></div>
+        <div data-ui-view></div>
 
-    <!-- GLOBAL DIALOG -->
-    <div data-ng-include="'apps/frontend/templates/dialog-confirm.html'"></div>
-    <div data-ng-include="'apps/frontend/templates/dialog-alert.html'"></div>
-    <div data-ng-include="'apps/frontend/templates/dialog-info.html'"></div>
-    <div data-ng-include="'apps/frontend/templates/dialog-error.html'"></div>
-    <!-- END OF GLOBAL DIALOG -->
+        <!-- GLOBAL DIALOG -->
+        <div data-ng-include="'apps/frontend/templates/dialog-confirm.html'"></div>
+        <div data-ng-include="'apps/frontend/templates/dialog-alert.html'"></div>
+        <div data-ng-include="'apps/frontend/templates/dialog-info.html'"></div>
+        <div data-ng-include="'apps/frontend/templates/dialog-error.html'"></div>
+        <!-- END OF GLOBAL DIALOG -->
 
-    <!-- VENDOR -->
-    <script>
-        window.paceOptions = {
-            document: true,
-            eventLag: true,
-            restartOnPushState: true,
-            restartOnRequestAfter: true,
-            ajax: {
-                trackMethods: [ 'POST','GET']
-            }
-        };
-    </script>
+        <!-- VENDOR -->
+        <script>
+            window.paceOptions = {
+                document: true,
+                eventLag: true,
+                restartOnPushState: true,
+                restartOnRequestAfter: true,
+                ajax: {
+                    trackMethods: [ 'POST','GET']
+                }
+            };
+        </script>
 
-    <script src="assets/vendor/pace/pace.min.js"></script>
-    <script src="assets/vendor/lodash/lodash.js"></script>
-    <script src="assets/vendor/jquery/jquery.js"></script>
-    <script src="assets/vendor/angular/angular.js"></script>
-    <script src="assets/vendor/ui-router/angular-ui-router.js"></script>
-    <script src="assets/vendor/oclazyload/oclazyload.js"></script>
-    <script src="assets/vendor/bootstrap/v3/js/bootstrap.js"></script>
-    <script src="assets/vendor/bootstrap/v3/js/ripples.js"></script>
-    <script src="assets/vendor/bootstrap/v3/js/material.js"></script>
-    <script src="assets/vendor/bootstrap/v3/js/snackbar.js"></script>
-    <!-- END VENDOR -->
-    
-    <!-- CORE MODULE -->
-    <script src="apps/core/core.module.js"></script>
-    <script src="apps/core/core.constant.js"></script>
-    <script src="apps/core/core.provider.js"></script>
-    <script src="apps/core/core.directive.js"></script>
-    <script src="apps/core/core.filter.js"></script>
-    <!-- END CORE MODULE -->
+        <script src="assets/vendor/pace/pace.min.js"></script>
+        <script src="assets/vendor/lodash/lodash.js"></script>
+        <script src="assets/vendor/jquery/jquery.js"></script>
+        <script src="assets/vendor/angular/angular.js"></script>
+        <script src="assets/vendor/ui-router/angular-ui-router.js"></script>
+        <script src="assets/vendor/oclazyload/oclazyload.js"></script>
+        <script src="assets/vendor/bootstrap/v3/js/bootstrap.js"></script>
+        <script src="assets/vendor/bootstrap/v3/js/ripples.js"></script>
+        <script src="assets/vendor/bootstrap/v3/js/material.js"></script>
+        <script src="assets/vendor/bootstrap/v3/js/snackbar.js"></script>
+        <!-- END VENDOR -->
+        
+        <!-- CORE MODULE -->
+        <script src="apps/core/core.module.js"></script>
+        <script src="apps/core/core.constant.js"></script>
+        <script src="apps/core/core.provider.js"></script>
+        <script src="apps/core/core.directive.js"></script>
+        <script src="apps/core/core.filter.js"></script>
+        <!-- END CORE MODULE -->
 
-    <!-- APP MODULE -->
-    <script src="apps/frontend/app.module.js"></script>
-    <script src="apps/frontend/app.constant.js"></script>
-    <script src="apps/frontend/app.config.js"></script>
-    <script src="apps/frontend/app.provider.js"></script>
-    <script src="apps/frontend/app.directive.js"></script>
-    <script src="apps/frontend/app.filter.js"></script>
+        <!-- APP MODULE -->
+        <script src="apps/frontend/app.module.js"></script>
+        <script src="apps/frontend/app.constant.js"></script>
+        <script src="apps/frontend/app.config.js"></script>
+        <script src="apps/frontend/app.provider.js"></script>
+        <script src="apps/frontend/app.directive.js"></script>
+        <script src="apps/frontend/app.filter.js"></script>
 
-    <!-- END APP MODULE -->
-    <script id="body-files"></script>
+        <!-- END APP MODULE -->
+        <script id="body-files"></script>
 
-</body>
-</html>
+    </body>
+    </html>
