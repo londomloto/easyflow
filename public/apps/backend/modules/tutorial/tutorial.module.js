@@ -17,11 +17,9 @@
         };
 
         $scope.removeTutorial = function(tutorial) {
-            theme.showConfirm('remove-tutorial').then(function(action){
+            theme.showConfirm('Konfirmasi', 'Anda yakin akan menghapus tutorial ini? ?').then(function(action){
                 if (action) {
-                    
                     var data = angular.copy(tutorial);
-
                     api.del('/tutorial/' + tutorial.id, data).then(function(response){
                         console.log(response);
                     });

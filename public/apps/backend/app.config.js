@@ -8,7 +8,7 @@
     /////////
     
     /** @ngInject */
-    function config(routerProvider, loaderProvider) {
+    function config(routerProvider, loaderProvider, authProvider, apiProvider) {
 
         loaderProvider.register([
             {
@@ -22,11 +22,6 @@
             {
                 name: 'login.module',
                 files: ['/public/apps/backend/modules/login/login.module.js'],
-                insertBefore: '#body-files'
-            },
-            {
-                name: 'home.module',
-                files: ['/public/apps/backend/modules/home/home.module.js'],
                 insertBefore: '#body-files'
             },
             {
@@ -54,26 +49,28 @@
         /// ROUTES
         ///////////////////////////////////////
         
-        routerProvider.fallback('main');
-        
+        routerProvider.setup({
+            defaultState: {
+                name: 'main.dashboard',
+                url: '/main/dashboard'
+            },
+            loginState: {
+                name: 'login',
+                url: '/login'
+            }
+        });
+
         routerProvider.register({
             'main': {
-                url: '',
-                templateUrl: '/public/apps/backend/modules/main/main.html'
-            },
-            'main.home': {
-                url: '/home',
-                breadcrumb: 'Home',
-                templateUrl: '/public/apps/backend/modules/home/home.html',
-                controller: 'HomeController as homeCtl',
-                resolve: {
-                    dependencies: function(loader) {
-                        return loader.load(['home.module']);
-                    }
-                }
+                url: '/main',
+                templateUrl: '/public/apps/backend/modules/main/main.html',
+                abstract: true
+                // authenticate: true
             },
             'main.dashboard': {
                 url: '/dashboard',
+                breadcrumb: 'Dashboard',
+                authenticate: true,
                 templateUrl: '/public/apps/backend/modules/dashboard/dashboard.html',
                 controller: 'DashboardController as dashboardCtl',
                 resolve: {
@@ -83,12 +80,14 @@
                 }
             },
             'main.role': {
-                url: '/role',
+                url: '/access',
+                authenticate: true,
                 breadcrumb: 'Hak Akses'
             },
             'main.user': {
                 url: '/user',
                 breadcrumb: 'Pengguna',
+                authenticate: true,
                 templateUrl: '/public/apps/backend/modules/user/user.html',
                 controller: 'UserController as userCtl',
                 resolve: {
@@ -100,6 +99,7 @@
             'main.user.edit': {
                 url: '/edit/:id',
                 breadcrumb: 'Sunting',
+                authenticate: true,
                 views: {
                     '@main': {
                         templateUrl: '/public/apps/backend/modules/user/edit.html',
@@ -109,11 +109,13 @@
             },
             'main.admin': {
                 url: '/admin',
-                breadcrumb: 'Administrator'
+                breadcrumb: 'Administrator',
+                authenticate: true
             },
             'main.tutorial': {
                 url: '/tutorial',
                 breadcrumb: 'Tutorial',
+                authenticate: true,
                 templateUrl: '/public/apps/backend/modules/tutorial/tutorial.html',
                 controller: 'TutorialController as tutorialCtl',
                 resolve: {
@@ -128,6 +130,7 @@
             'main.tutorial.add': {
                 url: '/add',
                 breadcrumb: 'Tambah',
+                authenticate: true,
                 views: {
                     '@main': {
                         templateUrl: '/public/apps/backend/modules/tutorial/add.html',
@@ -138,6 +141,7 @@
             'main.tutorial.edit': {
                 url: '/edit/:id',
                 breadcrumb: 'Sunting',
+                authenticate: true,
                 views: {
                     '@main': {
                         templateUrl: '/public/apps/backend/modules/tutorial/edit.html',

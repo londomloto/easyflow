@@ -56,12 +56,34 @@ class Security extends \Sys\Core\Component {
     /**
      * Useful for generating secret key
      */
-    public function generateKey() {
-        return base64_encode(openssl_random_pseudo_bytes(64));
+    public function generateKey($encoder = 'base64_encode', $length = 32) {
+        return $encoder(openssl_random_pseudo_bytes($length));
+    }
+    
+    /**
+     * Like generateKey(), but numeric only
+     */
+    public function generateId($length = 6) {
+        $chars = '0123456789';
+        $max = strlen($chars) - 1;
+        $id = date('YmdHis').'-';
+
+        for ($i = 0; $i < $length; $i++) {
+            $id .= $chars[mt_rand(0, $max)];
+        }
+
+        return $id;
     }
 
-    public function generateToken($payload = array()) {
+    /**
+     * Useful for generating auth token
+     */
+    public function generateToken($payload = array(), $lifetime = NULL) {
         $time = time();
+
+        if (is_null($lifetime)) {
+            $lifetime = $this->getAppConfig()->application->session->cookie_lifetime;
+        }
 
         $data = array(
             // issued time
@@ -70,45 +92,53 @@ class Security extends \Sys\Core\Component {
             'jti' => base64_encode(mcrypt_create_iv(32)),
             // issuer
             'iss' => $this->getService('request')->getServerName(),
-            // not before
-            'nbf' => $time + 10,
+            // not before ($time + 10)
+            'nbf' => $time + 1,
             // expire
-            'exp' => $time + 10 + 60,
+            'exp' => $time + 1 + $lifetime,
             // payload
             'data' => $payload
         );
 
         $config = $this->_config;
-        $secret = base64_decode($config->server_key);
+        $secret = base64_decode($config->secret_key);
         $token  = \Firebase\JWT\JWT::encode($data, $secret, 'HS512');
 
         return $token;
     }
 
-    public function generateAppToken() {
-        
-    }
-
     /**
      * Generate user access token
      */
-    public function generateUserToken($user) {
+    public function generateUserToken($user, $lifetime = 1400) {
         return $this->generateToken(array(
             'user_id' => $user->id,
             'user_email' => $user->email
-        ));
+        ), $lifetime);
     }
 
     public function verifyToken($token) {
         $config = $this->_config;
-        $secret = base64_decode($config->server_key);
+        $secret = base64_decode($config->secret_key);
         $result = FALSE;
 
         try {
-            $decode = \Firebase\JWT\JWT::decode($token, $secret, array('HS512'));
-            $result = TRUE;
-        } catch(\Exception $e) {}
+            $result = \Firebase\JWT\JWT::decode($token, $secret, array('HS512'));
+        } catch(\Exception $e) {
+            $message = $e->getMessage();
 
+            switch(TRUE) {
+                case $e instanceof \Firebase\JWT\BeforeValidException:
+                    $message = "Hak akses Anda belum aktif";
+                    break;
+                case $e instanceof \Firebase\JWT\ExpiredException:
+                    $message = "Hak akses Anda sudah kadaluarsa";
+                    break;
+            }
+
+            throw new SecurityException($message);
+        }
+        
         return $result;
     }
 

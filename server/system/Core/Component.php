@@ -9,6 +9,11 @@ abstract class Component implements IComponent {
         $this->_app = $app;
     }
 
+    public function __call($method, $args) {
+        $class = get_called_class();
+        throw new ComponentException("Fungsi {$class}->$method() tidak ditemukan");
+    }
+
     public function getApp() {
         return $this->_app;
     }   

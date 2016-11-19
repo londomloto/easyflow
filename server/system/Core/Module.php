@@ -1,13 +1,14 @@
 <?php 
 namespace Sys\Core;
 
+use Sys\Service\SecurityException;
+
 abstract class Module extends Component {
 
     protected static $_default = NULL;
     protected static $_initialied = array();
 
-    protected static $_authenticatedMethods = array();
-    protected static $_authorizedMethods = array();
+    protected $_protectedActions = array();
 
     public function __construct(IApplication $app) {
         parent::__construct($app);
@@ -29,12 +30,52 @@ abstract class Module extends Component {
 
     }
 
-    public function authenticateMethods($methods) {
+    public function authorize($action) {
+        if (isset($this->_protectedActions[$action])) {
+            
+            if ( ! $this->session->has('CURRENT_USER')) {
+                throw new SecurityException("Sesi Anda sudah habis, silahkan login kembali", 401);
+            }
 
+            /*
+            $token = $this->request->getHeader('Authorization');
+            
+            if (empty($token)) {
+                $token = $this->request->getParam('token');
+            }
+
+            if ( ! $this->session->has('CURRENT_USER') || empty($token)) {
+                throw new SecurityException("Sesi Anda sudah habis, silahkan login kembali", 401);
+            }
+            
+            $token = str_replace('Bearer ', '', $token);
+            return $this->security->verifyToken($token);
+            */
+        }
+
+        return TRUE;
     }
 
-    public function authorizeMethods($methods) {
+    public function protect($action, $type = 'user') {
+        if (is_array($action)) {
+            foreach($action as $key => $val) {
+                if (is_numeric($key)) {
+                    $_action = $val;
+                    $_type = 'user';
+                } else {
+                    $_action = $key;
+                    $_type = isset($val['type']) ? $val['type'] : 'user';
+                }
 
+                $this->_protectedActions[$_action] = array(
+                    'type' => $_type
+                );
+            }
+        } else {
+            $this->_protectedActions[$action] = array(
+                'type' => $type
+            );
+        }
     }
 
     public function __get($name) {
@@ -42,7 +83,17 @@ abstract class Module extends Component {
         $prop = '_'.$name;
 
         if ( ! isset($this->{$prop})) {
-            $services = array('request', 'response', 'session', 'security', 'uploader', 'auth', 'role', 'url');
+            $services = array(
+                'request', 
+                'response', 
+                'session', 
+                'dispatcher',
+                'security', 
+                'uploader', 
+                'auth', 
+                'role', 
+                'url'
+            );
 
             if (in_array($name, $services)) {
                 // check in service

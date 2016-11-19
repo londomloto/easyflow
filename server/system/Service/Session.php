@@ -10,36 +10,85 @@ class Session extends \Sys\Core\Component {
     public function __construct(\Sys\Core\IApplication $app) {
         parent::__construct($app);
         $this->_started = FALSE;
-        $this->_config = $this->getAppConfig()->application->session->toArray();
+        $this->_config  = $this->getAppConfig()->application->session->toArray();
     }
 
-    public function has($name) {
-        return isset($_SESSION[$name]);
+    public function context($context = FALSE) {
+        if ( ! $context) {
+            return isset($_SESSION['CONTEXT']) ? $_SESSION['CONTEXT'] : FALSE;
+        }
+        $_SESSION['CONTEXT'] = str_replace('-', '_', $context);
     }
 
-    public function set($name, $value) {
-        $_SESSION[$name] = $value;
+    public function isStarted() {
+        return $this->_started;
     }
 
-    public function get($name) {
-        return $this->has($name) ? $_SESSION[$name] : FALSE;
+    public function id($id = NULL) {
+        if (is_null($id)) {
+            return session_id();
+        }
+
+        session_id($id);
+        return $id;
     }
 
-    public function remove($name) {
-        unset($_SESSION[$name]);
+    public function name() {
+        return session_name();
     }
 
-    public function start() {
+    public function key($key) {
+        $context = $this->context();
+        if ($context) {
+            $key = $context . '_'.$key;
+        }
+        return $key;
+    }
+
+    public function has($key) {
+        $key = $this->key($key);
+        return isset($_SESSION[$key]);
+    }
+
+    public function set($key, $value) {
+        $key = $this->key($key);
+        $_SESSION[$key] = $value;
+    }
+
+    public function get($key) {
+        $ori = $key;
+        $key = $this->key($key);
+        return $this->has($ori) ? $_SESSION[$key] : FALSE;
+    }
+
+    public function remove($key) {
+        $key = $this->key($key);
+        unset($_SESSION[$key]);
+    }
+
+    public function close() {
+        session_write_close();
+    }
+
+    public function start($name = NULL, $path = NULL) {
 
         if ($this->_started) {
-            return;
+            $this->close();
         }
 
         $config = $this->_config;
         $secure = $this->getService('url')->isSecure();
         
-        session_name($config['name']);
+        if (is_null($name)) {
+            $name = $config['name'];
+        }
+
+        if (is_null($path)) {
+            $path = $config['cookie_path'];
+        }
         
+        session_name($name);
+
         // setcookie(
         //     session_name(),
         //     session_id(),
@@ -52,7 +101,7 @@ class Session extends \Sys\Core\Component {
 
         session_set_cookie_params(
             $config['cookie_lifetime'],
-            $config['cookie_path'],
+            $path,
             NULL,
             $secure,
             TRUE
@@ -79,8 +128,6 @@ class Session extends \Sys\Core\Component {
             session_start();
             $this->_started = TRUE;
         }
-
-        
     }
 
     public function destroy() {

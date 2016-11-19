@@ -161,7 +161,7 @@ class User extends \Sys\Core\Module {
     ///////// API's /////////
     
     public static function columns() {
-        return 'id,email,fullname,sex,job_title,bio,avatar,avatar_name,role,access_token,register_date,last_login,last_ip';
+        return 'id,email,fullname,sex,job_title,bio,avatar,avatar_name,role,token,register_date,last_login,last_ip';
     }
     
     public static function secure($user) {

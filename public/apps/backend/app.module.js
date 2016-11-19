@@ -13,23 +13,34 @@
     
     /** @ngInject */
     function AppController($scope, router, auth) {
-        
         $scope.logout = function() {
             auth.logout().then(function(result){
-                router.go('home');
+                router.go('login');
             });
         };
 
     }
     
-    /** @ngInject */
-    function run($rootScope, site) {
-        $rootScope.site = {};
-        $rootScope.user = {};
+    /** ngInject */
+    function run($rootScope, router, auth) {
         
-        site.getInfo().then(function(info){
-            $rootScope.site = info.site;
-            $rootScope.user = info.user;
+        // maybe late...
+        auth.verify();
+
+        // debug
+        // $rootScope.$on("$stateChangeError", console.log.bind(console));
+
+        $rootScope.$on('$stateChangeStart', function(evt, state){
+            if (state.authenticate) {
+                if ( ! auth.isAuthenticated()) {
+                    auth.verify().then(function(user){
+                        if ( ! user) {
+                            evt.preventDefault();
+                            router.go(router.getLoginState());
+                        }
+                    });
+                }
+            }
         });
     }
 

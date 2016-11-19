@@ -3,6 +3,16 @@ namespace App\Module\Auth;
 
 class Auth extends \Sys\Core\Module {
     
+    public function verifyAction() {
+        $result = array(
+            'success' => TRUE,
+            'user' => $this->auth->getUser()
+        );
+
+        $this->response->responseJson();
+        return $result;
+    }
+
     public function loginAction() {
         $post = $this->request->getInput();
         $data = array();

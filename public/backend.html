@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" ng-app="app">
+<html lang="en" ng-app="app" ng-controller="AppController as appctl">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimal-ui" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Admin</title>
+    <title data-ui-title>Administrasi</title>
 
     <link rel="stylesheet" type="text/css" href="/public/assets/vendor/pace/pace.css">
     <link rel="stylesheet" type="text/css" href="/public/assets/vendor/animate/animate.min.css">
@@ -19,6 +19,13 @@
 
     <div class="app" id="app" data-ui-view></div>
     
+    <!-- GLOBAL DIALOG -->
+    <div data-ng-include="'/public/apps/backend/templates/dialog-confirm.html'"></div>
+    <div data-ng-include="'/public/apps/backend/templates/dialog-alert.html'"></div>
+    <div data-ng-include="'/public/apps/backend/templates/dialog-info.html'"></div>
+    <div data-ng-include="'/public/apps/backend/templates/dialog-error.html'"></div>
+    <!-- END OF GLOBAL DIALOG -->
+
     <script>
         window.paceOptions = {
             document: true,

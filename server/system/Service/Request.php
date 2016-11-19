@@ -8,6 +8,22 @@ class Request extends \Sys\Core\Component {
     protected $_raw;
     protected $_put;
 
+    public function parse() {
+        if ($this->isPost()) {
+            if (empty($_POST)) {
+                $input = $this->getInput();
+                if (is_array($input)) {
+                    foreach($input as $key => $val) {
+                        $_POST[$key] = $val;
+                        if ( ! isset($_REQUEST[$key])) {
+                            $_REQUEST[$key] = $val;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public function getHeaders() {
         $headers = array();
 
@@ -26,8 +42,8 @@ class Request extends \Sys\Core\Component {
         return $headers;
     }
 
-    public function getHeader($header) {
-        $name = strtoupper(strtr($header, '-', '_'));
+    public function getHeader($name) {
+        $name = strtoupper(strtr($name, '-', '_'));
 
         if (isset($_SERVER[$name])) {
             return $_SERVER[$name];
@@ -102,7 +118,8 @@ class Request extends \Sys\Core\Component {
     }
 
     public function hasPost($name) {
-        return isset($_POST[$name]);
+        $post = $this->getPost();
+        return isset($post[$name]);
     }
 
     public function hasPut($name) {
@@ -135,6 +152,14 @@ class Request extends \Sys\Core\Component {
             ! empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
             strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest'
         );
+    }
+
+    public function isSoap() {
+
+    }
+
+    public function isJson() {
+        return $this->getPreferredType() == 'application/json';
     }
 
     public function isSecure() {
@@ -251,6 +276,84 @@ class Request extends \Sys\Core\Component {
             return $provider;
         }
         
+    }
+
+    public function getAcceptedType($supported, $default = 'text/html') {
+        $supp = array();
+
+        foreach($supported as $type) {
+            $supp[strtolower($type)] = $type;
+        }
+
+        if (empty($supp)) {
+            return $default;
+        }
+
+        if (isset($_SERVER['HTTP_ACCEPT'])) {
+            $accepts = $this->sortAccept($_SERVER['HTTP_ACCEPT']);
+
+            foreach($accepts as $type => $q) {
+                if (substr($type, -2) != '/*') {
+                    if (isset($supp[$type])) {
+                        return $supp[$type];
+                    }
+                    continue;
+                }
+
+                if ($type == '*/*') {
+                    return array_shift($supp);
+                }
+
+                list($general, $specific) = explode('/', $type);
+
+                $general .= '/';
+                $len = strlen($general);
+
+                foreach ($supp as $mime => $t) {
+                    if (strncasecmp($general, $mime, $len) == 0) {
+                        return $t;
+                    }
+                }
+            }
+        }
+
+        return $default;
+    }
+
+    public function getPreferredType() {
+        $preferred = array(
+            'application/xhtml+xml',
+            'application/xml',
+            'application/json',
+            'text/html',
+            'text/plain'
+        );
+
+        return $this->getAcceptedType($preferred);
+    }
+
+    public function sortAccept($header) {
+        $matches = array();
+        $parts = explode(',', $header);
+
+        foreach($parts as $option) {
+            $option = array_map('trim', explode(';', $option));
+            $l = strtolower($option[0]);
+            if (isset($option[1])) {
+                $q = (float) str_replace('q=', '', $option[1]);
+            } else {
+                $q = null;
+                if ($l == '*/*') {
+                    $q = 0.01;
+                } elseif (substr($l, -1) == '*') {
+                    $q = 0.02;
+                }
+            }
+            $matches[$l] = isset($q) ? $q : 1000 - count($matches);
+        }
+
+        arsort($matches, SORT_NUMERIC);
+        return $matches;
     }
 
     public function getDefaultHandler() {

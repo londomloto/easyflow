@@ -6,6 +6,7 @@ class Service {
     protected $_name;
     protected $_definition;
     protected $_shared;
+    protected $_resolved;
     protected $_params;
 
     protected $_sharedInstance;
@@ -15,6 +16,7 @@ class Service {
         $this->_definition = $definition;
         $this->_shared = $shared;
         $this->_params = array();
+        $this->_resolved = FALSE;
     }
 
     public function setParams($params = array()) {
@@ -23,6 +25,10 @@ class Service {
 
     public function getDefinition() {
         return $this->_definition;
+    }
+
+    public function isResolved() {
+        return $this->_resolved;
     }
 
     public function resolve($params = NULL) {
@@ -65,6 +71,8 @@ class Service {
         if ( ! $found) {
             throw new ServiceException("Service '" . $this->_name . "' tidak ditemukan");
         }
+
+        $this->_resolved = TRUE;
 
         if ($this->_shared) {
             $this->_sharedInstance = $instance;

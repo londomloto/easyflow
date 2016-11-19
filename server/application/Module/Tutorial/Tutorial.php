@@ -3,6 +3,12 @@ namespace App\Module\Tutorial;
 
 class Tutorial extends \Sys\Core\Module {
 
+    public function initialize() {
+        $this->protect(array(
+            'update'
+        ));
+    }
+
     public function findAction($id = NULL) {
         $id = intval($id);
         $baseVideoUrl = $this->url->getBaseUrl().'public/tutorial/';
@@ -62,9 +68,9 @@ class Tutorial extends \Sys\Core\Module {
     }
 
     public function updateAction() {
-        if ($this->request->hasFiles()) {
-            $post = $this->request->getPost();
+        $post = $this->request->getPost();
 
+        if ($this->request->hasFiles()) {
             $this->uploader->setup(array(
                 'path' => PUBPATH.'tutorial/',
                 'type' => 'mp4'
@@ -75,8 +81,6 @@ class Tutorial extends \Sys\Core\Module {
                 $post['video'] = $upload['file_name'];
                 $post['video_type'] = $upload['file_type'];
             }
-        } else {
-            $post = $this->request->getInput();    
         }
 
         $result = array(

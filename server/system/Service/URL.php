@@ -9,6 +9,7 @@ class URL extends \Sys\Core\Component {
     protected $_path;
     protected $_query;
     protected $_request;
+    protected $_current;
 
     public function __construct(\Sys\Core\IApplication $app) {
         parent::__construct($app);
@@ -76,6 +77,10 @@ class URL extends \Sys\Core\Component {
         return $url;
     }
 
+    function getCurrentUrl() {
+        return $this->_current;
+    }
+
     function appendUrl($url, $query) {
         
         $security = $this->getService('security');
@@ -124,7 +129,7 @@ class URL extends \Sys\Core\Component {
         $this->validateUrl();
 
         $url = parse_url($_SERVER['REQUEST_URI']);
-
+        
         if (isset($url['path'])) {
             $path = $url['path'];
         } else {
@@ -163,6 +168,7 @@ class URL extends \Sys\Core\Component {
 
         $this->_path  = $path;
         $this->_query = $query;
+        $this->_current = $this->_path;
 
     }
 

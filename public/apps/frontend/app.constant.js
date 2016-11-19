@@ -2,6 +2,9 @@
 (function(){
     angular
         .module('app')
-        .constant('APP_KEY', '');
+        .constant('SERVICE', {
+            KEY: '20161118111952-578188',
+            URL: '/server/'
+        });
         
 }());

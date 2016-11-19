@@ -32,7 +32,7 @@
                 data = angular.copy($scope.user);
                 data.noavatar = data.noavatar ? '1' : '0';
 
-                delete data['access_token'];
+                delete data['token'];
 
                 if ($scope.userfile) {
                     opts = {
@@ -75,7 +75,7 @@
                 var data = angular.copy($scope.user);
                 data.passwd = $scope.pass1;
 
-                delete data['access_token'];
+                delete data['token'];
 
                 api.post('/user/update-account', data).then(function(result){
                     if (result.data.success) {
@@ -90,7 +90,7 @@
         };
 
         $scope.removeAccount = function() {
-            theme.showConfirm('remove-account-confirm').then(function(action){
+            theme.showConfirm('Konfirmasi', 'Anda yakin akan menghapus akun?').then(function(action){
                 if (action) {
                     api.post('/user/delete-account', {email: $scope.user.email}).then(function(result){
                         if (result.data.success) {
@@ -189,7 +189,7 @@
         };
 
         $scope.removeDiagram = function(diagram) {
-            theme.showConfirm('remove-diagram-confirm').then(function(action){
+            theme.showConfirm('Konfirmasi', 'Anda yakin akan menghapus diagram ini?').then(function(action){
                 if (action) {
                     api.post('/user/diagram/remove', angular.copy(diagram)).then(function(response){
                         if (response.data.success) {

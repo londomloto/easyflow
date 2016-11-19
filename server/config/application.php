@@ -40,8 +40,9 @@ return array(
      * Session config
      */
     'session' => array(
-        'name' => 'easyflow',
-        'cookie_lifetime' => 86400,
+        'name' => 'EASYSESSID',
+        // 'cookie_lifetime' => 86400,
+        'cookie_lifetime' => 1440,
         'cookie_path' => '/'
     ),
 
@@ -49,7 +50,7 @@ return array(
      * Security setting
      */
     'security' => array(
-        'server_key' => 'dM0m8TVFtwxcKiMFJ2hA2o+eo7RH2kr7amiLsIOQxVJ+S29VtWjzS1M7mUlR8dtNyuwFNMOAC6+LZtv7c2PhJg=='
+        'secret_key' => 'Lv4dmEWEWAjEyLaJkXz+BGvypPYcH/aSO3LMOCloAuM='
     ),
 
     /**

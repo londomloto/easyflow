@@ -5,18 +5,123 @@
         .module('core')
         .provider('api', apiProvider)
         .provider('site', siteProvider)
+        .provider('auth', authProvider)
+        .provider('router', routerProvider)
+        .provider('loader', loaderProvider)
         .provider('googleApi', googleApiProvider)
         .provider('facebookApi', facebookApiProvider)
         .provider('theme', themeProvider);
 
     /** @ngInject */
-    function apiProvider() {
+    function routerProvider($stateProvider, $urlRouterProvider) {
+        var provider = this,
+            options = { 
+                defaultState: { name: null, url: null },
+                loginState: { name: null, url: null }
+            };
+
+        provider.$get = factory;
+        provider.setup = setup;
+        provider.register = register;
+
+        function setup(config) {
+            _.assign(options, config || {});
+
+            if (options.defaultState) {
+                $urlRouterProvider.otherwise(options.defaultState.url);
+            }
+        }
+
+        function register(routes) {
+            for (var state in routes) {
+                if (routes.hasOwnProperty(state)) {
+                    $stateProvider.state(state, routes[state]);
+                }
+            }
+        }
+
+        /** @ngInject */
+        function factory($rootScope, $templateFactory, $state) {
+            var service = {
+                getDefaultState: getDefaultState,
+                getDefaultUrl: getDefaultUrl,
+                getLoginState: getLoginState,
+                getLoginUrl: getLoginUrl,
+                getParam: getParam,
+                go: go
+            };
+
+            return service;
+
+            function getDefaultState() {
+                return options.defaultState.name;
+            }
+
+            function getDefaultUrl() {
+                return options.defaultState.url;
+            }
+
+            function getLoginState() {
+                return options.loginState.name;
+            }
+
+            function getLoginUrl() {
+                return options.loginState.url;
+            }
+
+            function getParam(name) {
+                var params = $state.params;
+                return params[name];
+            }
+
+            function go(state) {
+                $state.go(state);
+            }
+
+        }
+    }
+
+    /** @ngInject */
+    function loaderProvider($ocLazyLoadProvider) {
         var provider = this;
 
         provider.$get = factory;
+        provider.register = register;
+
+        function register(modules) {
+            $ocLazyLoadProvider.config({
+                modules: modules
+            });
+        }
 
         /** @ngInject */
-        function factory($rootScope, $http, API_URL) {
+        function factory($ocLazyLoad) {
+            var service = {
+                load: load
+            };
+
+            return service;
+
+            function load(modules) {
+                return $ocLazyLoad.load(modules, {serie: true});
+            }
+        }
+    }
+
+    /** @ngInject */
+    function apiProvider() {
+        var provider = this,
+            options = {};
+
+        provider.$get = factory;
+        provider.setup = setup;
+
+        function setup(config) {
+            _.assign(options, config || {});
+        }
+
+        /** @ngInject */
+        function factory($rootScope, $http, $q, router, theme, SERVICE, HTTP_STATUS) {
             var service = { 
                 get: get,
                 del: del,
@@ -24,9 +129,11 @@
                 post: post
             };
 
+            var url = SERVICE.URL.replace(/\/$/, '');
+
             return service;
 
-            function get(path, data) {
+            function get(path, data, options) {
                 if (data) {
                     var params = [];
                     
@@ -39,14 +146,19 @@
                     if (params) {
                         path += (path.indexOf('?') > -1 ? '&' : '?') + params;
                     }
-                    
                 }
-                return $http.get(API_URL + path);
+
+                options = _.extend({
+                    url: url + path,
+                    method: 'GET'
+                }, options || {});
+
+                return request(options);
             }
 
             function del(path, data, options) {
                 options = _.extend({
-                    url: API_URL + path,
+                    url: url + path,
                     method: 'DELETE'
                 }, options || {});
 
@@ -56,23 +168,27 @@
                     options.data = data;
                 }
 
-                return $http(options);
+                return request(options);
             }
 
-            function put(path) {
-                $http.put(API_URL + path);
+            function put(path, data, options) {
+                options = _.extend({
+                    url: url + path,
+                    data: data,
+                    method: 'PUT'
+                });
+
+                return request(options);
             }
 
             function post(path, data, options) {
                 var regularPost = false;
 
-                options = options || {};
-
-                _.assign(options, {
-                    url: API_URL + path,
+                options = _.extend({
+                    url: url + path,
                     data: data,
                     method: 'POST'
-                });
+                }, options || {});
 
                 if (options.regularPost) {
                     regularPost = options.regularPost;
@@ -81,11 +197,6 @@
 
                 if (options.upload) {
                     regularPost = true;
-                }
-
-                if ($rootScope.user && $rootScope.user.access_token) {
-                    options.headers = options.headers || {};
-                    options.headers['Authorization'] = 'Bearer ' + $rootScope.user.access_token;
                 }
 
                 if (regularPost) {
@@ -116,34 +227,176 @@
                         options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
                     }
                 }
-                
-                return $http(options);
+
+                return request(options);
             }
 
+            function request(options) {
+                var def = $q.defer();
+
+                options.headers = options.headers || {};
+                options.headers['X-Application'] = SERVICE.KEY;
+
+                if ($rootScope.user && $rootScope.user.token) {
+                    options.headers['Authorization'] = 'Bearer ' + $rootScope.user.token;
+                }
+
+                $http(options).then(
+                    function(response) {
+                        def.resolve(response);
+                    },
+                    function(response) {
+                        var message = response.data.message,
+                            code = +response.status;
+                            
+                        if (code == HTTP_STATUS.UNAUTHORIZED) {
+                            if (message) alert(message);
+                            router.go(router.getLoginState());
+                        } else {
+                            if (message) theme.showAlert('Peringatan', message);
+                            def.reject(response);
+                        }
+                    }
+                );
+
+                return def.promise;
+            }
+
+        }
+    }
+
+    function authProvider() {
+        var provider = this,
+            options = {};
+
+        provider.$get = factory;
+        provider.setup = setup;
+
+        function setup(config) {
+            _.assign(options, config || {});
+        }
+
+        /////////
+        
+        /** @ngInject */
+        function factory($rootScope, $timeout, $q, router, api) {
+            var loading = null;
+            var service = {
+                login: login,
+                logout: logout,
+                social: social,
+                verify: verify,
+                register: register,
+                invalidate: invalidate,
+                isAuthenticated: isAuthenticated
+            };
+
+            return service;
+
+            function isAuthenticated() {
+                return $rootScope.user.id !== undefined;
+            }
+
+            function verify() {
+                var def = $q.defer();
+
+                if (isAuthenticated()) {
+                    def.resolve($rootScope.user);
+                } else {
+                    if (loading) {
+                        loading.then(function(user){
+                            loading = null;
+                            def.resolve(user);
+                        });
+                    } else {
+                        loading = api.get('/auth/verify').then(function(response){
+                            var user = response.data.user;
+                            $rootScope.user = user;
+                            return user;
+                        });
+
+                        loading.then(function(user){
+                            loading = null;
+                            def.resolve(user);
+                        });
+                    }
+                }
+
+                return def.promise;
+            }
+
+            function invalidate() {
+                $rootScope.user = null;
+            }
+
+            function login(email, passwd) {
+                return api.post('/auth/login', {email: email, passwd: passwd})
+                   .then(function(response){
+                        if (response.data.success) {
+                            $rootScope.user = response.data.user;
+                        } else {
+                            $rootScope.user = null;
+                        }
+                        return response.data;
+                   });
+            }
+
+            function logout() {
+                return api.post('/auth/logout').then(function(response){
+                    if (response.data.success) {
+                        $rootScope.user = null;
+                    }
+                    return response.data;
+                });
+            }
+
+            function register(data) {
+                return api.post('/auth/register', data).then(function(response){
+                    if (response.data.success) {
+                        $rootScope.user = response.data.user;
+                    }
+                    return response.data;
+                });   
+            }
+
+            function social(user) {
+                return api.post('/auth/social', user).then(function(response){
+                    if (response.data.success) {
+                        $rootScope.user = response.data.user;
+                    }
+                    return response.data;
+                });
+            }
         }
     }
 
     /** @ngInject */
     function siteProvider() {
         var provider = this;
-
         provider.$get = factory;
         
         /////////
         
         /** @ngInject */
-        function factory(api) {
+        function factory($rootScope, api) {
             var service = {
-                getInfo: getInfo
+                verify: verify,
+                getTitle: getTitle
             };
 
             return service;
 
-            function getInfo() {
-                return api.get('/site/info/').then(function(res){
-                    return res.data;
+            function verify() {
+                return api.get('/site/verify').then(function(response){
+                    $rootScope.site = response.data.site;
+                    return response.data;
                 });
             }
+
+            function getTitle() {
+                return $rootScope.site ? $rootScope.site.title : 'App';
+            }
+
         }
     }
 
@@ -189,7 +442,7 @@
 
                 gapi.load('auth2', function(){
                     var auth = gapi.auth2.init({
-                        client_id: GOOGLE.API_KEY,
+                        client_id: GOOGLE.APP_ID,
                         fetch_basic_profile: true
                     });
 
@@ -241,7 +494,7 @@
                     $window.fbAsyncInit = function() {
                         loaded = true;
                         FB.init({
-                            appId: FACEBOOK.API_KEY,
+                            appId: FACEBOOK.APP_ID,
                             version: 'v2.8'
                         })
                         def.resolve();
@@ -304,11 +557,11 @@
             var service = {
                 init: init,
                 toast: toast,
-                // confirm: showConfirm,
                 registerModal: registerModal,
                 showModal: showModal,
                 hideModal: hideModal,
-                showConfirm: showConfirm
+                showConfirm: showConfirm,
+                showAlert: showAlert
             };
 
             return service;
@@ -330,16 +583,21 @@
                 modals[modal.name] = modal;
             }
 
-            function showConfirm(name) {
+            function showAlert(title, message) {
+                var modal = modals['alert'];
+                if (modal) {
+                    modal.show(title, message);
+                }
+            }
+
+            function showConfirm(title, message) {
                 var def = $q.defer();
 
-                var modal = modals[name];
+                var modal = modals['confirm'];
 
                 if (modal) {
-                    modal.show({
-                        callback: function(action) {
-                            def.resolve(action);
-                        }
+                    modal.show(title, message, function(action){
+                        def.resolve(action == 'yes' ? true : false);
                     });
                 } else {
                     def.resolve(false);

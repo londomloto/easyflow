@@ -37,7 +37,7 @@
         <div class="col-sm-6">
             <div class="thumbnail">
                 <div class="cover">
-                    <img alt="." data-ng-src="{{ item.cover | thumbnail:'user/diagram':362:200 }}" class="img-responsive">
+                    <img alt="." data-ng-src="{{ item.cover | thumbnail:'/user/diagram/':362:200 }}" class="img-responsive">
                     <a class="zoom lightbox-item" href="{{ item.cover_url }}">
                         <span><i class="ion-android-search"></i></span>
                     </a>    
@@ -70,11 +70,6 @@
         </div>
     </div>    
 
-</div>
-
-<div data-ui-confirm="remove-diagram-confirm"
-     data-title="Konfirmasi"
-     data-message="Anda yakin akan menghapus diagram ini?">
 </div>
 
 <div data-ui-modal="diagram-setting" class="modal fade" data-backdrop="static" data-keyboard="false" role="dialog">

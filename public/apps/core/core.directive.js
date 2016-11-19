@@ -6,8 +6,33 @@
         .directive('googleLogin', googleLoginDirective)
         .directive('facebookLogin', facebookLoginDirective)
         .directive('repeatDone', repeatDoneDirective)
+        .directive('uiTitle', uiTitleDirective)
         .directive('uiVideo', uiVideoDirective)
-        .directive('uiFile', uiFileDirective);
+        .directive('uiFile', uiFileDirective)
+        .directive('uiModal', uiModalDirective)
+        .directive('uiDialog', uiDialogDirective);
+
+    /** @ngInject */
+    function uiTitleDirective($rootScope, site) {
+        var directive = {
+            restrict: 'A',
+            link: link
+        };
+        
+        return directive;
+
+        function link(scope, element) {
+            $rootScope.$on('$stateChangeSuccess', _.debounce(function(evt, state){
+                var title =  site.getTitle();
+                
+                if (state.title) {
+                    title = title + ' - ' + state.title;
+                }
+
+                element.text(title);
+            }, 0));
+        }
+    }
 
     /** @ngInject */
     function uiFileDirective($parse) {
@@ -76,6 +101,110 @@
                     $parse(attrs.repeatDone)(scope);
                 });
             }
+        }
+    }
+
+    /** @ngInject */
+    function uiModalDirective(theme) {
+        var directive = {
+            link: link,
+            restrict: 'A',
+            controller: Controller,
+            controllerAs: 'vm'
+        };
+
+        return directive;
+
+        function Controller() {
+            var vm = this;
+
+            vm.name = null;
+            vm.modal = null;
+
+            vm.register = function() {
+                theme.registerModal(vm);
+            };
+
+            vm.show = function() {
+                if (vm.modal) {
+                    vm.modal.show();
+                }
+            };
+
+            vm.hide = function() {
+                if (vm.modal) {
+                    vm.modal.hide();
+                }
+            };
+        }
+
+        function link(scope, element, attrs, ctrl) {
+            ctrl.name  = attrs.uiModal;
+            ctrl.modal = $(element).modal('hide').data('bs.modal');
+            ctrl.register();
+        }
+    }
+
+    /** @ngInject */
+    function uiDialogDirective(theme) {
+        var directive = {
+            link: link,
+            restrict: 'A',
+            controller: Controller,
+            controllerAs: 'vm'
+        };
+
+        return directive;
+
+        /** @ngInject */
+        function Controller($scope) {
+            var vm = this;
+
+            vm.name = null;
+            vm.modal = null;
+            vm.action = null;
+            vm.callback = null;
+
+            vm.register = function() {
+                theme.registerModal(vm);
+            };
+
+            vm.show = function(title, message, callback) {
+                $scope.title = title;
+                $scope.message = message;
+
+                vm.callback = callback;
+
+                if (vm.modal) {
+                    vm.modal.show();
+                }
+            };
+
+            vm.hide = function(action) {
+                vm.action = action;
+            };
+
+            vm.onHide = function() {
+                if (vm.callback) {
+                    vm.callback(vm.action);
+                }
+            };
+
+            $scope.hide = function() {
+                if (vm.modal) {
+                    vm.modal.hide();
+                }
+            };
+        }
+
+        function link(scope, element, attrs, ctrl) {
+            ctrl.name = attrs.uiDialog;
+            ctrl.modal = element.modal('hide').data('bs.modal');
+            ctrl.register();
+
+            element.on('hidden.bs.modal', function(){
+                ctrl.onHide();
+            });
         }
     }
 

@@ -8,7 +8,7 @@
     /////////
     
     /** @ngInject */
-    function config(routerProvider, loaderProvider) {
+    function config(routerProvider, loaderProvider, authProvider) {
 
         ///////////////////////////////////////
         /// MODULES
@@ -95,7 +95,12 @@
         /// ROUTES
         ///////////////////////////////////////
         
-        routerProvider.fallback('/home');
+        routerProvider.setup({
+            defaultState: {
+                name: 'home',
+                url: '/home'
+            }
+        });
         
         routerProvider.register({
             'home': {

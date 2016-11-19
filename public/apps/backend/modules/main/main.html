@@ -3,7 +3,7 @@
     <div class="left navside dark dk" layout="column">
         <div class="navbar no-radius primary">
             <a class="navbar-brand">
-                <span class="hidden-folded inline"><i class="ion-android-settings"></i> administrasi</span>
+                <span class="hidden-folded inline"><i class="ion-android-settings"></i> easyflow</span>
             </a>
         </div>
         <div flex class="hide-scroll">
@@ -87,20 +87,32 @@
                     </a>
                 </li>
             </ul>
-            <ul class="nav navbar-nav pull-right">
-                <li class="nav-item dropdown pos-stc-xs">
-                    <a class="nav-link" href data-toggle="dropdown">
-                        <i class="ion-android-notifications"></i>
-                        <span class="label label-sm up warn">3</span>
+            <ul data-ng-if="user" class="nav navbar-nav pull-right">
+                <li class="nav-item pos-stc-xs">
+                    <a class="nav-link">
+                        {{ user.fullname }}
                     </a>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link clear" href data-toggle="dropdown">
                         <span class="avatar w-32">
-                            <img src="../assets/images/a0.jpg" alt="...">
+                            <img data-ng-src="{{ user.avatar | thumbnail:'/user/':32:32 }}" alt="...">
                             <i class="on b-white bottom"></i>
                         </span>
                     </a>
+                    <div class="dropdown-menu pull-right dropdown-menu-scale">
+                        <a class="dropdown-item" ui-sref="app.inbox.list">
+                            <span>Perpesanan</span>
+                            <span class="label warn m-l-xs">3</span>
+                        </a>
+                        <a class="dropdown-item" ui-sref="app.page.profile">
+                            <span>Sunting Profil</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" ui-sref="app.docs">Dokumentasi</a>
+                        <a data-ng-click="logout()" href="javascript:;" class="dropdown-item">Keluar</a>
+                    </div>
+
                 </li>
             </ul>
         </div>

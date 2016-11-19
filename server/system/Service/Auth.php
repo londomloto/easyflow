@@ -35,7 +35,8 @@ class Auth extends \Sys\Core\Component {
             if ($hash == $user->passwd) {
 
                 $token = $security->generateUserToken($user);
-
+                $user->token = $token;
+                
                 // save to session
                 $this->save($user);
 
@@ -44,7 +45,7 @@ class Auth extends \Sys\Core\Component {
                 $this->_db->update(
                     $tabuser, 
                     array(
-                        'access_token' => $token,
+                        'token' => $token,
                         'last_login' => date('Y-m-d H:i:s'),
                         'last_ip' => $this->getService('request')->getClientAddress()
                     ),

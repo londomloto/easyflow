@@ -69,7 +69,6 @@
                 
                 <?php
                     $count = count($trace);
-                    $items = array();
 
                     for ($i = 0; $i < $count; $i++) {
                         $curr = $trace[$i];
@@ -84,8 +83,7 @@
                         }
 
                         if (isset($curr['class'])) {
-                            $item .= ! empty($item) ? ' : ' : '';
-                            $item .= $curr['class'];
+                            $item .= (! empty($item) ? ' : ' : '') . $curr['class'];
 
                             if (isset($curr['type'])) {
                                 $item .= $curr['type'];
@@ -104,8 +102,12 @@
                                             $p[] = '"'.$a[$j].'"';
                                         } else if (is_numeric($a[$j])) {
                                             $p[] = $a[$j];
+                                        } else if (is_array($a[$j])) {
+                                            $p[] = 'Array';
+                                        } else if (is_object($a[$j])) {
+                                            $p[] = ucfirst(gettype($a[$j])).'('.get_class($a[$j]).')';
                                         } else {
-                                            $p[] = ucfirst(gettype($a[$j]));
+                                            $p[] = $a[$j];
                                         }
                                     }
 
@@ -117,7 +119,9 @@
                             }
                         }
 
-                        echo '<li>'.$item.'</li>';
+                        if ( ! empty($item)) {
+                            echo '<li>'.$item.'</li>';    
+                        }
                     }
 
                 ?>

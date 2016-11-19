@@ -1,7 +1,8 @@
 <?php
 namespace Sys\Core;
 
-use Sys\Helper\Text;
+use Sys\Helper\Text,
+    Sys\Service\DispatcherException;
 
 class Application implements IApplication {
 
@@ -26,7 +27,6 @@ class Application implements IApplication {
 
         set_error_handler(array($this, 'handleError'));
         set_exception_handler(array($this, 'handleException'));
-
     }
 
     public static function getDefault() {
@@ -119,32 +119,49 @@ class Application implements IApplication {
         $content = ob_get_contents();
         ob_end_clean();
 
-        $data = array();
+        $json = $this->hasService('request') ? $this->getService('request')->isJson() : FALSE;
 
-        switch(TRUE) {
-            case $exception instanceof ServiceException:
-            case $exception instanceof \Sys\Service\DispatcherException:
-                header('HTTP/1.1 404 Not Found');
-                break;
-            default:
-                header('HTTP/1.1 500 Internal Server Error');
-                break;
+        $maps = array(
+            401 => 'Unauthorized',
+            403 => 'Forbidden',
+            404 => 'Not Found',
+            500 => 'Internal Server Error'
+        );
+
+        $code = (int) $exception->getCode();
+        $code = isset($maps[$code]) ? $code : 500;
+        $name = $maps[$code];
+
+        header("HTTP/1.1 {$code} {$name}");
+
+        if ($json) {
+            $data = array(
+                'success' => FALSE, 
+                'message' => $exception->getMessage()
+            );
+            print(json_encode($data));
+        } else {
+            header("HTTP/1.1 {$code} {$name}");
+
+            if ( ! is_null($content)) {
+                echo $content;
+            }
+
+            if ($this->isDevelopment()) {
+                $data = array(
+                    'code' => $code,
+                    'name' => $name,
+                    'message' => $exception->getMessage(),
+                    'file' => $exception->getFile(),
+                    'line' => $exception->getLine(),
+                    'trace' => $exception->getTrace()
+                );
+
+                extract($data);
+                include(SYSPATH.'Template/exception.php');
+            }
         }
 
-        if ( ! is_null($content)) {
-            echo $content;
-        }
-
-        if ($this->isDevelopment()) {
-            $data['name'] = get_class($exception);
-            $data['message'] = $exception->getMessage();
-            $data['file'] = $exception->getFile();
-            $data['line'] = $exception->getLine();
-            $data['trace'] = $exception->getTrace();
-
-            extract($data);
-            include(SYSPATH.'Template/exception.php');
-        }
     }
 
     protected function _initConfig() {
@@ -171,8 +188,8 @@ class Application implements IApplication {
         $this->addService('response', 'Sys\Service\Response', TRUE);
         $this->addService('request', 'Sys\Service\Request', TRUE);
         $this->addService('session', 'Sys\Service\Session', TRUE);
-        $this->addService('security', 'Sys\Service\Security', TRUE);
         $this->addService('dispatcher', 'Sys\Service\Dispatcher', TRUE);
+        $this->addService('security', 'Sys\Service\Security', TRUE);
         $this->addService('url', 'Sys\Service\URL', TRUE);
 
         $this->addService('uploader', 'Sys\Service\Uploader', TRUE);
@@ -295,6 +312,10 @@ class Application implements IApplication {
         return $this->_services[$name];
     }
 
+    public function hasService($name) {
+        return isset($this->_services[$name]);
+    }
+
     public function addService($name, $defs, $shared = TRUE) {
         $service = new Service($name, $defs, $shared);
         $this->_services[$name] = $service;
@@ -330,6 +351,7 @@ class Application implements IApplication {
         $cfg = $this->getConfig()->application;
 
         $url->parse();
+        $req->parse();
 
         $segments = $url->getSegments();
 
@@ -360,14 +382,8 @@ class Application implements IApplication {
                 }
             }
 
-            $paramsSize = count($params);
-
-            if ($paramsSize) {
-                if ( ! is_numeric($params[$paramsSize - 1])) {
-                    $action = array_shift($params);
-                } else {
-                    $action = $req->getDefaultHandler();
-                }
+            if ( ! empty($params)) {
+                $action = array_shift($params);
             } else {
                 $action = $req->getDefaultHandler();
             }
@@ -379,28 +395,16 @@ class Application implements IApplication {
             $instance = $resolver->resolve(array($this));
 
             if ($instance) {
-                $action = Text::camelize($action, FALSE);
+                $dis->setModule($instance);
+                $dis->dispatch($action, $params);
 
-                if (method_exists($instance, $action.'Action')) {
-                    $action = $action.'Action';
-                    array_shift($segments);
-                } else {
-                    throw new \Sys\Service\DispatcherException("Fungsi {$resolver->getDefinition()}::{$action}Action() tidak ditemukan");
-                }
-                
-                ob_start();
-                $retval  = call_user_func_array(array($instance, $action), $params);
-                $content = ob_get_contents();
-                ob_end_clean();
-
-                $res->setContent($content);
-                $res->setReturn($retval);
-                
+                $res->setContent($dis->getOutput());
+                $res->setReturn($dis->getReturn());
             } else {
-                throw new \Sys\Service\DispatcherException("Module `{$module}` tidak ditemukan");
+                throw new DispatcherException("Module {$module} tidak ditemukan");
             }
         } else {
-            throw new \Sys\Service\DispatcherException("Module tidak ditemukan");
+            throw new DispatcherException("Alamat {$url->getCurrentUrl()} tidak ditemukan");
         }  
 
         return $res;

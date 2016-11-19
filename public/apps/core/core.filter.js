@@ -9,20 +9,11 @@
         .filter('dateformat', dateformatFilter);
 
     /** @ngInject */
-    function thumbnailFilter($rootScope) {
-        
+    function thumbnailFilter($rootScope, SERVICE) {
+        var url = SERVICE.URL.replace(/\/$/, '');
+
         return function(image, path, width, height) {
-            var url;
-
-            if ($rootScope.site) {
-                url = $rootScope.site.server_url;
-            } else {
-                url = '';
-            }
-
-            url += path + '/thumbnail/' + image + '/' + width + '/' + height;
-
-            return url;
+            return url + path + 'thumbnail/' + image + '/' + width + '/' + height;
         }
     }
 

@@ -1,7 +1,7 @@
 <div class="row-col">
     <div class="col-sm-3 col-lg-2">
         <div>
-            <img class="img-responsive" ng-src="{{ edit.avatar | thumbnail:'user':200:200 }}">
+            <img class="img-responsive" ng-src="{{ edit.avatar | thumbnail:'/user/':200:200 }}">
         </div>    
         <div class="m-t text-center">
             <div class="form-file">
@@ -67,7 +67,7 @@
                 </div>
                 <div class="form-group">
                     <label>Kode Akses</label>
-                    <textarea rows="9" style="resize:none;" class="form-control">{{ edit.access_token }}</textarea>
+                    <textarea rows="9" style="resize:none;" class="form-control">{{ edit.token }}</textarea>
                 </div>
             </div>
         </div>

@@ -1,36 +1,40 @@
 <?php
 namespace App\Module\Site;
 
-class Site  extends \Sys\Core\Module {
-
-    public function initialize() {
-
-    }
+class Site extends \Sys\Core\Module {
 
     public function testAction() {
-        throw new \Exception("Error Processing Request", 1);
         
     }
 
-    public function infoAction() {
-        $config = $this->getAppConfig();
-        
-        $site = $this->db->fetchOne("SELECT * FROM site");
-        $site->server_url = $this->url->getBaseUrl();
-        $site->client_url = str_replace('/server', '', $site->server_url);
+    public function verifyAction() {
+        $code = $this->request->getHeader('X-Application');
 
-        $user = $this->session->get('CURRENT_USER');
-        
-        // add csrf token
-        $site->csrf = $this->security->generateKey();
+        if (empty($code)) {
+            $code = $this->request->getParam('appid');
+        }
 
-        $status = array(
-            'site' => $site,
-            'user' => $user
+        if ( ! empty($code)) {
+            $site = $this->db->fetchOne(
+                "SELECT * FROM application WHERE id = ? AND active = 1", 
+                array($code)
+            );    
+
+            if ($site) {
+                $site->csrf = $this->security->generateKey();
+                unset($site->key);
+            }
+
+            $this->session->context($site->id);
+        }
+        
+        $result = array(
+            'success' => TRUE,
+            'site' => $site
         );
-        
+
         $this->response->responseJson();
-        return $status;
+        return $result;
     }
 
 }
