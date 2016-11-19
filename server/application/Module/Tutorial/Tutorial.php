@@ -68,6 +68,10 @@ class Tutorial extends \Sys\Core\Module {
     }
 
     public function updateAction() {
+        throw new \Exception("Error Processing Request", 401);
+        
+        // trigger_error("Hello World", E_USER_ERROR);
+
         $post = $this->request->getPost();
 
         if ($this->request->hasFiles()) {

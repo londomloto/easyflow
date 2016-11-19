@@ -47,6 +47,7 @@ class Response extends \Sys\Core\Component {
     }
     
     public function send() {
+
         if ($this->_responseType == self::RESPONSE_JSON) {
             $this->setHeader('Content-Type', 'application/json');
         }
@@ -58,7 +59,7 @@ class Response extends \Sys\Core\Component {
         if ( ! is_null($this->_retval)) {
             if ((is_array($this->_retval) || is_object($this->_retval))) {
                 if ($this->_responseType == self::RESPONSE_JSON) {
-                     echo json_encode($this->_retval);
+                     echo json_encode($this->_retval, JSON_PRETTY_PRINT);
                 } else {
                     // force error to user;
                     echo $this->_retval;

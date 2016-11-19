@@ -10,7 +10,7 @@ class Application implements IApplication {
     protected $_databases;
     protected $_modules;
     protected $_config;
-    protected $_environment;
+    protected $_debug;
 
     protected static $_default;
 
@@ -19,151 +19,27 @@ class Application implements IApplication {
         $this->_services  = array();
         $this->_modules   = array();
         $this->_databases = array();
-        $this->_environment = 'development';
+        $this->_debug = TRUE;
 
         if ( ! self::$_default) {
             self::$_default = $this;
         }
 
-        set_error_handler(array($this, 'handleError'));
-        set_exception_handler(array($this, 'handleException'));
+        $this->_handleError();
     }
 
     public static function getDefault() {
         return self::$_default;
     }
 
-    public function isDevelopment() {
-        return $this->_environment == 'development';
+    protected function _handleError() {
+        $handler = new ErrorHandler($this);
+
+        register_shutdown_function(array($handler, 'handleShutdown'));
+        set_error_handler(array($handler, 'handleError'));
+        set_exception_handler(array($handler, 'handleException'));
     }
-
-    public function isProduction() {
-        return ! $this->isDevelopment();
-    }
-
-    public function handleError($errno, $errstr, $errfile, $errline) {
-
-        $fatal = in_array(
-            $errno, 
-            array(
-                E_ERROR, 
-                E_CORE_ERROR, 
-                E_COMPILE_ERROR,
-                E_USER_ERROR
-            )
-        ) ? TRUE : FALSE;
-
-        if ($fatal) {
-            $content = NULL;
-
-            if ( ! ob_get_level()) {
-                ob_start();
-            }
-
-            $content = ob_get_contents();
-            ob_end_clean();
-
-            header('HTTP/1.1 500 Internal Server Error');
-            
-            if ( ! is_null($content)) {
-                echo $content;
-            }
-
-            if ($this->isDevelopment()) {
-                $data = array(
-                    'name' => 'Fatal Error',
-                    'file' => $errfile,
-                    'line' => $errline,
-                    'message' => $errstr
-                );
-
-                extract($data);
-                include(SYSPATH.'Template/error.php');
-            }
-
-        } else {
-            if ($this->isDevelopment()) {
-                $name = 'Error';
-
-                switch($errno) {
-                    case E_WARNING: 
-                    case E_COMPILE_WARNING:
-                    case E_USER_WARNING:
-                        $name = 'Warning'; 
-                        break;
-                    case E_NOTICE: 
-                    case E_USER_NOTICE:
-                        $name = 'Notice'; 
-                        break;
-                    case E_DEPRECATED:
-                    case E_USER_DEPRECATED:
-                        $name = 'Deprectaed';
-                        break;
-                }
-
-                echo "<br><b>$name</b>: $errstr in <b>$errfile</b> on line <b>$errline</b><br>";
-            }
-            
-        }
-
-    }
-
-    public function handleException($exception) {
-
-        $content = NULL;
-        
-        if ( ! ob_get_level()) {
-            ob_start();
-        }
-
-        $content = ob_get_contents();
-        ob_end_clean();
-
-        $json = $this->hasService('request') ? $this->getService('request')->isJson() : FALSE;
-
-        $maps = array(
-            401 => 'Unauthorized',
-            403 => 'Forbidden',
-            404 => 'Not Found',
-            500 => 'Internal Server Error'
-        );
-
-        $code = (int) $exception->getCode();
-        $code = isset($maps[$code]) ? $code : 500;
-        $name = $maps[$code];
-
-        header("HTTP/1.1 {$code} {$name}");
-
-        if ($json) {
-            $data = array(
-                'success' => FALSE, 
-                'message' => $exception->getMessage()
-            );
-            print(json_encode($data));
-        } else {
-            header("HTTP/1.1 {$code} {$name}");
-
-            if ( ! is_null($content)) {
-                echo $content;
-            }
-
-            if ($this->isDevelopment()) {
-                $data = array(
-                    'code' => $code,
-                    'name' => $name,
-                    'message' => $exception->getMessage(),
-                    'file' => $exception->getFile(),
-                    'line' => $exception->getLine(),
-                    'trace' => $exception->getTrace()
-                );
-
-                extract($data);
-                include(SYSPATH.'Template/exception.php');
-            }
-        }
-
-    }
-
+    
     protected function _initConfig() {
 
         $find = new \RecursiveIteratorIterator(
@@ -410,21 +286,20 @@ class Application implements IApplication {
         return $res;
     }
 
-    public function start($environment = 'development') {
+    public function isDebug() {
+        return $this->_debug;
+    }
+
+    public function start($debug = TRUE) {
         
-        $this->_environment = $environment;
+        $this->_debug = $debug;
 
-        // uncaughet exception/error ?
-        switch ($environment) {
-            case 'development':
-                error_reporting(E_ALL);
-                ini_set('display_errors', 1);
-                break;
+        error_reporting(E_ALL ^ E_DEPRECATED);
 
-            case 'production':
-                error_reporting(0);
-                ini_set('display_errors', 0);
-                break;
+        if ($debug) {
+            ini_set('display_errors', 'On');
+        } else {
+            ini_set('display_errors', 'Off');
         }
 
         $this->_initConfig();

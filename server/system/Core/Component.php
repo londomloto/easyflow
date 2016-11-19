@@ -8,12 +8,7 @@ abstract class Component implements IComponent {
     public function __construct(IApplication $app) {
         $this->_app = $app;
     }
-
-    public function __call($method, $args) {
-        $class = get_called_class();
-        throw new ComponentException("Fungsi {$class}->$method() tidak ditemukan");
-    }
-
+    
     public function getApp() {
         return $this->_app;
     }   
@@ -24,6 +19,10 @@ abstract class Component implements IComponent {
 
     public function getResolver($name) {
         return $this->getApp()->getResolver($name);
+    }
+
+    public function hasService($name) {
+        return $this->getApp()->hasService($name);
     }
 
     public function getService($name) {

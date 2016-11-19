@@ -5,12 +5,13 @@
  * @author Roso Sasongko <roso.sasongko@gmail.com>
  */
 
-error_reporting(E_ALL ^ E_DEPRECATED);
-ini_set('display_errors', 1);
-
 date_default_timezone_set('Asia/Jakarta');
 
+/**
+ * Mandatory Consts
+ */
 define('DS', DIRECTORY_SEPARATOR);
+
 define('BASEPATH', __DIR__ . DS);
 define('SYSPATH', BASEPATH . 'system' . DS);
 define('APPPATH', BASEPATH . 'application' . DS);

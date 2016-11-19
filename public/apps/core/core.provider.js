@@ -11,7 +11,54 @@
         .provider('loader', loaderProvider)
         .provider('googleApi', googleApiProvider)
         .provider('facebookApi', facebookApiProvider)
+        .provider('session', sessionProvider)
         .provider('theme', themeProvider);
+
+    function sessionProvider() {
+        var provider = this;
+        provider.$get = factory;
+
+        /** @ngInject */
+        function factory($window) {
+            var storage = $window.localStorage,
+                service = {
+                    has: has,
+                    get: get,
+                    set: set,
+                    del: del
+                };
+
+            return service;
+
+            function has(key) {
+                return !!storage.getItem(key);
+            }
+
+            function del(key) {
+                if (has(key)) {
+                    storage.removeItem(key);
+                }
+            }
+
+            function get(key) {
+                var data = storage.getItem(key);
+                if (data) {
+                    data = JSON.parse(data);
+                    return data.value;
+                }
+                return null;
+            }
+
+            function set(key, val) {
+                var data = {};
+
+                data.value = val;
+                data.type  = _.isObject(val) ? 'object' : 'scalar';
+
+                storage.setItem(key, JSON.stringify(data));
+            }
+        }
+    }
 
     /** @ngInject */
     function routerProvider($stateProvider, $urlRouterProvider) {
@@ -42,7 +89,7 @@
         }
 
         /** @ngInject */
-        function factory($rootScope, $templateFactory, $state) {
+        function factory($rootScope, $state) {
             var service = {
                 getDefaultState: getDefaultState,
                 getDefaultUrl: getDefaultUrl,
@@ -202,19 +249,55 @@
     }
 
     /** @ngInject */
-    function apiProvider() {
+    function apiProvider($httpProvider) {
         var provider = this,
             options = {};
 
         provider.$get = factory;
         provider.setup = setup;
 
+        // intercept HTTP status response
+        $httpProvider.interceptors.push(interceptor);
+
         function setup(config) {
             _.assign(options, config || {});
         }
 
         /** @ngInject */
-        function factory($rootScope, $http, $q, router, theme, url, SERVICE, HTTP_STATUS) {
+        function interceptor($timeout, $injector, theme, HTTP_STATUS) {
+            var router;
+
+            // trick: circular dependency
+            $timeout(function(){
+                router = $injector.get('router');
+            }); 
+
+            return {
+                responseError: function(rejection) {
+                    var message = rejection.data.message;
+
+                    if (rejection.status == HTTP_STATUS.UNAUTHORIZED) {
+                        if (message) {
+                            alert(message);
+                        }
+
+                        if (router) {
+                            router.go(router.getLoginState());
+                        }
+                    } else {
+                        if (message) {
+                            var title = rejection.data.title || 'Pesan Kesalahan';
+                            theme.showAlert(title, message);
+                        }
+                    }
+
+                    return rejection;
+                }
+            };
+        }
+
+        /** @ngInject */
+        function factory($rootScope, $http, url, SERVICE) {
             var service = { 
                 get: get,
                 del: del,
@@ -325,8 +408,6 @@
             }
 
             function request(options) {
-                var def = $q.defer();
-
                 options.headers = options.headers || {};
                 options.headers['X-Application'] = SERVICE.KEY;
 
@@ -334,25 +415,7 @@
                     options.headers['Authorization'] = 'Bearer ' + $rootScope.user.token;
                 }
 
-                $http(options).then(
-                    function(response) {
-                        def.resolve(response);
-                    },
-                    function(response) {
-                        var message = response.data.message,
-                            code = +response.status;
-                            
-                        if (code == HTTP_STATUS.UNAUTHORIZED) {
-                            if (message) alert(message);
-                            router.go(router.getLoginState());
-                        } else {
-                            if (message) theme.showAlert('Peringatan', message);
-                            def.reject(response);
-                        }
-                    }
-                );
-
-                return def.promise;
+                return $http(options);
             }
 
         }
@@ -369,12 +432,12 @@
             _.assign(options, config || {});
         }
 
-        /////////
-        
         /** @ngInject */
-        function factory($rootScope, $timeout, $q, router, api) {
+        function factory($rootScope, $timeout, $q, session, router, api) {
             var loading = null;
+
             var service = {
+                save: save,
                 login: login,
                 logout: logout,
                 social: social,
@@ -387,14 +450,16 @@
             return service;
 
             function isAuthenticated() {
-                return $rootScope.user.id !== undefined;
+                return session.has('CURRENT_USER');
             }
 
             function verify() {
-                var def = $q.defer();
+                var user = session.get('CURRENT_USER'),
+                    def = $q.defer();
 
-                if (isAuthenticated()) {
-                    def.resolve($rootScope.user);
+                if (user) {
+                    save(user);
+                    def.resolve(user);
                 } else {
                     if (loading) {
                         loading.then(function(user){
@@ -404,7 +469,7 @@
                     } else {
                         loading = api.get('/auth/verify').then(function(response){
                             var user = response.data.user;
-                            $rootScope.user = user;
+                            save(user);
                             return user;
                         });
 
@@ -418,27 +483,32 @@
                 return def.promise;
             }
 
+            function save(user) {
+                if (user) {
+                    $rootScope.user = user;
+                    session.set('CURRENT_USER', user);
+                } else {
+                    $rootScope.user = null;
+                    session.set('CURRENT_USER', null);
+                }
+            }
+
             function invalidate() {
                 $rootScope.user = null;
+                session.del('CURRENT_USER');
             }
 
             function login(email, passwd) {
                 return api.post('/auth/login', {email: email, passwd: passwd})
                    .then(function(response){
-                        if (response.data.success) {
-                            $rootScope.user = response.data.user;
-                        } else {
-                            $rootScope.user = null;
-                        }
+                        save(response.data.user);
                         return response.data;
                    });
             }
 
             function logout() {
                 return api.post('/auth/logout').then(function(response){
-                    if (response.data.success) {
-                        $rootScope.user = null;
-                    }
+                    invalidate();
                     return response.data;
                 });
             }
@@ -446,7 +516,7 @@
             function register(data) {
                 return api.post('/auth/register', data).then(function(response){
                     if (response.data.success) {
-                        $rootScope.user = response.data.user;
+                        save(response.data.user);
                     }
                     return response.data;
                 });   
@@ -455,7 +525,7 @@
             function social(user) {
                 return api.post('/auth/social', user).then(function(response){
                     if (response.data.success) {
-                        $rootScope.user = response.data.user;
+                        save(response.data.user);
                     }
                     return response.data;
                 });
