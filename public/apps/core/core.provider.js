@@ -51,10 +51,7 @@
 
             function set(key, val) {
                 var data = {};
-
                 data.value = val;
-                data.type  = _.isObject(val) ? 'object' : 'scalar';
-
                 storage.setItem(key, JSON.stringify(data));
             }
         }
