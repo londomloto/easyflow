@@ -109,7 +109,7 @@ class Image {
         ob_start();
         $outputFunction($dst, NULL, $quality);
         $data = ob_get_contents();
-        ob_end_clean();
+        ob_clean();
 
         ImageDestroy($src);
         ImageDestroy($dst);

@@ -10,6 +10,7 @@ class Service {
     protected $_params;
 
     protected $_sharedInstance;
+    protected $_eventBus;
 
     public function __construct($name, $definition, $shared = FALSE) {
         $this->_name = $name;
@@ -23,8 +24,16 @@ class Service {
         $this->_params = $params;
     }
 
+    public function setEventBus(IEventBus $eventBus) {
+        $this->_eventBus = $eventBus;
+    }
+
     public function getDefinition() {
         return $this->_definition;
+    }
+
+    public function getName() {
+        return $this->_name;
     }
 
     public function isResolved() {
@@ -45,6 +54,10 @@ class Service {
         $instance = NULL;
         $found = TRUE;
 
+        if (is_null($params)) {
+            $params = $this->_params;
+        }
+        
         if (is_string($definition)) {
             if (class_exists($definition)) {
                 $class = new \ReflectionClass($definition);
@@ -69,7 +82,12 @@ class Service {
         }
 
         if ( ! $found) {
-            throw new ServiceException("Service '" . $this->_name . "' tidak ditemukan");
+            $message = sprintf(_("Service '%s' not found!"), $this->_name);
+            throw new \Exception($message, 404);
+        }
+
+        if ($this->_eventBus) {
+            $instance->setEventBus($this->_eventBus);
         }
 
         $this->_resolved = TRUE;

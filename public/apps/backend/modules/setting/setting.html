@@ -1,0 +1,27 @@
+<div class="padding" data-ui-template="backend-setting.html" data-remote="true">
+    
+</div>
+
+<div data-ui-modal="request-key" data-backdrop="static" data-keyboard="false" class="modal fade animate">
+    <div class="modal-dialog zoom">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Perbaharui Kode</h4>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Kode rahasia aplikasi digunakan untuk melakukan enkripsi dan dekripsi data dalam proses otentifikasi maupun otorisasi.
+                    Kode ini harus dijaga kerahasiaannya agar tidak digunakan oleh pihak yang tidak berkepentingan.
+                </p>
+                <p>
+                    Kode rahasia aplikasi saat ini: <br>
+                    <code class="_700">{{ setting.secret_key }}</code>
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button data-ng-click="generateKey()" href="javascript:;" class="btn primary">Perbaharui</button>
+                <button data-ng-click="hideModal('request-key')" href="javascript:;" class="btn">Batal</button>
+            </div>
+        </div>
+    </div>
+</div>

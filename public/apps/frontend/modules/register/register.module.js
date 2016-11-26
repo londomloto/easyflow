@@ -10,20 +10,22 @@
     function RegisterController($scope, router, auth, theme) {
         theme.init($scope);
 
-        $scope.fullname = '';
-        $scope.email = '';
-        $scope.passwd = '';
+        $scope.account = {
+            fullname: '',
+            email: '',
+            passwd1: '',
+            passwd2: ''
+        };
 
-        $scope.register = function() {
+        $scope.createAccount = function() {
             if ($scope.form.$valid) {
+                var account = angular.copy($scope.account);
+                account.passwd = account.passwd1;
                 
-                var data = {
-                    fullname: $scope.fullname,
-                    email: $scope.email,
-                    passwd: $scope.passwd
-                };
+                delete account.passwd1;
+                delete account.passwd2;
 
-                auth.register(data).then(function(result){
+                auth.register(account).then(function(result){
                     router.go('profile.home');
                 });
             }

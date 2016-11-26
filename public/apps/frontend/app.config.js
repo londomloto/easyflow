@@ -5,17 +5,35 @@
         .module('app')
         .config(config);
 
-    /////////
-    
     /** @ngInject */
-    function config(routerProvider, loaderProvider, authProvider) {
+    function config(
+        routerProvider, 
+        loaderProvider, 
+        siteProvider, 
+        authProvider,
+        apiProvider,
+        CLIENT,
+        SERVER
+    ) {
 
-        ///////////////////////////////////////
-        /// MODULES
-        ///////////////////////////////////////
-        
+        siteProvider.setup({
+            context: CLIENT.CONTEXT
+        });
+
+        authProvider.setup({
+            context: CLIENT.CONTEXT
+        });
+
+        apiProvider.setup({
+            base: SERVER.BASE,
+            context: CLIENT.CONTEXT
+        });
+
+        loaderProvider.setup({
+            base: CLIENT.BASE
+        });
+
         loaderProvider.register([
-            ///////// STYLES /////////
             {
                 name: 'editor.styles',
                 files: [
@@ -72,8 +90,10 @@
             {
                 name: 'editor.module',
                 files: [
+                    'assets/vendor/graph/vendor/lodash/lodash.js',
                     'assets/vendor/graph/vendor/interact/interact.js',
                     'assets/vendor/graph/vendor/jed/jed.js',
+                    
                     'apps/frontend/modules/editor/editor.config.js',
                     'assets/vendor/graph/dist/graph.min.js',
                     'apps/frontend/modules/editor/editor.module.js'
@@ -90,15 +110,15 @@
             }
         ]);
 
-
-        ///////////////////////////////////////
-        /// ROUTES
-        ///////////////////////////////////////
-        
+        // ROUTER
         routerProvider.setup({
             defaultState: {
                 name: 'home',
                 url: '/home'
+            },
+            loginState: {
+                name: 'login',
+                url: '/login'
             }
         });
         
@@ -154,6 +174,29 @@
                     }
                 }
             },
+            'forgot.notify': {
+                url: '/notify/:type',
+                title: 'Terima Kasih',
+                style: 'forgot',
+                views: {
+                    '@': {
+                        templateUrl: function(params) {
+                            return 'apps/frontend/modules/forgot/notify-' + params.type + '.html';
+                        }
+                    }
+                }
+            },
+            'forgot.recover': {
+                url: '/recover?email&token',
+                title: 'Pembaharuan',
+                style: 'forgot',
+                views: {
+                    '@': {
+                        templateUrl: 'apps/frontend/modules/forgot/recover.html',
+                        controller: 'RecoverController as recoverCtl'
+                    }
+                }
+            },
             'profile': {
                 url: '/profile',
                 title: 'Profile',
@@ -180,6 +223,7 @@
                 url: '/edit',
                 title: 'Edit Profile',
                 style: 'profile',
+                authenticate: true,
                 templateUrl: 'apps/frontend/modules/profile/profile.edit.html',
                 controller: 'EditProfileController as editProfileCtl'
             },
@@ -223,7 +267,6 @@
                 }
             }
         });
-
     }
 
 }());

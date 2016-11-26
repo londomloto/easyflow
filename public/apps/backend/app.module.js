@@ -23,7 +23,6 @@
     
     /** ngInject */
     function run($rootScope, router, auth) {
-        
         // maybe late...
         auth.verify();
 

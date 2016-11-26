@@ -68,6 +68,15 @@ hr.star-primary:after {
 .img-centered {
   margin: 0 auto;
 }
+
+/** helper */
+.m-t {
+  margin-top: 15px;
+}
+.m-b {
+  margin-bottom: 15px;
+}
+
 header {
   text-align: center;
   /*background: #18BC9C;*/
@@ -115,7 +124,9 @@ header .intro-text .skills {
 .modal-content .modal-footer {
   padding: 15px;
 }
-
+.navbar {
+  border-radius: 0;
+}
 .navbar .dropdown-menu li > a,
 .navbar.navbar-default .dropdown-menu li > a {
   font-size: 16px;
@@ -260,7 +271,7 @@ section.success {
 }
 
 .form-group label.control-label {
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1.07143;
 }
 
@@ -289,6 +300,12 @@ section.success {
 .form-group .help-block {
   font-size: 16px;
   margin-top: 0;
+  display: inline;
+  position: relative;
+}
+
+.form-group.is-focused .help-block {
+  display: inline;
 }
 
 .form-control, .form-group .form-control {
@@ -474,6 +491,14 @@ footer .footer-below {
 }
 
 /** COMMON */
+.copyleft {
+  display: inline-block;
+  -webkit-transform: rotate(180deg);
+          transform: rotate(180deg);  
+  -webkit-transform-origin: 6px 12px;
+          transform-origin: 6px 12px;
+  font-weight: bold;
+}
 .b-r {
   border-right: solid 1px #ccc;  
 }
@@ -628,7 +653,8 @@ footer .footer-below {
 body.register .navbar-custom,
 body.login .navbar-custom,
 body.profile .navbar-custom,
-body.tutorial .navbar-custom {
+body.tutorial .navbar-custom,
+body.forgot .navbar-custom {
   border-bottom: solid 1px #ccc;
 }
 
@@ -706,6 +732,4 @@ body.tutorial .navbar-custom {
   height: 1px;
   background-color: #eee;
 }
-
-/** EDITOR */
 

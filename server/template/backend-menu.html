@@ -1,0 +1,61 @@
+<nav class="scroll nav-light">
+    <ul class="nav">
+        <li class="nav-header hidden-folded"><small class="text-muted">BERANDA</small></li>
+        <li>
+            <a data-ui-sref="main.dashboard">
+                <span class="nav-icon"><i class="ion-stats-bars"></i></span>
+                <span class="nav-text">Dashboard</span>
+            </a>
+        </li>
+        {% if can.access_app %}
+        <li class="nav-header hidden-folded"><small class="text-muted">PENGATURAN</small></li>
+        {% endif %}
+        {% if can.access_app %}
+        <li>
+            <a data-ui-sref="main.setting">
+                <span class="nav-icon"><i class="ion-cube"></i></span>
+                <span class="nav-text">Aplikasi</span>
+            </a>
+        </li>
+        {% endif %}
+        {% if can.access_access and can.access_user %}
+        <li class="nav-header hidden-folded"><small class="text-muted">ADMIN &amp; PENGGUNA</small></li>
+        {% endif %}
+        {% if can.access_access %}
+        <li>
+            <a data-ui-sref="main.access">
+                <span class="nav-icon"><i class="ion-locked"></i></span>
+                <span class="nav-text">Hak Akses</span>
+            </a>
+        </li>
+        {% endif %}
+        {% if can.access_user %}
+        <li>
+            <a data-ui-sref="main.user">
+                <span class="nav-icon"><i class="ion-android-contact"></i></span>
+                <span class="nav-text">Pengguna</span>
+            </a>
+        </li>
+        {% endif %}
+        <li class="nav-header hidden-folded"><small class="text-muted">DIAGRAM</small></li>
+        <li>
+            <a href="dashboard.html" >
+                <span class="nav-icon"><i class="ion-erlenmeyer-flask"></i></span>
+                <span class="nav-text">Data Diagram</span>
+            </a>
+        </li>
+        <li>
+            <a href="dashboard.html" >
+                <span class="nav-icon"><i class="ion-android-globe"></i></span>
+                <span class="nav-text">Data Publikasi</span>
+            </a>
+        </li>
+        <li class="nav-header hidden-folded"><small class="text-muted">HALAMAN (BLOG)</small></li>
+        <li>
+            <a data-ui-sref="main.tutorial" >
+                <span class="nav-icon"><i class="ion-easel"></i></span>
+                <span class="nav-text">Tutorial</span>
+            </a>
+        </li>
+    </ul>
+</nav>

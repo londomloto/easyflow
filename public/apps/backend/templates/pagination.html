@@ -1,0 +1,7 @@
+<ul class="pagination pagination-xs m-a-0">
+    <li data-ng-repeat="item in pages" data-ng-class="{'active': item.page == page && item.type == 'page'}">
+        <a data-ng-click="loadPage(item.page)" href="javascript:;">
+            <i class="{{ item.icon }}"></i>{{ item.text }}
+        </a>
+    </li>
+</ul>

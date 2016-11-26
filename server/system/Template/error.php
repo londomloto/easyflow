@@ -9,7 +9,7 @@
         body {
             padding: 0;
             margin: 0;
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: Consolas, Monaco, sans-serif;
         }
         h3, h4, p {
             margin: 0;
@@ -17,8 +17,7 @@
         }
         
         .container {
-            margin: 20px;
-            border: solid 1px #dfdfdf;
+            
         }
         .item {
             padding: 10px 0;
@@ -34,9 +33,9 @@
             margin: 5px 0;
         }
         .header {
-            padding: 20px;
-            border-bottom: solid 1px #dfdfdf;
-            background-color: #fafafa;
+            border-bottom: solid 4px #D64652;
+            background-color: #f44455;
+            color: #fff;
         }
         .body {
             padding: 20px;

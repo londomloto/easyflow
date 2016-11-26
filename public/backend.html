@@ -18,13 +18,6 @@
 <body data-ng-cloak>
 
     <div class="app" id="app" data-ui-view></div>
-    
-    <!-- GLOBAL DIALOG -->
-    <div data-ng-include="'apps/backend/templates/dialog-confirm.html'"></div>
-    <div data-ng-include="'apps/backend/templates/dialog-alert.html'"></div>
-    <div data-ng-include="'apps/backend/templates/dialog-info.html'"></div>
-    <div data-ng-include="'apps/backend/templates/dialog-error.html'"></div>
-    <!-- END OF GLOBAL DIALOG -->
 
     <script>
         window.paceOptions = {
@@ -39,7 +32,6 @@
     </script>
 
     <script src="assets/vendor/pace/pace.min.js"></script>
-    <script src="assets/vendor/lodash/lodash.js"></script>
     <script src="assets/vendor/jquery/jquery.js"></script>
     <script src="assets/vendor/tether/tether.min.js"></script>
     <script src="assets/vendor/bootstrap/v4/js/bootstrap.js"></script>
@@ -66,5 +58,12 @@
     <script src="apps/backend/app.directive.js"></script>
 
     <script id="body-files"></script>
+
+    <!-- GLOBAL DIALOG -->
+    <div data-ui-template="dialog-alert.html"></div>
+    <div data-ui-template="dialog-info.html"></div>
+    <div data-ui-template="dialog-error.html"></div>
+    <div data-ui-template="dialog-confirm.html"></div>
+    <!-- END OF GLOBAL DIALOG -->
 </body>
 </html>

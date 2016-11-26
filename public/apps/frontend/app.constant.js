@@ -2,9 +2,12 @@
 (function(){
     angular
         .module('app')
-        .constant('SERVICE', {
-            KEY: '20161118111952-578188',
-            URL: '/server/'
+        .constant('CLIENT', {
+            BASE: 'apps/frontend',
+            CONTEXT: 'FRONTEND'
+        })
+        .constant('SERVER', {
+            BASE: '/server'
         });
         
 }());

@@ -13,10 +13,6 @@
                             <label>Alamat Email</label>
                             <input type="text" class="form-control">
                         </div>
-                        <div class="form-group">
-                            <label>Jenis Kelamin</label>
-                            <input type="text" class="form-control">
-                        </div>
                         <button class="btn btn-fw primary">Cari Pengguna</button>
                     </form>
                 </div>
@@ -27,11 +23,14 @@
                 
                 <div data-ng-repeat="user in users" class="col-xs-6 col-sm-4 col-md-3">
                     <div class="box p-a-xs">
-                        <a href="#">
+                        <div style="position: absolute; right: 5px;">
+                            <button class="md-btn md-fab m-b-sm indigo"><i class="ion-person icon-md"></i></button>
+                        </div>
+                        <a data-ui-sref="main.user.edit({id: user.id})">
                             <img data-ng-src="{{ user.avatar | thumbnail:'/user/':190:190 }}" alt="" class="img-responsive">   
                         </a>
                         <div class="p-a-sm">
-                            <a data-ui-sref="main.user.edit({id: user.id})" class="_700">{{ user.fullname }}</a>
+                            <a data-ui-sref="main.user.edit({id: user.id})" class="_700 link">{{ user.fullname }}</a>
                             <small class="text-muted">{{ user.email }}</small>
                         </div>
                     </div>

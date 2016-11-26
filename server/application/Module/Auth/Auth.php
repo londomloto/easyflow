@@ -1,128 +1,170 @@
 <?php
 namespace App\Module\Auth;
 
+use App\Module\User\User,
+    App\Module\Site\Site;
+
 class Auth extends \Sys\Core\Module {
     
     public function verifyAction() {
+        $user = $this->auth->getCurrentUser();
+
         $result = array(
-            'success' => TRUE,
-            'user' => $this->auth->getUser()
+            'success' => FALSE,
+            'message' => '',
+            'data' => $user
         );
+
+        if ($user) {
+            $result['success'] = TRUE;
+        } else {
+            $result['message'] = _('User have never logged in');
+        }
+
+        $this->response->responseJson();
+        return $result;
+    }
+    
+    /**
+     * Request access token via normal form
+     */
+    public function loginAction() {
+        $post = $this->request->getPost();
+
+        $result = array(
+            'success' => FALSE,
+            'message' => ''
+        );
+
+        if (isset($post['email'], $post['passwd'])) {
+            if ($this->auth->login($post['email'], $post['passwd'])) {
+                $result['success'] = TRUE;
+                $result['data'] = $this->auth->getCurrentUser();
+            } else {
+                $result['message'] = $this->auth->getError();
+            }
+        } else {
+            $result['message'] = _('Invalid parameters');
+        }
 
         $this->response->responseJson();
         return $result;
     }
 
-    public function loginAction() {
-        $post = $this->request->getInput();
-        $data = array();
-
-        if (isset($post['email'], $post['passwd'])) {
-            if ($this->auth->login($post['email'], $post['passwd'])) {
-                $data['success'] = TRUE;
-                $data['user'] = $this->auth->getUser();
-            } else {
-                $data['success'] = FALSE;
-                $data['message'] = $this->auth->getError();
-            }
-        } else {
-            $data['success'] = FALSE;
-            $data['message'] = 'Inputan email dan sandi tidak boleh kosong';
-        }
-
-        $this->response->responseJson();
-        return $data;
-    }
-
     public function logoutAction() {
         $this->auth->logout();
         $this->response->responseJson();
-
+        
         return array(
             'success' => TRUE
         );
     }
 
     public function registerAction() {
-        $post = $this->request->getInput();
-        $data = array();
+        $post = $this->request->getPost();
+
+        $result = array(
+            'success' => FALSE,
+            'message' => ''
+        );
 
         if (isset($post['email'], $post['passwd'], $post['fullname'])) {
             $user = $this->auth->register($post);
+
             if ($user) {
                 $this->auth->login($user['email'], $post['passwd']);
-                $data['success'] = TRUE;
-                $data['user'] = $this->auth->getUser();
+                $result['success'] = TRUE;
+                $result['data'] = $this->auth->getCurrentUser();
             } else {
-                $data['success'] = FALSE;
-                $data['message'] = $this->auth->getError();
+                $result['message'] = $this->auth->getError();
             }
         } else {
-            $data['success'] = FALSE;
-            $data['message'] = 'Inputan data tidak valid';
+            $result['message'] = _('Invalid parameters');
         }
         
         $this->response->responseJson();
-        return $data;
+        return $result;
     }
 
     public function socialAction() {
-        $post = $this->request->getInput();
-        $user = $this->auth->find($post['email']);
-        $data = array(
-            'success' => FALSE
-        );
+        $post = $this->request->getPost();
 
-        if ( ! $user) {
-            $post['passwd'] = $this->security->generateSalt(8);
-            $user = $this->auth->register($post);
-            if ($user) {
-                $this->auth->login($user['email'], $post['passwd']);
-                $data['success'] = TRUE;
-                $data['user'] = $this->auth->getUser();
+        $result = array(
+            'success' => FALSE,
+            'message' => ''
+        );
+        
+        if (isset($post['email'])) {
+            $user = User::findByEmail($post['email'], FALSE);
+
+            if ( ! $user) {
+                
+                $post['passwd'] = $this->security->generateSalt(8);
+                $user = $this->auth->register($post);
+
+                if ($user) {
+                    $this->auth->login($user->email, $post['passwd']);
+
+                    $result['success'] = TRUE;
+                    $result['data'] = $this->auth->getCurrentUser();
+
+                    // send notification email
+                    $user->passwd_real = $post['passwd'];
+                    
+                    $site = Site::current();
+
+                    $message = $this->template->load('email_account_created', array(
+                        'site' => $site,
+                        'user' => $user
+                    ));
+
+                    $this->mailer->from($site->author_email, $site->author);
+                    $this->mailer->to($user->email);
+                    $this->mailer->subject(sprintf(_('%s, welcome to %s'), $user->fullname, $site->name));
+                    $this->mailer->message($message);
+                    $this->mailer->send();
+
+                } else {
+                    $result['message'] = $this->auth->getError();
+                }
             } else {
-                $data['success'] = FALSE;
-                $data['message'] = $this->auth->getError();
+                $this->auth->login($user->email, $user->passwd, TRUE);
+                $result['success'] = TRUE;
+                $result['data'] = $this->auth->getCurrentUser();
+            }
+
+            // update avatar
+            if ($post['avatar']) {
+                if ($upload = $this->uploadAvatar($post['avatar'])) {
+                    $avatar = $upload['file_name'];
+                    
+                    $this->db->update(
+                        'user',
+                        array(
+                            'avatar' => $avatar
+                        ),
+                        array(
+                            'email' => $post['email']
+                        )
+                    );
+
+                    $result['data']->avatar = $avatar;
+                    $result['data']->avatar_url = User::getAvatarUrl($avatar);
+
+                    $this->auth->save($result['data']);
+                }
             }
         } else {
-            $this->auth->login($user->email, $user->passwd, TRUE);
-            $data['success'] = TRUE;
-            $data['user'] = $this->auth->getUser();
-        }
-
-        // update avatar
-        if ($post['avatar']) {
-            if ($upload = $this->uploadAvatar($post['avatar'])) {
-                
-                $avatar = $upload['file_name'];
-                $avatarName = $upload['orig_name'];
-
-                $this->db->update(
-                    'user',
-                    array(
-                        'avatar' => $avatar,
-                        'avatar_name' => $avatarName
-                    ),
-                    array(
-                        'email' => $post['email']
-                    )
-                );
-
-                $data['user']->avatar = $avatar;
-                $data['user']->avatar_name = $avatarName;
-                $data['user']->avatar_url = $this->url->getBaseUrl().'public/upload/avatar/'.$avatar;
-
-                $this->session->set('user', $data['user']);
-            }
+            $result['message'] = _('Invalid parameters');
         }
 
         $this->response->responseJson();
-        return $data;
+        return $result;
     }
-
+    
     public function uploadAvatar($url) {
         $this->uploader->setup(array(
-            'path' => PUBPATH.'upload'.DS.'avatar'.DS
+            'path' => User::AVATAR_DIR
         ));
 
         if ($this->uploader->uploadUrl($url)) {

@@ -34,6 +34,12 @@ class Config {
         return $default;
     }
 
+    public function def($key, $value) {
+        if ( ! isset($this->{$key})) {
+            $this->set($key, $value);
+        }
+    }
+
     public function toArray() {
         $array = array();
         $vars  = get_object_vars($this);

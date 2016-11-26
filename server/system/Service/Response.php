@@ -26,8 +26,31 @@ class Response extends \Sys\Core\Component {
         $this->_retval = $retval;
     }
 
-    public function setHeader($name, $value) {
-        header("{$name}: {$value}");
+    public function hasHeader($header) {
+        $header = strtoupper(strtr($header, '-', '_'));
+        return isset($_SERVER[$header]) || isset($_SERVER['HTTP_'.$header]);
+    } 
+
+    public function setHeader($header, $value) {
+        header("{$header}: {$value}");
+    }
+
+    public function getHeader($header) {
+        $header = strtoupper(strtr($header, '-', '_'));
+
+        if (isset($_SERVER[$header])) {
+            return $_SERVER[$header];
+        }
+
+        if (isset($_SERVER['HTTP_'.$header])) {
+            return $_SERVER['HTTP_'.$header];
+        }
+
+        return '';
+    }
+
+    public function getMethod() {
+        return $_SERVER['REQUEST_METHOD'];
     }
 
     public function getContent() {
@@ -48,10 +71,29 @@ class Response extends \Sys\Core\Component {
     
     public function send() {
 
+        // enable CORS
+        if ($this->hasHeader('Origin')) {
+            $this->setHeader('Access-Control-Allow-Origin', $this->getHeader('Origin'));
+            $this->setHeader('Access-Control-Allow-Credentials', 'true');
+            $this->setHeader('Access-Control-Max-Age', '86400');
+        }
+
+        if ($this->getMethod() == 'OPTIONS') {
+            if ($this->hasHeader('Access-Control-Request-Method')) {
+                $this->setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+            }
+
+            if ($this->hasHeader('Access-Control-Request-Headers')) {
+                $this->setHeader('Access-Control-Allow-Headers', $this->getHeader('Access-Control-Request-Headers'));
+            }
+
+            exit(0);
+        }
+
         if ($this->_responseType == self::RESPONSE_JSON) {
             $this->setHeader('Content-Type', 'application/json');
         }
-
+        
         if ( ! is_null($this->_content)) {
             echo $this->_content;   
         }

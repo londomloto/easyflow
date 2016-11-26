@@ -1,18 +1,5 @@
 
-<nav class="navbar navbar-default navbar-custom">
-    <div class="container">
-        <div class="navbar-header" data-ng-include="'apps/frontend/templates/brand.html'"></div>
-
-        <div class="collapse navbar-collapse" id="app-navbar">
-            <ul class="nav navbar-nav navbar-right">
-                <li>
-                    <a ui-sref="home"><i class="ion-android-arrow-back"></i> Kembali ke halaman depan</a>
-                </li>
-            </ul>
-        </div>
-    </div>
-    
-</nav>
+<nav class="navbar navbar-default navbar-custom" data-ui-template="brand-simple.html"></nav>
 
 <section id="register-section">
     <div class="container">
@@ -26,38 +13,41 @@
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2">
 
-                <div ng-show="form.$submitted && form.$invalid" class="alert alert-dismissible alert-danger">
-                    <button type="button" class="close" data-dismiss="alert">×</button>
-                    <strong>Oops!</strong>
-                    <a href="javascript:void(0)" class="alert-link">Beberapa inputan tidak benar</a>, silahkan periksa kembali.
-                </div>
-
-                <form name="form" novalidate>
+                <form name="form" data-ng-submit="createAccount()" novalidate>
                     <div class="row control-group">
                         <div class="form-group">
-                            <label class="control-label" for="cf-input-1">Nama lengkap</label>
-                            <input class="form-control" ng-model="fullname" ng-model-options="{ updateOn: 'blur' }" name="fullname" id="cf-input-1" type="text" required>
+                            <label class="control-label">Nama lengkap</label>
+                            <input class="form-control" data-ng-model="account.fullname" type="text" required>
                         </div>
                     </div>
 
                     <div class="row control-group">
                         <div class="form-group">
-                            <label class="control-label" for="cf-input-2">Alamat email</label>
-                            <input class="form-control" ng-model="email" ng-model-options="{ updateOn: 'blur' }" name="email" id="cf-input-2" type="email" required>
+                            <label class="control-label">Alamat email</label>
+                            <input class="form-control" data-ng-model="account.email" type="email" required>
                         </div>
                     </div>
 
                     <div class="row control-group">
-                        <div class="form-group">
-                            <label class="control-label" for="cf-input-3">Kata sandi</label>
-                            <input class="form-control" ng-model="passwd" ng-model-options="{ updateOn: 'blur' }" name="passwd" id="cf-input-3" type="password" required>
+                        <div class="form-group" data-ng-class="{ 'invalid' : form._passwd1.$invalid && !form._passwd1.$pristine }">
+                            <label class="control-label">Kata sandi</label>
+                            <input class="form-control" data-ng-model="account.passwd1" data-ng-minlength="8" name="_passwd1" type="password" required>
+                            <p class="help-block">Gunakan kata sandi yang unik minimal 8 karakter</p>
+                        </div>
+                    </div>
+
+                    <div class="row control-group">
+                        <div class="form-group" data-ng-class="{ 'invalid' : form._passwd2.$invalid && !form._passwd2.$pristine }">
+                            <label class="control-label">Konfirmasi kata sandi</label>
+                            <input class="form-control" data-ng-model="account.passwd2" name="_passwd2" data-ui-match="form._passwd1" type="password" required>
+                            <p data-ng-show="form._passwd2.$error.match" class="help-block">Kata sandi yang Anda masukan tidak cocok</p>
                         </div>
                     </div>
 
                     <br>
                     <div class="row">
                         <div class="form-group">
-                            <button type="submit" ng-click="register()" class="btn btn-raised btn-primary btn-lg">Daftar sekarang</button>
+                            <button type="submit" data-ng-disabled="form.$invalid" class="btn btn-raised btn-primary btn-lg">Daftar sekarang</button>
                             <a ui-sref="login" class="btn btn-link btn-lg">Sudah punya akun ? <strong>login sekarang</strong></a>
                         </div>
                     </div>
@@ -67,4 +57,4 @@
     </div>
 </section>
 
-<footer class="text-center" data-ng-include="'apps/frontend/templates/footer.html'"></footer>
+<footer class="text-center" data-ui-template="footer.html"></footer>

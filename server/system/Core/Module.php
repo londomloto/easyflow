@@ -1,81 +1,79 @@
 <?php 
 namespace Sys\Core;
 
-use Sys\Service\SecurityException;
-
 abstract class Module extends Component {
 
-    protected static $_default = NULL;
-    protected static $_initialied = array();
-
-    protected $_protectedActions = array();
+    protected static $_loaded = array();
+    protected static $_instances = array();
+    protected static $_actions = array();
 
     public function __construct(IApplication $app) {
         parent::__construct($app);
+    }
 
-        $class = get_class($this);
+    public function start() {
+        $class = get_called_class();
 
-        if ( ! isset(self::$_initialied[$class])) {
-            self::$_initialied[$class] = TRUE;
-            $this->initialize();
+        if (isset(self::$_loaded[$class])) {
+            return;
         }
 
-        if ( ! self::$_default) {
-            self::$_default = $this;    
+        self::$_loaded[$class] = $this;
+
+        $class = new \ReflectionClass($class);
+        $funcs = $class->getMethods(\ReflectionMethod::IS_PUBLIC);
+        $actions = array();
+        $eventBus = $this->getEventBus();
+        
+        foreach($funcs as $func) {
+            $fname = $func->name;
+            
+            if (substr($fname, -6) == 'Action') {
+
+                $action = new \stdClass();
+                $action->name = substr($fname, 0, strpos($fname, 'Action'));
+                $action->numberOfParams = $func->getNumberOfParameters();
+                $action->numberOfRequiredParams = $func->getNumberOfRequiredParameters();
+                $action->params = new \stdClass();
+
+                foreach($func->getParameters() as $param) {
+                    $pname = $param->name;
+                    $paramItem = new \stdClass();
+                    $paramItem->position = $param->getPosition();
+                    $paramItem->required = $param->isOptional() === FALSE;
+                    $paramItem->defaultValue = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : NULL;
+
+                    $action->params->{$pname} = $paramItem;
+                }
+
+                $actions[$fname] = $action;
+
+                if ($eventBus) {
+                    $eventBus->fire(
+                        'module:setupAction', 
+                        $this, 
+                        array(
+                            'method' => $func,
+                            'action' => $actions[$fname]
+                        )
+                    );
+                }
+
+            }
         }
 
+        self::$_actions[$class->name] = $actions;
+
+        $this->initialize();
     }
 
     public function initialize() {
 
     }
 
-    public function authorize($action) {
-        if (isset($this->_protectedActions[$action])) {
-            
-            if ( ! $this->session->has('CURRENT_USER')) {
-                throw new SecurityException("Sesi Anda sudah habis, silahkan login kembali", 401);
-            }
-
-            /*
-            $token = $this->request->getHeader('Authorization');
-            
-            if (empty($token)) {
-                $token = $this->request->getParam('token');
-            }
-
-            if ( ! $this->session->has('CURRENT_USER') || empty($token)) {
-                throw new SecurityException("Sesi Anda sudah habis, silahkan login kembali", 401);
-            }
-            
-            $token = str_replace('Bearer ', '', $token);
-            return $this->security->verifyToken($token);
-            */
-        }
-
-        return TRUE;
-    }
-
-    public function protect($action, $type = 'user') {
-        if (is_array($action)) {
-            foreach($action as $key => $val) {
-                if (is_numeric($key)) {
-                    $_action = $val;
-                    $_type = 'user';
-                } else {
-                    $_action = $key;
-                    $_type = isset($val['type']) ? $val['type'] : 'user';
-                }
-
-                $this->_protectedActions[$_action] = array(
-                    'type' => $_type
-                );
-            }
-        } else {
-            $this->_protectedActions[$action] = array(
-                'type' => $type
-            );
-        }
+    public function listActions() {
+        $class = get_called_class();
+        return self::$_actions[$class];
     }
 
     public function __get($name) {
@@ -83,32 +81,19 @@ abstract class Module extends Component {
         $prop = '_'.$name;
 
         if ( ! isset($this->{$prop})) {
-            $services = array(
-                'request', 
-                'response', 
-                'session', 
-                'dispatcher',
-                'security', 
-                'uploader', 
-                'auth', 
-                'role', 
-                'url'
-            );
 
-            if (in_array($name, $services)) {
-                // check in service
-                $instance = $this->getService($name);    
-            } else {
-                // check in database
-                $instance = $this->getDb($name);
+            if ($this->hasDatabase($name)) {
+                $instance = $this->getDatabaseInstance($name);
+            } else if ($this->hasService($name)) {
+                $instance = $this->getServiceInstance($name);
             }
-            
+
             $this->{$prop} = $instance;
         }
 
         return $this->{$prop};
     }
-
+    
     /**
      * HTTP GET
      */
@@ -137,10 +122,27 @@ abstract class Module extends Component {
         
     }
 
-    /**
-     * Get shared module over application
-     */
-    public static function getDefault() {
-        return self::$_default;
+    public static function getInstance() {
+        $class = get_called_class();
+
+        if (isset(self::$_loaded[$class])) {
+            return self::$_loaded[$class];
+        }
+
+        $app = Application::getDefault();
+
+        $modules = array_filter(
+            $app->getModules(),
+            function($service) {
+                return $service->getDefinition() == $class;
+            }
+        );
+
+        $modules = array_values($modules);
+        $name = $modules[0]->getName();
+        $name = substr($name, 7);
+
+        return $app->getModuleInstance($name);
     }
+
 }

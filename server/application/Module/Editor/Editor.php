@@ -4,7 +4,7 @@ namespace App\Module\Editor;
 class Editor extends \Sys\Core\Module {
 
     public function saveAction() {
-        $user = $this->auth->getUser();
+        $user = $this->auth->getCurrentUser();
 
         $data = array(
             'success' => FALSE,

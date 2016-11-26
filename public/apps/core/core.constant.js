@@ -3,11 +3,11 @@
 
     angular
         .module('core')
-        .constant('HTTP_STATUS', {
-            UNAUTHORIZED: 401,
-            FORBIDDEN: 403,
-            NOT_FOUND: 404,
-            SERVER_ERROR: 500
+        .constant('HTTP', {
+            STATUS_BAD_REQUEST: 400,
+            STATUS_UNAUTHORIZED: 401,
+            STATUS_NOT_FOUND: 404,
+            STATUS_SERVER_ERROR: 500
         })
         .constant('GOOGLE', {
             SDK_URL: 'https://apis.google.com/js/platform.js?onload=gapiOnLoad',

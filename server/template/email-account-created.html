@@ -1,0 +1,52 @@
+<table width="100%" bgcolor="#F3F5F7" cellpadding="0" cellspacing="0">
+    <tr>
+        <td align="center" style="font-family: Helvetica, Arial, sans-serif; color: #B8BFC5; padding: 15px; font-size: 17px;">
+            <p style="font-weight: bold; margin: 0">{{ site.name }}</p>
+        </td>
+    </tr>
+</table>
+
+<table width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+        <td style="font-family: Helvetica, Arial, sans-serif; font-size: 17px; padding: 15px 20%;">
+            <h2 style="color:#2ABBA8;line-height:30px;margin-bottom:12px;margin:0 0 12px; font-size: 20px;">
+                Halo, {{ user.fullname }}
+            </h2>
+
+            <p>
+                Selamat datang di <strong>{{ site.name }}</strong>. Sekarang, Anda dapat login ke dalam akun Anda di: <a href="{{ site.url }}">{{ site.url }}</a>.
+            </p>
+            <p>
+                Berikut ini adalah informasi tentang akun Anda:
+            </p>
+            <table cellpadding="0" cellspacing="0">
+                <tr>
+                    <td width="100">Email:</td><td><strong>{{ user.email }}</strong></td>
+                </tr>
+                <tr>
+                    <td>Kata sandi:</td><td><strong>{{ user.passwd_real }}</strong></td>
+                </tr>
+            </table>
+            <p>
+                Selamat menggunakan aplikasi kami.
+            </p>
+            <p>
+                Terima kasih.
+            </p>
+        </td>
+    </tr>
+</table>
+
+<table width="100%" bgcolor="#F3F5F7" cellpadding="0" cellspacing="0">
+    <tr>
+        <td align="center" style="font-family: Helvetica, Arial, sans-serif; color: #B8BFC5; padding: 15px; font-size: 17px;">
+            <span style="-webkit-transform: rotate(180deg); transform: rotate(180deg); display: inline-block;">&copy;</span> {{ "now" | date("Y") }} - <a href="{{ site.url }}">{{ site.name }}</a>. All wrongs reserved.
+            <br>
+            <br>
+            <p style="font-weight: bold; margin: 0">{{ site.company_name }}</p>
+            {{ site.company_address }}<br>
+            {{ site.company_city }}, {{ site.company_state }}<br>
+            {{ site.company_country }}
+        </td>
+    </tr>
+</table>

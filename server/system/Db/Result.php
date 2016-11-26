@@ -17,7 +17,7 @@ class Result implements IResult, \Iterator, \Countable {
     protected $_fields;
     protected $_count;
 
-    public function __construct(IDb $db, $result, $fields = NULL) {
+    public function __construct(IDatabase $db, $result, $fields = NULL) {
         $this->_db = $db;
         $this->_result = $result;
         $this->_pointer = 0;

@@ -1,0 +1,49 @@
+
+<nav class="navbar navbar-default navbar-custom" data-ui-template="brand-simple.html"></nav>
+
+<section id="login-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center">
+                <h2>Sandi Baru</h2>
+                <hr class="star-primary">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-8 col-lg-offset-2">
+                
+                <div data-ng-if="recover.expired">
+                    <p>Maaf, permintaan pembaharuan sandi sudah kadaluarsa. Silahkan Anda melakukan permintaan ulang.</p>
+                    <a data-ui-sref="forgot" class="btn btn-raised btn-primary btn-lg"">Minta ulang sandi</a>
+                </div>
+
+                <div data-ng-if="!recover.expired">
+                    <form name="form" data-ng-submit="recoverPassword(form)" novalidate>
+                        <div class="row control-group">
+                            <div class="col-xs-12 form-group" data-ng-class="{ 'invalid': form.passwd1.$invalid && !form.passwd1.$pristine }">
+                                <label class="control-label">Sandi baru</label>
+                                <input class="form-control" data-ng-model="recover.passwd1" data-ng-minlength="8" name="passwd1" type="password" required>
+                                <p class="help-block">Gunakan kombinasi sandi yang unik, minimal 8 karakter</p>
+                            </div>
+                        </div>
+                        <div class="row control-group m-t">
+                            <div class="col-xs-12 form-group" data-ng-class="{ 'invalid': form.passwd2.$invalid && !form.passwd2.$pristine }">
+                                <label class="control-label">Tulis ulang sandi baru</label>
+                                <input class="form-control" data-ng-model="recover.passwd2" data-ng-minlength="8" data-ui-match="form.passwd1" name="passwd2" type="password" required>
+                                <p class="help-block" data-ng-show="form.passwd2.$error.match && !form.passwd2.$pristine">Password yang Anda masukan tidak cocok</p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12 form-group">
+                                <button type="submit" data-ng-disabled="form.$invalid" class="btn btn-raised btn-primary btn-lg">Simpan Perubahan</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="text-center" data-ui-template="footer.html"></footer>

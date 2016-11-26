@@ -22,8 +22,22 @@
     }
     
     /** @ngInject */
-    function run(auth) {
+    function run($rootScope, router, auth) {
         auth.verify();
+
+        $rootScope.$on('$stateChangeStart', function(evt, state){
+            if (state.authenticate) {
+                if ( ! auth.isAuthenticated()) {
+                    auth.verify().then(function(user){
+                        if ( ! user) {
+                            evt.preventDefault();
+                            router.go(router.getLoginState());
+                        }
+                    });
+                }
+            }
+        });
+
     }
 
 }());

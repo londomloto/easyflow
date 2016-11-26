@@ -1,0 +1,154 @@
+{% set readonly = can.update_app ? '' : 'readonly' %}
+<form name="form" novalidate>
+    <div class="row">
+        <div class="col-md-6 col-sm-6 col-xs-6">
+            <div class="box">
+                <div class="box-header">
+                  <h3>Website</h3>
+                  <small>Pengaturan umum aplikasi (website)</small>
+                </div>
+                <div class="box-body">
+                    <div class="form-group" data-ng-class="{ 'has-danger' : form.name.$invalid && !form.name.$pristine }">
+                        <label>Nama aplikasi</label>
+                        <input data-ng-model="setting.name" name="name" type="text" class="form-control" required {{ readonly }}>
+                    </div>
+                    <div class="form-group" data-ng-class="{ 'has-danger' : form.title.$invalid && !form.title.$pristine }">
+                        <label>Judul aplikasi</label>
+                        <input data-ng-model="setting.title" name="title" type="text" class="form-control" required {{ readonly }}>
+                    </div>
+                    <div class="form-group" data-ng-class="{ 'has-danger' : form.url.$invalid && !form.url.$pristine }">
+                        <label>Alamat url</label>
+                        <input data-ng-model="setting.url" name="url" type="text" class="form-control" required {{ readonly }}>
+                    </div>
+                    <div class="form-group" data-ng-class="{ 'has-danger' : form.email.$invalid && !form.email.$pristine }">
+                        <label>Alamat email</label>
+                        <input data-ng-model="setting.email" name="email" type="text" class="form-control" required {{ readonly }}>
+                    </div>
+                    <div class="form-group">
+                        <label>Pengelola</label>
+                        <input data-ng-model="setting.author" type="text" class="form-control" {{ readonly }}>
+                    </div>
+                    <div class="form-group">
+                        <label>Perusahaan</label>
+                        <input data-ng-model="setting.comp_name" type="text" class="form-control" {{ readonly }}>
+                    </div>
+                    <div class="form-group">
+                        <label>Alamat jalan</label>
+                        <input data-ng-model="setting.comp_addr" type="text" class="form-control" {{ readonly }}>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-sm-6 col-xs-12">
+                            <label>Kota</label>
+                            <input data-ng-model="setting.comp_city" type="text" class="form-control" {{ readonly }}>
+                        </div>
+                        <div class="form-group col-sm-6 col-xs-12">
+                            <label>Kode Pos</label>
+                            <input data-ng-model="setting.comp_zipcode" type="text" class="form-control" {{ readonly }}>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-sm-6 col-xs-12">
+                            <label>Propinsi</label>
+                            <input data-ng-model="setting.comp_state" type="text" class="form-control" {{ readonly }}>
+                        </div>
+                        <div class="form-group col-sm-6 col-xs-12">
+                            <label>Negara</label>
+                            <input data-ng-model="setting.comp_country" type="text" class="form-control" {{ readonly }}>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Facebook</label>
+                        <input data-ng-model="setting.facebook_page" type="text" class="form-control" {{ readonly }}>
+                    </div>
+                    <div class="form-group">
+                        <label>Twitter</label>
+                        <input data-ng-model="setting.twitter_page" type="text" class="form-control" {{ readonly }}>
+                    </div>
+                    <div class="form-group">
+                        <label>Google</label>
+                        <input data-ng-model="setting.google_page" type="text" class="form-control" {{ readonly }}>
+                    </div>
+                    {% if can.update_app %}
+                    <button data-ng-click="updateSetting()" data-ng-disabled="form.$invalid" type="button" class="btn btn-info m-t">Simpan Perubahan</button>
+                    <button data-ng-click="resetSetting()" type="button" class="btn btn-link m-t">Batalkan perubahan</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-sm-6 col-xs-6">
+            <div class="box">
+                <div class="box-header">
+                  <h3>Email</h3>
+                  <small>Pengaturan umum pengiriman email menggunakan SMTP</small>
+                </div>
+                <div class="box-body">
+                    <div class="form-group" data-ng-class="{ 'has-danger' : form.smtp_server.$invalid && !form.smtp_server.$pristine }">
+                        <label>Alamat server</label>
+                        <input data-ng-model="setting.smtp_server" name="smtp_server" type="text" class="form-control" required {{ readonly }}>
+                    </div>
+                    <div class="form-group" data-ng-class="{ 'has-danger' : form.smtp_port.$invalid && !form.smtp_port.$pristine }">
+                        <label>Nomor port</label>
+                        <input data-ng-model="setting.smtp_port" name="smtp_port" type="text" class="form-control" required {{ readonly }}>
+                    </div>
+                    {% if can.update_app %}
+                    <div class="form-group">
+                        <label>Keamanan jaringan</label>
+                        <div class="row">
+                            <div class="col-sm-6">
+                                <label class="md-check">
+                                    <input type="radio" data-ng-model="setting.smtp_secure" value="">
+                                    <i class="blue"></i> Tidak ada
+                                </label>     
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="md-check">
+                                    <input type="radio" data-ng-model="setting.smtp_secure" value="tls">
+                                    <i class="blue"></i> TLS/SSL
+                                </label>     
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="form-group">
+                        <label>Keamanan jaringan</label>
+                        <input data-ng-model="setting.smtp_secure" type="text" class="form-control" required {{ readonly }}>
+                    </div>
+                    {% endif %}
+                    <div class="form-group" data-ng-class="{ 'has-danger' : form.smtp_user.$invalid && !form.smtp_user.$pristine }">
+                        <label>Nama pengguna (eq: john@example.com)</label>
+                        <input data-ng-model="setting.smtp_user" name="smtp_user" type="text" class="form-control" required {{ readonly }}>
+                    </div>
+                    <div class="form-group" data-ng-class="{ 'has-danger' : form.smtp_pass.$invalid && !form.smtp_pass.$pristine }">
+                        <label>Sandi pengguna</label>
+                        <input data-ng-model="setting.smtp_pass" name="smtp_pass" type="password" class="form-control" required {{ readonly }}>
+                    </div>
+                    {% if can.update_app %}
+                    <button data-ng-click="updateSetting()" data-ng-disabled="form.$invalid" type="button" class="btn btn-info m-t">Simpan Perubahan</button>
+                    <button data-ng-click="resetSetting()" type="button" class="btn btn-link m-t">Batalkan perubahan</button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="box">
+                <div class="box-header">
+                  <h3>Keamanan</h3>
+                  <small>Pengaturan umum keamanan aplikasi</small>
+                </div>
+                <div class="box-body">
+                    <div class="form-group" data-ng-class="{ 'has-danger' : form.secret_key.$invalid && !form.secret_key.$pristine }">
+                        {% if can.update_app %}
+                        <label>Kode rahasia ( <a data-ng-click="requestKey()" href="javascript:;" class="link text-info">klik di sini untuk memperbaharui kode rahasia</a> )</label>
+                        {% else %}
+                        <label>Kode rahasia</label>
+                        {% endif %}
+                        <input data-ng-model="setting.secret_key" name="secret_key" type="text" class="form-control" readonly required>
+                    </div>
+                    {% if can.update_app %}
+                    <button data-ng-click="updateSetting()" data-ng-disabled="form.$invalid" type="submit" class="btn btn-info m-t">Simpan Perubahan</button>
+                    <button data-ng-click="resetSetting()" type="button" class="btn btn-link m-t">Batalkan perubahan</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

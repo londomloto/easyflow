@@ -10,7 +10,7 @@ Target Server Type    : MYSQL
 Target Server Version : 50626
 File Encoding         : 65001
 
-Date: 2016-11-19 13:56:53
+Date: 2016-11-21 17:41:23
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -37,8 +37,8 @@ CREATE TABLE `application` (
 -- ----------------------------
 -- Records of application
 -- ----------------------------
-INSERT INTO `application` VALUES ('20161118111952-578188', 'es-frontend', 'frontend', 'Easyflow', 'editor diagram aktifitas berbasis web', 'Roso Sasongko', 'roso.sasongko@gmail.com', 'https://github.com/londomloto/easyflow', null, 'http://easyflow.io/', 'ubgQ1Xk81BmhlW2bgRRLYp2vWOkh8BU3cUeezh0e8zOxkrP7KQiI+fmgE4ylJa/NADshDpm6S627cMEjFqHf/g==', '1');
-INSERT INTO `application` VALUES ('20161118112004-155692', 'es-backend', 'backend', 'Admin Easyflow', null, 'Roso Sasongko', 'roso.sasongko@gmail.com', 'https://github.com/londomloto/easyflow', null, 'http://easyflow.io/admin/', 'QnZvBc/dRSycrm5jkgMt+hKhC1IenyGBuyywyZRzn0fcsfEuqOEc4yS9bEEdy5LumxGqvFAFkPhAagWMn9CNvA==', '1');
+INSERT INTO `application` VALUES ('20161118111952-578188', 'www.easyflow.io', 'frontend', 'Easyflow', 'editor diagram aktifitas berbasis web', 'Roso Sasongko', 'roso.sasongko@gmail.com', 'https://github.com/londomloto/easyflow', null, 'http://easyflow.io/', 'ubgQ1Xk81BmhlW2bgRRLYp2vWOkh8BU3cUeezh0e8zOxkrP7KQiI+fmgE4ylJa/NADshDpm6S627cMEjFqHf/g==', '1');
+INSERT INTO `application` VALUES ('20161118112004-155692', 'www.easyflow.io/admin', 'backend', 'Admin Easyflow', null, 'Roso Sasongko', 'roso.sasongko@gmail.com', 'https://github.com/londomloto/easyflow', null, 'http://easyflow.io/admin/', 'QnZvBc/dRSycrm5jkgMt+hKhC1IenyGBuyywyZRzn0fcsfEuqOEc4yS9bEEdy5LumxGqvFAFkPhAagWMn9CNvA==', '1');
 
 -- ----------------------------
 -- Table structure for capability
@@ -46,16 +46,22 @@ INSERT INTO `application` VALUES ('20161118112004-155692', 'es-backend', 'backen
 DROP TABLE IF EXISTS `capability`;
 CREATE TABLE `capability` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) DEFAULT NULL,
+  `name` varchar(100) DEFAULT NULL,
+  `title` varchar(200) DEFAULT NULL,
+  `description` varchar(1000) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records of capability
 -- ----------------------------
-INSERT INTO `capability` VALUES ('1', 'manage_site');
-INSERT INTO `capability` VALUES ('2', 'manage_user');
-INSERT INTO `capability` VALUES ('3', 'delete_tutorial');
+INSERT INTO `capability` VALUES ('1', 'manage_app', 'Pengaturan aplikasi', 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod\r\ntempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,\r\nquis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo\r\nconsequat. Duis aute irure dolor in reprehenderit in voluptate velit esse\r\ncillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non\r\nproident, sunt in culpa qui officia deserunt mollit anim id est laborum.');
+INSERT INTO `capability` VALUES ('2', 'create_user', 'Pengaturan pengguna', 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod\r\ntempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,\r\nquis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo\r\nconsequat. Duis aute irure dolor in reprehenderit in voluptate velit esse\r\ncillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non\r\nproident, sunt in culpa qui officia deserunt mollit anim id est laborum.');
+INSERT INTO `capability` VALUES ('3', 'delete_tutorial', 'Hapus tutorial', 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod\r\ntempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,\r\nquis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo\r\nconsequat. Duis aute irure dolor in reprehenderit in voluptate velit esse\r\ncillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non\r\nproident, sunt in culpa qui officia deserunt mollit anim id est laborum.');
+INSERT INTO `capability` VALUES ('22', 'add_tutorial', 'Tambah tutorial', '');
+INSERT INTO `capability` VALUES ('23', 'create_tutorial', 'Tambah tutorial', '');
+INSERT INTO `capability` VALUES ('24', 'update_user', 'Sunting pengguna', '');
+INSERT INTO `capability` VALUES ('25', 'remove_user', 'Hapus pengguna', '');
 
 -- ----------------------------
 -- Table structure for diagram
@@ -129,6 +135,7 @@ CREATE TABLE `role` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) DEFAULT NULL,
   `title` varchar(100) DEFAULT NULL,
+  `description` varchar(500) DEFAULT NULL,
   `removable` int(1) DEFAULT '1',
   `is_default` int(1) DEFAULT '0',
   PRIMARY KEY (`id`)
@@ -137,30 +144,9 @@ CREATE TABLE `role` (
 -- ----------------------------
 -- Records of role
 -- ----------------------------
-INSERT INTO `role` VALUES ('1', 'admin', 'Adminstrator', '0', '0');
-INSERT INTO `role` VALUES ('2', 'user', 'User', '1', '1');
-INSERT INTO `role` VALUES ('3', 'contributor', 'Contributor', '1', '0');
-
--- ----------------------------
--- Table structure for site
--- ----------------------------
-DROP TABLE IF EXISTS `site`;
-CREATE TABLE `site` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) DEFAULT NULL,
-  `title` varchar(255) DEFAULT NULL,
-  `description` varchar(255) DEFAULT NULL,
-  `author` varchar(255) DEFAULT NULL,
-  `author_email` varchar(255) DEFAULT NULL,
-  `github_page` varchar(255) DEFAULT NULL,
-  `facebook_page` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
-
--- ----------------------------
--- Records of site
--- ----------------------------
-INSERT INTO `site` VALUES ('1', 'easyflow', 'Easyflow', 'editor diagram aktifitas berbasis web', 'Roso Sasongko', 'roso.sasongko@gmail.com', 'https://github.com/londomloto/easyflow', null);
+INSERT INTO `role` VALUES ('1', 'admin', 'Adminstrator', null, null, null);
+INSERT INTO `role` VALUES ('2', 'user', 'User', null, '1', '1');
+INSERT INTO `role` VALUES ('3', 'contributor', 'Contributor', null, '1', null);
 
 -- ----------------------------
 -- Table structure for tutorial
@@ -176,7 +162,7 @@ CREATE TABLE `tutorial` (
   `created_date` datetime DEFAULT NULL,
   `created_by` varchar(100) DEFAULT 'SYSTEM',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records of tutorial
@@ -205,12 +191,14 @@ CREATE TABLE `user` (
   `last_login` datetime DEFAULT NULL,
   `last_ip` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=50 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Records of user
 -- ----------------------------
-INSERT INTO `user` VALUES ('1', 'naima@yahoo.com', '4be0ad9091cf3a37f6d57b68ac95374c4ce772a8348f38d78a30965638959a85', 'f824c0', 'Naima Sarah Mikayla', 'Perempuan', 'Tukang neneng', 'Gadis gembul yang lucu', '55d72550a296f070057b89545f09600ddebf05cd.jpg', '01_160328045758.jpg', '', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE0Nzc0NzYwMTIsImp0aSI6InNxa0tDQTRyTFwvNUhzUEJOQXhkMllXTE1GZXBjaWE5a3dHOXJDR1NSZUpVPSIsImlzcyI6ImRldi5sb2NhbCIsIm5iZiI6MTQ3NzQ3NjAyMiwiZXhwIjoxNDc3NDc2MDgyLCJkYXRhIjp7InVzZXJfaWQiOjEsInVzZXJfZW1haWwiOiJuYWltYUB5YWhvby5jb20ifX0.qoM1VyqFEYXeRvTUW2qqK0_lLSiV9mvDNAbC6-hwNqGXhwj4DNUZUswAoqPJwESqjIWySdFYG0TKwF5bLZHhWg', '2016-11-16 12:34:24', '2016-10-26 12:16:00', '127.0.0.1');
-INSERT INTO `user` VALUES ('46', 'roso.sasongko@gmail.com', 'e5aec24b714ca99ac208ac6e2bf64da7b4e9663158e86fa5dce7e1c172c909ba', 'e01fbc', 'Roso Sasongko', 'Laki - Laki', 'Buruh ketik', 'Sedang sibuk bikin TA', 'a347c327f0848cb7b43a53ba092af9b6fa6e52ae.jpg', '11987195_682208611913900_6376520968472438491_n.jpg', null, 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE0NzkyMjE4MTYsImp0aSI6IjdpZ0JnXC8zNVNwSzFQalhTbWN0VGRxb20yR2xGWXp3MXk0dFYwWXZKR1kwPSIsImlzcyI6ImVhc3lmbG93LmlvIiwibmJmIjoxNDc5MjIxODI2LCJleHAiOjE0NzkyMjE4ODYsImRhdGEiOnsidXNlcl9pZCI6NDYsInVzZXJfZW1haWwiOiJyb3NvLnNhc29uZ2tvQGdtYWlsLmNvbSJ9fQ.aD5_KHRyaQOLCdBXIEXH01UugHrgShdUGYGzyeUKkqH6TRyLT8B7T99nYTDbVaG2nbLL_UgGh-v-FY-est2D5Q', '2016-11-16 12:34:29', '2016-11-15 21:56:56', '127.0.0.1');
-INSERT INTO `user` VALUES ('48', 'nurfarid8924@gmail.com', '367061449c46d06fa7140666d5a2781245fc0d599bb32baa02fb509186193c5e', '4470d2', 'Faridha Aridh', 'Perempuan', '', '', '8d1f701462f6a8dc2cb89948f15de7bb2a30de17.jpg', 'photo.jpg', 'user', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE0Nzk1MDg3NDIsImp0aSI6IkRkdVRaVlRxcHZQNVNXZ2NmZWlUdlYwMmVkNFwvVkQrMVVlXC9NMk52bTVydz0iLCJpc3MiOiJlYXN5Zmxvdy5pbyIsIm5iZiI6MTQ3OTUwODc0MywiZXhwIjoxNDc5NTEwMTQzLCJkYXRhIjp7InVzZXJfaWQiOjQ4LCJ1c2VyX2VtYWlsIjoibnVyZmFyaWQ4OTI0QGdtYWlsLmNvbSJ9fQ.OBWMQ2ZOuN8JvcrnPa7l9Cgrd0Dd6GHd2Mkx4YDgNG4WTTfpNxznYDhesjkBxv0-SmVN1F5WVU10euLMvXOKhA', '2016-11-16 12:34:33', '2016-11-19 05:39:02', '127.0.0.1');
-INSERT INTO `user` VALUES ('49', 'adjies4k4@gmail.com', 'e525a6f2bba0fbaa0fed66966268f4f8d81608bb035c7a6b8c4eefc32c549570', 'c627fb', 'Jaka Tingkir', null, null, null, '41f28638033febd356a3d55b920072af01d306c4.jpg', '12376830_993932100698647_3521195658288418292_n.jpg', null, 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE0NzkyMzczMzYsImp0aSI6ImZ1VHJ0dUhPXC95NFEwd0NHRTNJU3d1XC9OK1pxK1RcLzZ4RklUMXpSdklTTDA9IiwiaXNzIjoiZWFzeWZsb3cuaW8iLCJuYmYiOjE0NzkyMzczNDYsImV4cCI6MTQ3OTIzNzQwNiwiZGF0YSI6eyJ1c2VyX2lkIjo0OSwidXNlcl9lbWFpbCI6ImFkamllczRrNEBnbWFpbC5jb20ifX0.hTnFLtghoxYCxillcVKFy1350OGXMX54YkP_gdOm38qBxYRBZ09JGJGrt5H3lniEWwqeY8bvPQC_w2U3V2X1KA', '2016-11-16 12:34:37', '2016-11-16 01:55:53', '127.0.0.1');
+INSERT INTO `user` VALUES ('1', 'naima@yahoo.com', '4be0ad9091cf3a37f6d57b68ac95374c4ce772a8348f38d78a30965638959a85', 'f824c0', 'Naima Sarah Mikayla', 'Perempuan', 'Tukang neneng', 'Gadis gembul yang lucu', '53323204e77f4658167d33f521c5f976a082f810.png', 'avatar5.png', '', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE0Nzc0NzYwMTIsImp0aSI6InNxa0tDQTRyTFwvNUhzUEJOQXhkMllXTE1GZXBjaWE5a3dHOXJDR1NSZUpVPSIsImlzcyI6ImRldi5sb2NhbCIsIm5iZiI6MTQ3NzQ3NjAyMiwiZXhwIjoxNDc3NDc2MDgyLCJkYXRhIjp7InVzZXJfaWQiOjEsInVzZXJfZW1haWwiOiJuYWltYUB5YWhvby5jb20ifX0.qoM1VyqFEYXeRvTUW2qqK0_lLSiV9mvDNAbC6-hwNqGXhwj4DNUZUswAoqPJwESqjIWySdFYG0TKwF5bLZHhWg', '2016-11-16 12:34:24', '2016-10-26 12:16:00', '127.0.0.1');
+INSERT INTO `user` VALUES ('46', 'roso.sasongko@gmail.com', 'e5aec24b714ca99ac208ac6e2bf64da7b4e9663158e86fa5dce7e1c172c909ba', 'e01fbc', 'Roso Sasongko', 'Laki - Laki', 'Buruh ketik', 'Sedang sibuk bikin TA', '000e15178056fdf3c47fcf56b87513c05b81dbe1.png', '1757649-me_avatar_big.png', null, 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE0NzkyMjE4MTYsImp0aSI6IjdpZ0JnXC8zNVNwSzFQalhTbWN0VGRxb20yR2xGWXp3MXk0dFYwWXZKR1kwPSIsImlzcyI6ImVhc3lmbG93LmlvIiwibmJmIjoxNDc5MjIxODI2LCJleHAiOjE0NzkyMjE4ODYsImRhdGEiOnsidXNlcl9pZCI6NDYsInVzZXJfZW1haWwiOiJyb3NvLnNhc29uZ2tvQGdtYWlsLmNvbSJ9fQ.aD5_KHRyaQOLCdBXIEXH01UugHrgShdUGYGzyeUKkqH6TRyLT8B7T99nYTDbVaG2nbLL_UgGh-v-FY-est2D5Q', '2016-11-16 12:34:29', '2016-11-15 21:56:56', '127.0.0.1');
+INSERT INTO `user` VALUES ('48', 'nurfarid8924@gmail.com', '367061449c46d06fa7140666d5a2781245fc0d599bb32baa02fb509186193c5e', '4470d2', 'Faridha Aridh', 'Perempuan', '', '', '7fe45db3d1d6e44787c6ee3ca1d882bf441592e2.png', 'avatar4.png', 'user', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE0Nzk2ODYxNTgsImp0aSI6IjNHMmlHXC9lZWpJNEtvSkVFTURqVFVVdlBlK1d5VzRyYzBQXC9McE9Tcm1mMD0iLCJpc3MiOiJlYXN5Zmxvdy5pbyIsIm5iZiI6MTQ3OTY4NjE1OSwiZXhwIjoxNDc5Njg3NTU5LCJkYXRhIjp7InVzZXJfaWQiOjQ4LCJ1c2VyX2VtYWlsIjoibnVyZmFyaWQ4OTI0QGdtYWlsLmNvbSJ9fQ.SfCKjoSSF5jI9t_CwodLp1XmuteBXdoLfQfJ1MTY4-OZmhOwMEoXBtiJLVW0kAktNwf71EiGgi4z9RuYGWU15g', '2016-11-16 12:34:33', '2016-11-21 06:55:58', '127.0.0.1');
+INSERT INTO `user` VALUES ('49', 'adjies4k4@gmail.com', 'e525a6f2bba0fbaa0fed66966268f4f8d81608bb035c7a6b8c4eefc32c549570', 'c627fb', 'Jaka Tingkir', null, null, null, 'abbc2d598c57a60bdd12d2dec68bb34188dc41a7.png', 'avatar1.png', null, 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9.eyJpYXQiOjE0NzkyMzczMzYsImp0aSI6ImZ1VHJ0dUhPXC95NFEwd0NHRTNJU3d1XC9OK1pxK1RcLzZ4RklUMXpSdklTTDA9IiwiaXNzIjoiZWFzeWZsb3cuaW8iLCJuYmYiOjE0NzkyMzczNDYsImV4cCI6MTQ3OTIzNzQwNiwiZGF0YSI6eyJ1c2VyX2lkIjo0OSwidXNlcl9lbWFpbCI6ImFkamllczRrNEBnbWFpbC5jb20ifX0.hTnFLtghoxYCxillcVKFy1350OGXMX54YkP_gdOm38qBxYRBZ09JGJGrt5H3lniEWwqeY8bvPQC_w2U3V2X1KA', '2016-11-16 12:34:37', '2016-11-16 01:55:53', '127.0.0.1');
+INSERT INTO `user` VALUES ('50', null, 'f02da6a53d1020b65f51e9c0109bb5bfd9f46ddf4fbce2bbfced6b909e5e9a06', '7d42f0', null, null, null, null, null, null, null, null, '2016-11-21 14:04:50', null, null);
+INSERT INTO `user` VALUES ('51', null, 'a9e564cad0f83484f8d7934ca813728b8feaddd9714442f4b96f570777e93446', 'f11e7a', null, null, null, null, null, null, null, null, '2016-11-21 14:05:14', null, null);

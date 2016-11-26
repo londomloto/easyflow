@@ -32,28 +32,31 @@ class ErrorHandler extends Component {
             case E_CORE_ERROR:
             case E_COMPILE_ERROR:
             case E_PARSE:
-                return "Kesalahan fatal";
+                return _("Fatal error");
             case E_USER_ERROR:
             case E_RECOVERABLE_ERROR:
-                return "Kesalahan";
+                return _("Error");
             case E_WARNING:
             case E_USER_WARNING:
             case E_CORE_WARNING:
             case E_COMPILE_WARNING:
-                return "Peringatan";
+                return _("Warning");
             case E_NOTICE:
             case E_USER_NOTICE:
-                return "Notifikasi";
+                return _("Notify");
             case E_STRICT:
-                return "Debug";
+                return _("Debug");
+            case E_DEPRECATED:
+                return _("Deprecated");
             default:
-                return "Kesalahan tidak dikenal";
+                return _("Unknown error");
         }
     }
 
     public static function getStatusCode($exception) {
         $code = (int) $exception->getCode();
         $maps = array(
+            400 => 400,
             401 => 401,
             403 => 403,
             404 => 404,
@@ -62,42 +65,51 @@ class ErrorHandler extends Component {
         return isset($maps[$code]) ? $maps[$code] : 500;
     }
 
-    public static function getStatusName($status) {
-        $maps = array(
-            401 => 'Unauthorized',
-            403 => 'Forbidden',
-            404 => 'Not Found',
-            500 => 'Internal Server Error'
-        );
+    public static function getStatusName($status, $translation = FALSE) {
+        if ($translation) {
+            $maps = array(
+                400 => _('Unsupported resource'),
+                401 => _('Access denied'),
+                403 => _('Access not allowed'),
+                404 => _('Resource not found'),
+                500 => _('Internal server error')
+            );    
+        } else {
+            $maps = array(
+                400 => 'Bad Request',
+                401 => 'Unauthorized',
+                403 => 'Forbidden',
+                404 => 'Not Found',
+                500 => 'Internal Server Error'
+            );
+        }
 
-        return isset($maps[$status]) ? $maps[$status] : 'Internal Server Error';
+        return isset($maps[$status]) ? $maps[$status] : $maps[500];
     }
 
     public function isJsonRequest() {
-        return $this->hasService('request') ? $this->getService('request')->isJson() : FALSE;
+        return $this->hasService('request') ? $this->getRequest()->isJson() : FALSE;
     }
 
     public function handleError($errno, $errstr, $errfile, $errline) {
         $fatal = self::isFatal($errno);
         $debug = $this->getApp()->isDebug();
 
-        if ( ! ob_get_level()) {
-            ob_start();
-        }
-
-        $content = ob_get_contents();
-        ob_end_clean();
-
         $name = self::getSeverityName($errno);
         $json = $this->isJsonRequest();
 
         if ($fatal) {
-            header('HTTP/1.1 500 Internal Server Error');
+            if ( ! headers_sent()) {
+                header('HTTP/1.1 500 Internal Server Error');    
+            }
         }
 
         if ($json) {
             if ($fatal) {
-                header('Content-Type: application/json');
+                
+                if ( ! headers_sent()) {
+                    header('Content-Type: application/json');    
+                }
                 
                 $data = array(
                     'title' => $name,
@@ -110,10 +122,6 @@ class ErrorHandler extends Component {
                 exit();
             }
         } else {
-            if ( ! empty($content)) {
-                echo $content;
-            }
-
             if ($debug) {
                 if ($fatal) {
                     $data = array(
@@ -133,21 +141,14 @@ class ErrorHandler extends Component {
 
     public function handleException($exception) {
         $debug = $this->getApp()->isDebug();
-        $content = NULL;
         
-        if ( ! ob_get_level()) {
-            ob_start();
-        }
-
-        $content = ob_get_contents();
-        ob_end_clean();
-
         $json = $this->isJsonRequest();
-
         $code = self::getStatusCode($exception);
         $name = self::getStatusName($code);
 
-        header("HTTP/1.1 {$code} {$name}");
+        if ( ! headers_sent()) {
+            header("HTTP/1.1 {$code} {$name}");    
+        }
 
         if ($json) {
             $data = array(
@@ -159,10 +160,8 @@ class ErrorHandler extends Component {
             print(json_encode($data, JSON_PRETTY_PRINT));
             exit;
         } else {
-            header("HTTP/1.1 {$code} {$name}");
-
-            if ( ! is_null($content)) {
-                echo $content;
+            if ( ! headers_sent()) {
+                header("HTTP/1.1 {$code} {$name}");    
             }
 
             if ($debug) {
@@ -176,7 +175,12 @@ class ErrorHandler extends Component {
                 );
 
                 extract($data);
-                include(SYSPATH.'Template/exception.php');
+
+                if ($code == 401) {
+                    include(SYSPATH.'Template/unauthorized.php');    
+                } else {
+                    include(SYSPATH.'Template/exception.php');
+                }
             }
         }
 

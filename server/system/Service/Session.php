@@ -10,14 +10,7 @@ class Session extends \Sys\Core\Component {
     public function __construct(\Sys\Core\IApplication $app) {
         parent::__construct($app);
         $this->_started = FALSE;
-        $this->_config  = $this->getAppConfig()->application->session->toArray();
-    }
-
-    public function context($context = FALSE) {
-        if ( ! $context) {
-            return isset($_SESSION['CONTEXT']) ? $_SESSION['CONTEXT'] : FALSE;
-        }
-        $_SESSION['CONTEXT'] = str_replace('-', '_', $context);
+        $this->_config  = $this->getAppConfig()->application->session;
     }
 
     public function isStarted() {
@@ -37,32 +30,19 @@ class Session extends \Sys\Core\Component {
         return session_name();
     }
 
-    public function key($key) {
-        $context = $this->context();
-        if ($context) {
-            $key = $context . '_'.$key;
-        }
-        return $key;
-    }
-
     public function has($key) {
-        $key = $this->key($key);
         return isset($_SESSION[$key]);
     }
 
     public function set($key, $value) {
-        $key = $this->key($key);
         $_SESSION[$key] = $value;
     }
 
     public function get($key) {
-        $ori = $key;
-        $key = $this->key($key);
-        return $this->has($ori) ? $_SESSION[$key] : FALSE;
+        return $this->has($key) ? $_SESSION[$key] : FALSE;
     }
 
     public function remove($key) {
-        $key = $this->key($key);
         unset($_SESSION[$key]);
     }
 
@@ -75,16 +55,16 @@ class Session extends \Sys\Core\Component {
         if ($this->_started) {
             $this->close();
         }
-
+        
         $config = $this->_config;
-        $secure = $this->getService('url')->isSecure();
+        $secure = $this->getUrl()->isSecure();
         
         if (is_null($name)) {
-            $name = $config['name'];
+            $name = $config->name;
         }
 
         if (is_null($path)) {
-            $path = $config['cookie_path'];
+            $path = $config->cookie_path;
         }
         
         session_name($name);
@@ -100,7 +80,7 @@ class Session extends \Sys\Core\Component {
         // );
 
         session_set_cookie_params(
-            $config['cookie_lifetime'],
+            $config->cookie_lifetime,
             $path,
             NULL,
             $secure,
@@ -132,7 +112,7 @@ class Session extends \Sys\Core\Component {
 
     public function destroy() {
         $params = session_get_cookie_params();
-
+        
         setcookie(
             session_name(), 
             '', 
@@ -147,8 +127,8 @@ class Session extends \Sys\Core\Component {
         session_destroy();
 
         $this->_started = FALSE;
-    }   
-
+    }
+    
     public function isSafe() {
         if ( ! isset($_SESSION['IPADDRESS']) || ! isset($_SESSION['USERAGENT']))
             return FALSE;
@@ -192,6 +172,10 @@ class Session extends \Sys\Core\Component {
         session_write_close();
 
         session_id($id);
+        
+        // I don't know to handle multiple Set-Cookie by calling session_start()
+        // https://bugs.php.net/bug.php?id=38104
+        ini_set('session.use_cookies', 0);
         session_start();
 
         unset($_SESSION['OBSOLETE']);

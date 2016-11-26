@@ -6,65 +6,7 @@
                 <span class="hidden-folded inline"><i class="ion-android-settings"></i> easyflow</span>
             </a>
         </div>
-        <div flex class="hide-scroll">
-            <nav class="scroll nav-light">
-                <ul class="nav">
-                    <li class="nav-header hidden-folded"><small class="text-muted">BERANDA</small></li>
-                    <li>
-                        <a data-ui-sref="main.dashboard">
-                            <span class="nav-icon"><i class="ion-stats-bars"></i></span>
-                            <span class="nav-text">Dashboard</span>
-                        </a>
-                    </li>
-                    <li class="nav-header hidden-folded"><small class="text-muted">ADMIN &amp; PENGGUNA</small></li>
-                    <li>
-                        <a data-ui-sref="main.role">
-                            <span class="nav-icon"><i class="ion-locked"></i></span>
-                            <span class="nav-text">Hak Akses</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a data-ui-sref="main.user">
-                            <span class="nav-icon"><i class="ion-code"></i></span>
-                            <span class="nav-text">Kapabilitas</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a data-ui-sref="main.user">
-                            <span class="nav-icon"><i class="ion-android-contact"></i></span>
-                            <span class="nav-text">Pengguna</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a data-ui-sref="main.admin">
-                            <span class="nav-icon"><i class="ion-android-person"></i></span>
-                            <span class="nav-text">Administrator</span>
-                        </a>
-                    </li>
-                    <li class="nav-header hidden-folded"><small class="text-muted">DIAGRAM</small></li>
-                    <li>
-                        <a href="dashboard.html" >
-                            <span class="nav-icon"><i class="ion-erlenmeyer-flask"></i></span>
-                            <span class="nav-text">Data Diagram</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="dashboard.html" >
-                            <span class="nav-icon"><i class="ion-android-globe"></i></span>
-                            <span class="nav-text">Data Publikasi</span>
-                        </a>
-                    </li>
-                    <li class="nav-header hidden-folded"><small class="text-muted">HALAMAN (BLOG)</small></li>
-                    <li>
-                        <a data-ui-sref="main.tutorial" >
-                            <span class="nav-icon"><i class="ion-easel"></i></span>
-                            <span class="nav-text">Tutorial</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-
-        </div>
+        <div flex class="hide-scroll" data-ui-template="backend-menu.html" data-remote="true"></div>
         <div class="b-t" flex-no-shrink></div>
     </div>
 </div>
@@ -101,14 +43,14 @@
                         </span>
                     </a>
                     <div class="dropdown-menu pull-right dropdown-menu-scale">
-                        <a class="dropdown-item" ui-sref="app.inbox.list">
-                            <span>Perpesanan</span>
-                            <span class="label warn m-l-xs">3</span>
-                        </a>
                         <a class="dropdown-item" ui-sref="app.page.profile">
                             <span>Sunting Profil</span>
                         </a>
                         <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" ui-sref="app.inbox.list">
+                            <span>Kunci Layar</span>
+                            <span class="label warn m-l-xs">3</span>
+                        </a>
                         <a class="dropdown-item" ui-sref="app.docs">Dokumentasi</a>
                         <a data-ng-click="logout()" href="javascript:;" class="dropdown-item">Keluar</a>
                     </div>

@@ -1,0 +1,93 @@
+{% set readonly = can.update_user ? '' : 'readonly' %}
+<div class="col-sm-3 col-lg-2">
+    {% verbatim %}
+    <div data-ui-lightbox=".profile-photo">
+        <a class="profile-photo" href="{{ edit.avatar_url }}">
+            <img data-ui-image="photo" class="img-responsive" data-ng-src="{{ edit.avatar | thumbnail:'/user/':200:200 }}">    
+        </a>
+    </div>    
+    {% endverbatim %}
+
+    {% if can.update_user %}
+        {% verbatim %}
+        <div class="m-t text-center">
+            <div class="form-file">
+                <input data-ui-file="photo" data-on-select="onSelectPhoto" type="file">
+                <button class="btn white">Unggah Foto</button>
+                <p class="p-a">{{ photoname }}</p>
+            </div>
+        </div>
+        {% endverbatim %}
+    {% endif %}
+</div>
+
+<div class="col-sm-9 col-lg-10">
+    <div class="row-col light lt">
+        <form class="p-a-md col-md-6">
+            <h4 class="m-a-0 m-b-sm text-md">Profile Pengguna</h4>
+            <hr>
+            <div class="form-group">
+                <label>Nama Lengkap</label>
+                <input data-ng-model="edit.fullname" type="text" class="form-control" {{ readonly }}>
+            </div>
+            <div class="form-group">
+                <label>Jenis Kelamin</label>
+                <input data-ng-model="edit.sex" type="text" class="form-control" {{ readonly }}>
+            </div>
+            <div class="form-group">
+                <label>Pekerjaan</label>
+                <input data-ng-model="edit.job_title" type="text" class="form-control" {{ readonly }}>
+            </div>
+            <div class="form-group">
+                <label>Keterangan</label>
+                <textarea style="resize: none;" data-ng-model="edit.bio" class="form-control" {{ readonly }}></textarea>
+            </div>
+            <h4 class="m-a-0 m-b-sm text-md">Akun Pengguna</h4>
+            <hr>
+            <div class="form-group">
+                <label>Alamat Email</label>
+                <input data-ng-model="edit.email" type="email" class="form-control" {{ readonly }}>
+            </div>
+            <div class="form-group">
+                <label>Kata Sandi</label>
+                <input type="password" class="form-control" {{ readonly }}>
+            </div>
+            <div class="form-group">
+                <label>Hak Akses</label>
+
+                {% if can.update_user %}
+                    {% verbatim %}
+                    <select data-ng-model="edit.role" class="form-control" required>
+                        <option data-ng-repeat="role in roles" value="{{ role.name }}">{{ role.title }}</option>
+                    </select>
+                    {% endverbatim %}
+                {% else %}
+                    <input type="text" data-ng-model="edit.role" class="form-control" {{ readonly }}>
+                {% endif %}
+                
+            </div>
+            {% if can.update_user %}
+            <button data-ng-click="saveUser()" type="submit" class="btn btn-info m-t">Simpan Perubahan</button>
+            {% endif %}
+        </form>   
+        {% verbatim %} 
+        <div class="p-a-md col-md-6">
+            <h4 class="m-a-0 m-b-sm text-md">Info Pengguna</h4>
+            <hr>
+            <div class="form-group">
+                <label>Tanggal Daftar</label>
+                <p class="form-control-static text-md">{{ edit.register_date | dateformat:'dd MMM yyyy HH:mm' }}</p>
+            </div>
+            <div class="form-group">
+                <label>Terakhir Login</label>
+                <p class="form-control-static text-md">{{ edit.last_login | dateformat:'dd MMM yyyy HH:mm' }}</p>
+            </div>
+            <div class="form-group">
+                <label>Alamat Mesin</label>
+                <p class="form-control-static text-md">{{ edit.last_ip }}</p>
+            </div>
+        </div>
+        {% endverbatim %} 
+    </div>    
+</div>
+

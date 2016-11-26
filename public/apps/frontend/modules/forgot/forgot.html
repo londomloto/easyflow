@@ -1,22 +1,6 @@
 
-<nav class="navbar navbar-default navbar-custom">
-    <div class="container">
-        
-        <div class="navbar-header" data-ng-include="'apps/frontend/templates/brand.html'"></div>
+<nav class="navbar navbar-default navbar-custom" data-ui-template="brand-simple.html"></nav>
 
-        <div class="collapse navbar-collapse" id="app-navbar">
-            <ul class="nav navbar-nav navbar-right">
-                <li>
-                    <a ui-sref="home"><i class="ion-android-arrow-back"></i> Kembali ke halaman depan</a>
-                </li>
-            </ul>
-        </div>
-        
-    </div>
-    
-</nav>
-
-<!-- Contact Section -->
 <section id="login-section">
     <div class="container">
         <div class="row">
@@ -28,19 +12,19 @@
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2">
 
-                <form  id="register-form">
+                <form name="form" data-ng-submit="requestPassword()" novalidate>
 
                     <div class="row control-group">
                         <div class="form-group">
                             <p>Untuk mendapatkan kembali kata sandi Anda, masukan alamat email yang Anda gunakan pada saat mendaftar:</p>
-                            <input class="form-control" id="cf-input-1" type="email" required>
+                            <input  data-ng-model="email" name="_email" class="form-control" type="email" required>
                         </div>
                     </div>
 
                     <br>
                     <div class="row">
                         <div class="form-group">
-                            <a href="javascript:void(0)" class="btn btn-raised btn-primary btn-lg">Minta ulang sandi</a>
+                            <button data-ng-disabled="form.$invalid" class="btn btn-raised btn-primary btn-lg">Minta ulang sandi</button>
                             <a ui-sref="login" class="btn btn-link btn-lg">Kembali ke halaman login</a>
                         </div>
                     </div>
@@ -50,7 +34,4 @@
     </div>
 </section>
 
-<!-- Footer -->
-<footer class="text-center" data-ng-include src="'apps/frontend/templates/footer.html'">
-    
-</footer>
+<footer class="text-center" data-ui-template="footer.html"></footer>

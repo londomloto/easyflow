@@ -1,0 +1,71 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the easyflow package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: easyflow 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-11-21 16:57+0700\n"
+"PO-Revision-Date: 2016-11-21 17:33+0700\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=WINDOWS-1252\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.6\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: id\n"
+
+#: application/Module/Auth/Auth.php:32 application/Module/Auth/Auth.php:64
+#: application/Module/Auth/Auth.php:123
+msgid "Invalid parameters"
+msgstr "Parameter tidak valid"
+
+#: application/Module/Tutorial/Tutorial.php:110
+msgid "Failed to delete tutorial"
+msgstr "Gagal menghapus tutorial"
+
+#: system/Core/Application.php:110 system/Core/ErrorHandler.php:35
+msgid "Fatal error"
+msgstr "Kesalahan fatal"
+
+#: system/Core/Application.php:349
+#, php-format
+msgid "Path %s doesn't found!"
+msgstr "Halaman %s tidak ditemukan!"
+
+#: system/Core/ErrorHandler.php:38
+msgid "Error"
+msgstr "Kesalahan"
+
+#: system/Core/ErrorHandler.php:43
+msgid "Warning"
+msgstr "Peringatan"
+
+#: system/Core/ErrorHandler.php:46
+msgid "Notify"
+msgstr "Perhatikan"
+
+#: system/Core/ErrorHandler.php:48
+msgid "Debug"
+msgstr "Debug"
+
+#: system/Core/ErrorHandler.php:50
+msgid "Deprecated"
+msgstr "Usang"
+
+#: system/Core/ErrorHandler.php:52
+msgid "Unknown error"
+msgstr "Kesalahan tidak dikenal"
+
+#: system/Core/Module.php:38
+msgid "Your session has been expired!"
+msgstr "Sesi Anda sudah habis!"
+
+#: system/Service/Dispatcher.php:26
+#, php-format
+msgid "Method %s::%s() doesn't exists!"
+msgstr "Fungsi %s::%s() tidak ditemukan!"
+

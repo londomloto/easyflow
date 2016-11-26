@@ -26,14 +26,7 @@
     <body class="{{ state.style }}" data-ng-cloak>
 
         <div data-ui-view></div>
-
-        <!-- GLOBAL DIALOG -->
-        <div data-ng-include="'apps/frontend/templates/dialog-confirm.html'"></div>
-        <div data-ng-include="'apps/frontend/templates/dialog-alert.html'"></div>
-        <div data-ng-include="'apps/frontend/templates/dialog-info.html'"></div>
-        <div data-ng-include="'apps/frontend/templates/dialog-error.html'"></div>
-        <!-- END OF GLOBAL DIALOG -->
-
+        
         <!-- VENDOR -->
         <script>
             window.paceOptions = {
@@ -48,7 +41,6 @@
         </script>
 
         <script src="assets/vendor/pace/pace.min.js"></script>
-        <script src="assets/vendor/lodash/lodash.js"></script>
         <script src="assets/vendor/jquery/jquery.js"></script>
         <script src="assets/vendor/angular/angular.js"></script>
         <script src="assets/vendor/ui-router/angular-ui-router.js"></script>
@@ -77,6 +69,13 @@
 
         <!-- END APP MODULE -->
         <script id="body-files"></script>
+
+        <!-- GLOBAL DIALOG -->
+        <div data-ui-template="dialog-alert.html"></div>
+        <div data-ui-template="dialog-info.html"></div>
+        <div data-ui-template="dialog-error.html"></div>
+        <div data-ui-template="dialog-confirm.html"></div>
+        <!-- END OF GLOBAL DIALOG -->
 
     </body>
     </html>

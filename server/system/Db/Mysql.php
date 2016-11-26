@@ -1,7 +1,9 @@
 <?php
 namespace Sys\Db;
 
-class Mysql implements IDb {
+use Sys\Helper\Text;
+
+class Mysql implements IDatabase {
 
     protected $_conn;
 
@@ -13,6 +15,8 @@ class Mysql implements IDb {
 
     protected $_error;
     protected $_fields;
+
+    protected $_eventBus;
     
     public function __construct($host, $user, $pass, $name, $port = NULL) {
         $this->_host = $host;
@@ -24,7 +28,17 @@ class Mysql implements IDb {
         $this->_fields = array();
     }
 
+    public function setEventBus(\Sys\Core\IEventBus $eventBus) {
+        $this->_eventBus = $eventBus;
+    }
+
+    public function getEventBus() {
+        return $this->_eventBus;
+    }
+
     public function connect() {
+
+        $this->disconnect();
 
         $this->_conn = new \Mysqli(
             $this->_host,
@@ -34,11 +48,31 @@ class Mysql implements IDb {
             $this->_port
         );
 
+        $this->_conn->set_charset('utf8');
+
+        $eventBus = $this->getEventBus();
+
+        if ($eventBus) {
+            $eventBus->fire('database:connect', $this);
+        }
+    }
+
+    public function disconnect() {
+        if ($this->_conn) {
+            $this->_conn->close();
+            $this->_conn = NULL;
+
+            $eventBus = $this->getEventBus();
+
+            if ($eventBus) {
+                $eventBus->fire('database:disconnect', $this);
+            }
+        }
     }
 
     public function validate() {
         if ( ! $this->_conn) {
-            throw new \Exception("Database tidak terhubung!");
+            throw new \Exception(_('Database not connected'));
         }
     }
 
@@ -49,6 +83,8 @@ class Mysql implements IDb {
         $conn = $this->_conn;
         $stmt = $conn->stmt_init();
         $result = NULL;
+
+        $sql = Text::compact($sql);
 
         if ($stmt->prepare($sql)) {
             if (is_array($params)) {
@@ -93,12 +129,10 @@ class Mysql implements IDb {
                     return TRUE;
                 }
             } else {
-                $this->_error($stmt->error);
-                return FALSE;
+                throw new \Exception($stmt->error);
             }
         } else {
-            $this->_error($stmt->error);
-            return FALSE;
+            throw new \Exception($stmt->error);
         }
     }
 
@@ -109,13 +143,14 @@ class Mysql implements IDb {
     public function fetchOne($sql, $params = NULL, $mode = Result::FETCH_ROW) {
         $result = $this->query($sql, $params);
         $result->setFetchMode($mode);
+        
         return $result->getFirst();
     }
 
     public function fetchAll($sql, $params = NULL, $mode = Result::FETCH_ROW) {
         $result = $this->query($sql, $params);
         $result->setFetchMode($mode);
-        
+
         return $result->toArray();
     }
 
@@ -127,6 +162,26 @@ class Mysql implements IDb {
 
     public function listField($table) {
         if ( ! isset($this->_fields[$table])) {
+
+            $types = array(
+                  1 => 'tinyint',
+                  2 => 'smallint',
+                  3 => 'int',
+                  4 => 'float',
+                  5 => 'double',
+                  7 => 'timestamp',
+                  8 => 'bigint',
+                  9 => 'mediumint',
+                 10 => 'date',
+                 11 => 'time',
+                 12 => 'datetime',
+                 13 => 'year',
+                 16 => 'bit',
+                253 => 'varchar',
+                254 => 'char',
+                246 => 'decimal'
+            );
+
             $query  = $this->_conn->query("SELECT * FROM $table LIMIT 1");
             $fields = array();
 
@@ -138,12 +193,17 @@ class Mysql implements IDb {
                     } else {
                         $field->primary = FALSE;
                     }
+                    $field->type = isset($types[$field->type]) ? $types[$field->type] : 'varchar';
                 }
             }
 
             $this->_fields[$table] = $fields;
         }
         return $this->_fields[$table];
+    }
+
+    public function escape($value) {
+        return $this->_conn->real_escape_string($value);
     }
 
     public function update($table, $data, $keys = NULL) {
@@ -178,6 +238,87 @@ class Mysql implements IDb {
             return $this->query($sql, $params);
         }
         return FALSE;
+    }
+
+    public function updateBatch($table, $values, $index) {
+        if (empty($values)) {
+            $this->_error(_('Bulk update: missing data'));
+            return FALSE;
+        }
+
+        if (empty($index)) {
+            $this->_error(_('Bulk update: missing index'));
+            return FALSE;
+        }
+
+        // validate columns
+        $types  = array();
+        $sample = $values[0];
+
+        foreach($this->listField($table) as $field) {
+            foreach($sample as $key => $val) {
+                if ($key == $field->name) {
+                    $types[$key] = $field->type;
+                }
+            }
+        }
+
+        $keys = array();
+        $when = array();
+
+        foreach($values as $row) {
+            switch(TRUE) {
+                case strpos($types[$index], 'int') !== FALSE:
+                    $keys[] = intval($row[$index]);
+                    break;
+                case $types[$index] == 'decimal':
+                case $types[$index] == 'decimal':
+                case $types[$index] == 'double':
+                    $keys[] = floatval($row[$index]);
+                    break;
+                default:
+                    $keys[] = "'" . $this->escape($row[$index]) . "'";
+                    break;
+            }
+
+            foreach($row as $key => $val) {
+                if ($key != $index && isset($types[$key])) {
+                    if ( ! isset($when[$key])) {
+                        $when[$key] = array();
+                    }
+
+                    if (is_null($val)) {
+                        $val = 'NULL';
+                    } else {
+                        switch(TRUE) {
+                            case strpos($types[$key], 'int') !== FALSE:
+                                $val = intval($val);
+                                break;
+                            case $types[$index] == 'decimal':
+                            case $types[$index] == 'decimal':
+                            case $types[$index] == 'double':
+                                $val = floatval($val);
+                            default:
+                                $val = "'" . $this->escape($val) . "'";
+                                break;
+                        }
+                    }
+
+                    $when[$key][] = "WHEN `$index` = '" . $this->escape($row[$index]) . "' THEN $val";
+                }
+            }
+        }
+
+        $case = array();
+
+        foreach($when as $field => $rows) {
+            $case[] = "`$field` = (CASE " . implode(" ", $rows) . " ELSE `$field` END)";
+        }
+
+        $sql .= "UPDATE `$table` SET " . implode(", ", $case) . " ";
+        $sql .= "WHERE `$index` IN (" . implode(", ", $keys) . ")";
+        
+        return $this->query($sql);
     }
 
     public function insert($table, $data) {

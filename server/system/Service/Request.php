@@ -42,15 +42,20 @@ class Request extends \Sys\Core\Component {
         return $headers;
     }
 
-    public function getHeader($name) {
-        $name = strtoupper(strtr($name, '-', '_'));
+    public function hasHeader($header) {
+        $header = strtoupper(strtr($header, '-', '_'));
+        return isset($_SERVER[$header]) || isset($_SERVER['HTTP_'.$header]);
+    }
 
-        if (isset($_SERVER[$name])) {
-            return $_SERVER[$name];
+    public function getHeader($header) {
+        $header = strtoupper(strtr($header, '-', '_'));
+
+        if (isset($_SERVER[$header])) {
+            return $_SERVER[$header];
         }
 
-        if (isset($_SERVER['HTTP_'.$name])) {
-            return $_SERVER['HTTP_'.$name];
+        if (isset($_SERVER['HTTP_'.$header])) {
+            return $_SERVER['HTTP_'.$header];
         }
 
         return '';
@@ -117,6 +122,10 @@ class Request extends \Sys\Core\Component {
         return isset($_REQUEST[$name]);
     }
 
+    public function hasParam($name) {
+        return isset($_GET[$name]);
+    }
+
     public function hasPost($name) {
         $post = $this->getPost();
         return isset($post[$name]);
@@ -163,7 +172,7 @@ class Request extends \Sys\Core\Component {
     }
 
     public function isSecure() {
-        return $this->getService('url')->isSecure();
+        return $this->getUrl()->isSecure();
     }
 
     public function get($name = NULL, $sanitize = TRUE) {
@@ -256,7 +265,7 @@ class Request extends \Sys\Core\Component {
             if (empty($name)) {
                 $values = $provider;
                 if ($sanitize) {
-                    $security = $this->getService('security');
+                    $security = $this->getSecurity();
                     foreach($values as $key => $val) {
                         $values[$key] = $security->sanitize($val);
                     }
@@ -267,7 +276,7 @@ class Request extends \Sys\Core\Component {
             $value = isset($provider[$name]) ? $provider[$name] : '';
 
             if ($sanitize) {
-                $security = $this->getService('security');
+                $security = $this->getSecurity();
                 $value = $security->sanitize($value);
             }
             

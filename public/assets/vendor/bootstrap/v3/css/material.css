@@ -504,8 +504,9 @@ fieldset[disabled][disabled] .btn-group-vertical,
 .input-group-btn .btn[disabled][disabled],
 .btn-group[disabled][disabled],
 .btn-group-vertical[disabled][disabled] {
-  color: rgba(0, 0, 0, 0.26);
-  background: transparent;
+  /*color: rgba(0, 0, 0, 0.26);
+  background: transparent;*/
+  opacity: .5;
 }
 .theme-dark fieldset[disabled][disabled] .btn,
 .theme-dark fieldset[disabled][disabled] .input-group-btn .btn,
@@ -1688,18 +1689,22 @@ fieldset[disabled] .form-group .form-control {
 .form-group.has-warning .help-block {
   color: #ff5722;
 }
-.form-group.has-error .form-control {
+.form-group.has-error .form-control,
+.form-group.invalid .form-control {
   -webkit-box-shadow: none;
           box-shadow: none;
 }
-.form-group.has-error.is-focused .form-control {
+.form-group.has-error.is-focused .form-control,
+.form-group.invalid.is-focused .form-control {
   background-image: -webkit-gradient(linear, left top, left bottom, from(#f44336), to(#f44336)), -webkit-gradient(linear, left top, left bottom, from(#D2D2D2), to(#D2D2D2));
   background-image: -webkit-linear-gradient(#f44336, #f44336), -webkit-linear-gradient(#D2D2D2, #D2D2D2);
   background-image: -o-linear-gradient(#f44336, #f44336), -o-linear-gradient(#D2D2D2, #D2D2D2);
   background-image: linear-gradient(#f44336, #f44336), linear-gradient(#D2D2D2, #D2D2D2);
 }
 .form-group.has-error label.control-label,
-.form-group.has-error .help-block {
+.form-group.invalid label.control-label,
+.form-group.has-error .help-block,
+.form-group.invalid .help-block {
   color: #f44336;
 }
 .form-group.has-success .form-control {

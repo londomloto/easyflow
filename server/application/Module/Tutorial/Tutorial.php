@@ -2,13 +2,7 @@
 namespace App\Module\Tutorial;
 
 class Tutorial extends \Sys\Core\Module {
-
-    public function initialize() {
-        $this->protect(array(
-            'update'
-        ));
-    }
-
+    
     public function findAction($id = NULL) {
         $id = intval($id);
         $baseVideoUrl = $this->url->getBaseUrl().'public/tutorial/';
@@ -67,11 +61,10 @@ class Tutorial extends \Sys\Core\Module {
         return $result;
     }
 
+    /**
+     * @Authenticate
+     */
     public function updateAction() {
-        throw new \Exception("Error Processing Request", 401);
-        
-        // trigger_error("Hello World", E_USER_ERROR);
-
         $post = $this->request->getPost();
 
         if ($this->request->hasFiles()) {
@@ -111,7 +104,7 @@ class Tutorial extends \Sys\Core\Module {
         }
 
         if ( ! $this->db->delete('tutorial', array('id' => $id))) {
-            throw new \Exception('Gagal menghapus tutorial');
+            throw new \Exception(_('Failed to delete tutorial'));
         }
 
         $this->response->send204();

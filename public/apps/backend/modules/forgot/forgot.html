@@ -1,0 +1,20 @@
+<div class="center-block w-xxl w-auto-xs p-y-md">
+    <div class="navbar">
+        <div class="pull-center"></div>
+    </div>
+    <div class="p-a-md box-color r box-shadow-z1 text-color m-a">
+        <div class="m-b">
+            Lupa sandi Anda?
+            <p class="text-xs m-t">Masukan alamat email Anda di bawah ini, kami akan mengirimkan prosedur pembaharuan sandi Anda.</p>
+        </div>
+        <form name="form" data-ng-submit="sendRequest()">
+            <div class="md-form-group">
+                <input data-ng-model="email" name="_email" class="md-input" required="" type="email">
+                <label>Alamat email Anda</label>
+            </div>
+            <button data-ng-disabled="form.$invalid" type="submit" class="btn primary btn-block p-x-md">Kirim</button>
+        </form>
+    </div>
+    <p id="alerts-container"></p>
+    <div class="p-v-lg text-center">Kembali ke <a data-ui-sref="login" class="text-primary _600">halaman login</a></div>    
+</div>

@@ -21,7 +21,7 @@
         };
 
         $scope.$watch('pallets', function(pallets){
-            _.forEach(pallets, function(p){
+            angular.forEach(pallets, function(p){
                 p.bindPaper($scope.paper);
             });
         });

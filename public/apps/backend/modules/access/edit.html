@@ -1,0 +1,54 @@
+<div class="padding">
+    
+    <div class="row">
+        <div class="col-sm-6">
+            <h4 class="m-a-0 m-b-sm text-md">Hak Akses</h4>
+            <hr>
+            <form>
+                <div class="form-group">
+                    <label>Kode Akses</label>
+                    <input data-ng-model="edit.name" type="text" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Nama Akses</label>
+                    <input data-ng-model="edit.title" type="text" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Keterangan</label>
+                    <textarea data-ng-model="edit.description" class="form-control"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="md-check">
+                        <input data-ng-model="edit.is_default" data-ng-true-value="1" data-ng-false-value="0" type="checkbox">
+                        <i class="blue"></i> Setting sebagai default
+                    </label>
+                </div>
+                <button data-ng-click="saveRole()" type="submit" class="btn btn-info m-t">Simpan Perubahan</button>
+            </form>
+        </div>
+
+        <div class="col-sm-6">
+            <h4 class="m-a-0 m-b-sm text-md">Setting Permisi</h4>
+            <hr>
+            
+            <div class="text-right">
+                <div data-ui-pagination data-template="pagination.html" data-store="permStore" data-display="5"></div>
+            </div>
+
+            <div class="list-group list-group-gap m-t">
+                <li data-ng-repeat="item in permData" class="list-group-item">
+                    <div class="pull-right">
+                        <label class="md-switch">
+                            <input data-ng-model="item.permission_active" data-ng-true-value="1" data-ng-false-value="0" type="checkbox">
+                            <i class="blue"></i>
+                        </label>
+                    </div>
+                    <p class="_700 m-b-0">{{ item.capability_title }}</p>
+                    <small>{{ item.capability_description || 'Tidak ada keterangan' }}</small>
+                </li>
+            </div>
+            
+        </div>
+    </div>
+
+</div>

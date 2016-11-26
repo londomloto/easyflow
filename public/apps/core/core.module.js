@@ -11,12 +11,11 @@
     /** @ngInject */
     function run($rootScope, site) {
         $rootScope.state = {};
-
         $rootScope.site = {};
         $rootScope.user = {};
         
         site.verify();
-
+        
         $rootScope.$on('$stateChangeStart', function(evt, state, params){
             $rootScope.state = state;
         });

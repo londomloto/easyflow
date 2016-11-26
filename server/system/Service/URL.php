@@ -1,7 +1,7 @@
 <?php
 namespace Sys\Service;
 
-class URL extends \Sys\Core\Component {
+class Url extends \Sys\Core\Component {
 
     protected $_baseUri;
     protected $_baseUrl;
@@ -60,8 +60,10 @@ class URL extends \Sys\Core\Component {
         $idx = $cfg->index;
         $suf = $cfg->suffix;
 
-        if ( $path != '/' && ! preg_match('/\\'.$suf.'$/', $path)) {
-            $path .= $suf;
+        if ($suf && $path != '') {
+            if ( ! preg_match('/\\'.$suf.'$/', $path)) {
+                $path .= $suf;
+            }
         }
 
         if ( ! empty($idx)) {
@@ -83,7 +85,7 @@ class URL extends \Sys\Core\Component {
 
     function appendUrl($url, $query) {
         
-        $security = $this->getService('security');
+        $security = $this->getSecurity();
 
         $parsed = parse_url($url);
         $param1 = array();
@@ -183,8 +185,13 @@ class URL extends \Sys\Core\Component {
     public function getSegments() {
         $cfg = $this->getApp()->getConfig()->application;
         $suf = $cfg->suffix;
+
         $uri = trim($this->getPath(), '/');
-        $uri = preg_replace('/(\\'.$suf.')$/', '', $uri);
+
+        if ($suf) {
+            $uri = preg_replace('/(\\'.$suf.')$/', '', $uri);    
+        }
+        
         $seg = explode('/', $uri);
 
         return $seg;

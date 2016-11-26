@@ -16,36 +16,43 @@ class Text {
         return substr($haystack, -$length) == $needle;
     }
 
-    public static function camelize($text, $capitalize = TRUE) {
-        $text = preg_replace('/[^a-z0-9]+/i', ' ', $text);
-        $text = trim($text);
-        $text = ucwords($text);
+    public static function camelize($str, $capitalize = TRUE) {
+        $str = preg_replace('/[^a-z0-9]+/i', ' ', $str);
+        $str = trim($str);
+        $str = ucwords($str);
 
         if ( ! $capitalize) {
-            $text[0] = strtolower($text[0]);
+            $str[0] = strtolower($str[0]);
         }
 
-        $text = str_replace(' ', '', $text);
+        $str = str_replace(' ', '', $str);
 
-        return $text;
+        return $str;
     }
 
-    public static function uncamelize($text, $separator = '-') {
-        $text[0] = strtolower($text);
+    public static function uncamelize($str, $separator = '-') {
+        $str[0] = strtolower($str);
         
-        $text = preg_replace_callback(
+        $str = preg_replace_callback(
             '/([A-Z])/', 
             function($match) use ($separator) {
                 return $separator . strtolower($match[1]);
             }, 
-            $text
+            $str
         );
 
-        return $text;
+        return $str;
     }
 
-    public static function slugify($text) {
+    public static function slugify($str) {
 
+    }
+
+    public static function compact($str) {
+        $str = trim($str);
+        $str = preg_replace('/[\\x00-\\x20]/', ' ', $str);
+        $str = preg_replace('/\s{2,}/', ' ', $str);
+        return $str;
     }
 
 }

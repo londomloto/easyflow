@@ -3,8 +3,8 @@
 
     angular
         .module('core')
-        .provider('api', apiProvider)
         .provider('url', urlProvider)
+        .provider('api', apiProvider)
         .provider('site', siteProvider)
         .provider('auth', authProvider)
         .provider('router', routerProvider)
@@ -12,11 +12,65 @@
         .provider('googleApi', googleApiProvider)
         .provider('facebookApi', facebookApiProvider)
         .provider('session', sessionProvider)
-        .provider('theme', themeProvider);
+        .provider('theme', themeProvider)
+        .provider('debounce', debounceProvider)
+        .provider('Store', StoreProvider);
+
+    function debounceProvider() {
+        var provider = this;
+        provider.$get = factory;
+
+        /** @ngInject */
+        function factory($timeout) {
+            return function(func, wait, immediate) {
+                var timeout, args, scope, result;
+                function debounce() {
+                    var later, callnow;
+
+                    scope = this;
+                    args = arguments;
+
+                    later = function() {
+                        timeout = null;
+                        if ( ! immediate) {
+                            result = func.apply(scope, args);
+                        }
+                    };
+
+                    callnow = immediate && ! timeout;
+
+                    if (timeout) {
+                        $timeout.cancel(timeout);
+                    }
+
+                    timeout = $timeout(later, wait);
+
+                    if (callnow) {
+                        result = func.apply(scope, args);
+                    }
+
+                    return result;
+                }
+
+                debounce.cancel = function() {
+                    $timeout.cancel(timeout);
+                    timeout = null;
+                };
+
+                return debounce;
+            }
+        }
+    }
 
     function sessionProvider() {
         var provider = this;
+
         provider.$get = factory;
+        provider.setup = setup;
+
+        function setup(config) {
+            angular.extend(options, config || {});
+        }
 
         /** @ngInject */
         function factory($window) {
@@ -70,7 +124,7 @@
         provider.register = register;
 
         function setup(config) {
-            _.assign(options, config || {});
+            angular.merge(options, config || {});
 
             if (options.defaultState) {
                 $urlRouterProvider.otherwise(options.defaultState.url);
@@ -86,13 +140,14 @@
         }
 
         /** @ngInject */
-        function factory($rootScope, $state) {
+        function factory($rootScope, $state, url) {
             var service = {
                 getDefaultState: getDefaultState,
                 getDefaultUrl: getDefaultUrl,
                 getLoginState: getLoginState,
                 getLoginUrl: getLoginUrl,
                 getParam: getParam,
+                getUrl: getUrl,
                 go: go
             };
 
@@ -119,47 +174,59 @@
                 return params[name];
             }
 
-            function go(state) {
-                $state.go(state);
+            function getUrl(name, params) {
+                var base = url.getBaseUrl(),
+                    path = $state.href(name, params || {});
+                return base + path;
+            }
+
+            function go(state, params) {
+                params = params || {};
+                $state.go(state, params);
             }
 
         }
     }
 
     /** @ngInject */
-    function urlProvider() {
+    function urlProvider($locationProvider) {
         var provider = this,
             options = {
-                base: null
+                base: null,
+                root: null
             };
 
         provider.$get = factory;
         provider.setup = setup;
         provider.getBaseUrl = getBaseUrl;
+        provider.getRootUrl = getRootUrl;
 
         init();
 
         function init() {
-            // setup default base
-            if (_.isNull(options.base)) {
-                var parser = document.createElement('a');
-                var base = '';
+            var parser = document.createElement('a');
+            var base = '';
+            var root = '';
 
-                parser.setAttribute('href', '');
+            parser.setAttribute('href', '');
 
-                base += parser.protocol + '//';
-                base += parser.host;
-                base += parser.pathname;
+            base += parser.protocol + '//';
+            base += parser.host;
+            base += parser.pathname;
 
-                options.base = base;
+            options.base = base;
 
-                parser = null;
-            }
+            root += parser.protocol + '//';
+            root += parser.host;
+            root += '/';
 
+            options.root = root;
+
+            parser = null;
         }
 
         function setup(config) {
-            _.assign(options, config || {});
+            angular.merge(options, config || {});
         }
 
         function getBaseUrl() {
@@ -167,74 +234,64 @@
         }
 
         function getRootUrl() {
-            var root = '/';
-            if (options.base) {
-                if (/admin\/$/.test(options.base)) {
-                    root = options.base.replace(/admin\/$/, '');
-                } else {
-                    root = options.base;
-                }
+            return options.root || '/';
+        }
+
+        function getSiteUrl(path) {
+            var html5 = $locationProvider.html5Mode(),
+                base = getBaseUrl();
+
+            path = (path || '').replace(/^\//, '');
+
+            if (html5.enabled) {
+                return base + path;
+            } else {
+                return base + '#/' + path;
             }
-            return root;
         }
 
         /** @ngInject */
-        function factory(SERVICE) {
+        function factory() {
             var service = {
                 getBaseUrl: getBaseUrl,
-                getServiceUrl: getServiceUrl
+                getRootUrl: getRootUrl,
+                getSiteUrl: getSiteUrl
             };
 
-            var SVC_URL;
-
             return service;
-
-            function getServiceUrl() {
-                if ( ! SVC_URL) {
-                    if (/^http/.test(SERVICE.URL)) {
-                        SVC_URL = SERVICE.URL;
-                    } else {
-                        SVC_URL  = getRootUrl();
-                        SVC_URL += SERVICE.URL.replace(/(^\/|\/$)/g, '');
-                    }
-                }
-                return SVC_URL;
-            }
         }
     }
 
     /** @ngInject */
-    function loaderProvider($ocLazyLoadProvider, urlProvider) {
+    function loaderProvider($ocLazyLoadProvider) {
         var provider = this,
-            options = {};
-
-        var baseUrl = urlProvider.getBaseUrl();
+            options = {
+                base: ''
+            };
 
         provider.$get = factory;
         provider.setup = setup;
         provider.register = register;
 
-
         function setup(config) {
-            _.assign(options, config || {});
+            angular.extend(options, config || {});
         }
 
         function register(modules) {
-            // _.forEach(modules, function(mod){
-            //     mod.files = _.map((mod.files || []), function(f){
-            //         return baseUrl + f;
-            //     });
-            // });
-
             $ocLazyLoadProvider.config({
                 modules: modules
             });
         }
 
+        function getBase() {
+            return options.base;
+        }
+
         /** @ngInject */
         function factory($ocLazyLoad) {
             var service = {
-                load: load
+                load: load,
+                getBase: getBase
             };
 
             return service;
@@ -246,9 +303,12 @@
     }
 
     /** @ngInject */
-    function apiProvider($httpProvider) {
+    function apiProvider($httpProvider, urlProvider) {
         var provider = this,
-            options = {};
+            options = {
+                base: '',
+                context: 'FRONTEND'
+            };
 
         provider.$get = factory;
         provider.setup = setup;
@@ -257,25 +317,61 @@
         $httpProvider.interceptors.push(interceptor);
 
         function setup(config) {
-            _.assign(options, config || {});
+            angular.merge(options, config || {});
+
+            if (options.base) {
+                if ( ! /^http/.test(options.base)) {
+                    var base = urlProvider.getRootUrl();
+                    base += options.base.replace(/(^\/|\/$)/g, '');
+
+                    options.base = base;
+                    base = null;
+                }
+            }
+        }
+
+        function getBaseUrl() {
+            return options.base;
+        }
+
+        function getContext() {
+            return options.context;
         }
 
         /** @ngInject */
-        function interceptor($timeout, $injector, theme, HTTP_STATUS) {
-            var router;
+        function interceptor($timeout, $injector, HTTP) {
+            var session, router, theme, auth;
 
             // trick: circular dependency
             $timeout(function(){
+                session = $injector.get('session');
                 router = $injector.get('router');
+                theme = $injector.get('theme');
+                auth = $injector.get('auth');
             }); 
 
             return {
+                request: function(config) {
+                    if (auth) {
+                        var user = auth.getCurrentUser();
+                        if (user) {
+                            config.headers['Authorization'] = 'Bearer ' + user.token;
+                        }
+                    }
+
+                    config.headers['X-Context'] = options.context;
+                    return config;
+                },
                 responseError: function(rejection) {
                     var message = rejection.data.message;
 
-                    if (rejection.status == HTTP_STATUS.UNAUTHORIZED) {
+                    if (rejection.status == HTTP.STATUS_UNAUTHORIZED) {
                         if (message) {
                             alert(message);
+                        }
+
+                        if (auth) {
+                            auth.invalidate();
                         }
 
                         if (router) {
@@ -294,24 +390,37 @@
         }
 
         /** @ngInject */
-        function factory($rootScope, $http, url, SERVICE) {
+        function factory($rootScope, $http) {
             var service = { 
                 get: get,
                 del: del,
                 put: put,
-                post: post
+                post: post,
+                getBaseUrl: getBaseUrl
             };
 
-            var BASE_URL = url.getServiceUrl();
+            var BASE_URL = options.base;
                 
             return service;
+
+            function fixpath(path) {
+                path = '/' + path.replace(/^\//, '');
+                return path;
+            }
 
             function get(path, data, options) {
                 if (data) {
                     var params = [];
-                    
-                    for (var key in data) {
-                        params.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key]));
+                    var key, val;
+
+                    for (key in data) {
+                        val = data[key];
+
+                        if (angular.isArray(val)) {
+                            val = JSON.stringify(val);
+                        }
+
+                        params.push(encodeURIComponent(key) + '=' + encodeURIComponent(val));
                     }
 
                     params = params.join('&');
@@ -321,8 +430,8 @@
                     }
                 }
 
-                options = _.extend({
-                    url: BASE_URL + path,
+                options = angular.extend({
+                    url: BASE_URL + fixpath(path),
                     method: 'GET'
                 }, options || {});
 
@@ -330,7 +439,7 @@
             }
 
             function del(path, data, options) {
-                options = _.extend({
+                options = angular.extend({
                     url: BASE_URL + path,
                     method: 'DELETE'
                 }, options || {});
@@ -345,11 +454,11 @@
             }
 
             function put(path, data, options) {
-                options = _.extend({
+                options = angular.extend({
                     url: BASE_URL + path,
                     data: data,
                     method: 'PUT'
-                });
+                }, options || {});
 
                 return request(options);
             }
@@ -357,7 +466,7 @@
             function post(path, data, options) {
                 var regularPost = false;
 
-                options = _.extend({
+                options = angular.extend({
                     url: BASE_URL + path,
                     data: data,
                     method: 'POST'
@@ -376,12 +485,14 @@
                     if (options.upload && options.upload.length) {
                         var fd = new FormData();
 
-                        _.forEach(options.upload, function(o){
+                        angular.forEach(options.upload, function(o, k){
                             fd.append(o.key, o.file);
                         });
 
-                        _.forOwn(data, function(v, k){
-                            fd.append(k, v);
+                        angular.forEach(data, function(v, k){
+                            if (data.hasOwnProperty(k)) {
+                                fd.append(k, v);
+                            }
                         });
 
                         options.data = fd;
@@ -405,13 +516,6 @@
             }
 
             function request(options) {
-                options.headers = options.headers || {};
-                options.headers['X-Application'] = SERVICE.KEY;
-
-                if ($rootScope.user && $rootScope.user.token) {
-                    options.headers['Authorization'] = 'Bearer ' + $rootScope.user.token;
-                }
-
                 return $http(options);
             }
 
@@ -420,18 +524,27 @@
 
     function authProvider() {
         var provider = this,
-            options = {};
+            options = {
+                context: 'FRONTEND',
+                sesskey: 'CURRENT_FRONTEND_USER'
+            };
 
         provider.$get = factory;
         provider.setup = setup;
 
         function setup(config) {
-            _.assign(options, config || {});
+            angular.extend(options, config || {});
+            options.sesskey = 'CURRENT_' + options.context + '_USER';
+        }
+
+        function getContext() {
+            return options.context;
         }
 
         /** @ngInject */
         function factory($rootScope, $timeout, $q, session, router, api) {
-            var loading = null;
+            var loading = null,
+                SESSKEY = options.sesskey;
 
             var service = {
                 save: save,
@@ -441,17 +554,23 @@
                 verify: verify,
                 register: register,
                 invalidate: invalidate,
-                isAuthenticated: isAuthenticated
+                isAuthenticated: isAuthenticated,
+                getCurrentUser: getCurrentUser
             };
 
             return service;
 
             function isAuthenticated() {
-                return session.has('CURRENT_USER');
+                var user = session.get(SESSKEY);
+                return !!user;
+            }
+
+            function getCurrentUser() {
+                return session.get(SESSKEY);
             }
 
             function verify() {
-                var user = session.get('CURRENT_USER'),
+                var user = session.get(SESSKEY),
                     def = $q.defer();
 
                 if (user) {
@@ -465,7 +584,7 @@
                         });
                     } else {
                         loading = api.get('/auth/verify').then(function(response){
-                            var user = response.data.user;
+                            var user = response.data.data;
                             save(user);
                             return user;
                         });
@@ -483,24 +602,27 @@
             function save(user) {
                 if (user) {
                     $rootScope.user = user;
-                    session.set('CURRENT_USER', user);
+                    session.set(SESSKEY, user);
                 } else {
                     $rootScope.user = null;
-                    session.set('CURRENT_USER', null);
+                    session.set(SESSKEY, null);
                 }
             }
 
             function invalidate() {
                 $rootScope.user = null;
-                session.del('CURRENT_USER');
+                session.del(SESSKEY);
             }
 
             function login(email, passwd) {
-                return api.post('/auth/login', {email: email, passwd: passwd})
-                   .then(function(response){
-                        save(response.data.user);
-                        return response.data;
-                   });
+                var data = {
+                    email: email,
+                    passwd: passwd
+                };
+                return api.post('/auth/login', data).then(function(response){
+                    save(response.data.data);
+                    return response.data;
+                });
             }
 
             function logout() {
@@ -513,7 +635,7 @@
             function register(data) {
                 return api.post('/auth/register', data).then(function(response){
                     if (response.data.success) {
-                        save(response.data.user);
+                        save(response.data.data);
                     }
                     return response.data;
                 });   
@@ -522,7 +644,7 @@
             function social(user) {
                 return api.post('/auth/social', user).then(function(response){
                     if (response.data.success) {
-                        save(response.data.user);
+                        save(response.data.data);
                     }
                     return response.data;
                 });
@@ -532,15 +654,33 @@
 
     /** @ngInject */
     function siteProvider() {
-        var provider = this;
+        var provider = this,
+            options = {
+                context: 'FRONTEND',
+                sesskey: 'CURRENT_FRONTEND_SITE'
+            };
+
         provider.$get = factory;
+        provider.setup = setup;
+        provider.getContext = getContext;
+
+        function setup(config) {
+            angular.extend(options, config || {});
+            options.sesskey = 'CURRENT_' + options.context + '_SITE';
+        }
+
+        function getContext() {
+            return options.context;
+        }
         
         /////////
         
         /** @ngInject */
-        function factory($rootScope, api) {
+        function factory($rootScope, session, api) {
             var service = {
                 verify: verify,
+                getContext: getContext,
+                invalidate: invalidate,
                 getTitle: getTitle
             };
 
@@ -548,15 +688,29 @@
 
             function verify() {
                 return api.get('/site/verify').then(function(response){
-                    $rootScope.site = response.data.site;
+                    save(response.data.data);
                     return response.data;
                 });
             }
 
-            function getTitle() {
-                return $rootScope.site ? $rootScope.site.title : 'App';
+            function save(site) {
+                if (site) {
+                    $rootScope.site = site;
+                    session.set(options.sesskey, site);
+                } else {
+                    $rootScope.site = null;
+                    session.set(options.sesskey, null);
+                }
             }
 
+            function invalidate() {
+                save(null);
+            }
+
+            function getTitle() {
+                var site = session.get(options.sesskey);
+                return site ? site.title : 'Application';
+            }
         }
     }
 
@@ -704,14 +858,14 @@
     }
 
     function themeProvider() {
-        var provider = this;
+        var provider = this,
+            templates = [];
         provider.$get = factory;
 
         /////////
         
         /** @ngInject */
-        function factory($q) {
-
+        function factory($q, $templateCache, debounce) {
             var modals = {};
 
             var service = {
@@ -721,15 +875,30 @@
                 showModal: showModal,
                 hideModal: hideModal,
                 showConfirm: showConfirm,
-                showAlert: showAlert
+                showAlert: showAlert,
+                registerTemplate: registerTemplate,
+                invalidateTemplates: invalidateTemplates
             };
 
             return service;
 
             function init(scope) {
-                scope.$on('$viewContentLoaded', _.debounce(function(){
+                scope.$on('$viewContentLoaded', debounce(function(){
                     $.material.init();
                 }, 0));
+            }
+
+            function registerTemplate(name) {
+                if (templates.indexOf(name) === -1) {
+                    templates.push(name);
+                }
+            }
+
+            function invalidateTemplates() {
+                for(var i = templates.length - 1; i >= 0; i--) {
+                    $templateCache.remove(templates[i]);
+                    templates.splice(i, 1);
+                }
             }
 
             function toast(message, type) {
@@ -779,6 +948,160 @@
                     modal.hide();
                 }
             }
+        }
+    }
+
+    function StoreProvider() {
+        var provider = this;
+        provider.$get = factory;
+
+        function factory($q, api) {
+            var Store = function(config) {
+                this.start = 0;
+                this.total = 0;
+                this.count = 0;
+                this.page  = 1;
+
+                this.listeners = [];
+
+                this.config = angular.extend({
+                    url: '',
+                    type: 'GET',
+                    params: {},
+                    pageSize: 10,
+                    autoLoad: false
+                }, config || {});
+
+                if (this.config.autoLoad) {
+                    this.load();
+                }
+            };
+
+            Store.prototype.constructor = Store;
+
+            Store.prototype.on = function(event, handler, context) {
+                context = context || this;
+
+                var options = {
+                    event: event,
+                    handler: handler,
+                    context: context
+                };
+
+                this.listeners.push(options);
+            };
+
+            Store.prototype.off = function(event, handler) {
+                var lsnr = this.listeners;
+
+                for (var i = lsnr.length - 1; i >= 0; i--) {
+                    if (lsnr[i].event == event) {
+                        if (handler) {
+                            if (lsnr[i].handler === handler) {
+                                lsnr.splice(i, 1);
+                            }
+                        } else {
+                            lsnr.splice(i, 1);    
+                        }
+                    }
+                }
+            };
+
+            Store.prototype.fire = function(/* event, args */) {
+                var lsnr = this.listeners,
+                    args = Array.prototype.slice.call(arguments),
+                    fire = args.shift();
+
+                for (var i = 0, ii = lsnr.length; i < ii; i++) {
+                    if (lsnr[i].event == fire) {
+                        lsnr[i].handler.apply(lsnr[i].context, args);
+                    }
+                }
+            };
+
+            Store.prototype.load = function(options) {
+                var def = $q.defer(),
+                    me = this;
+
+                if (this.config.url) {
+                    var method = this.config.type.toLowerCase();
+
+                    this.fire('beforeload', options);
+
+                    options = angular.extend({}, this.config.params, options || {});
+
+                    options.page  = options.page || this.page;
+                    options.start = options.start !== undefined ? options.start : (options.page - 1) * this.config.pageSize;
+                    options.limit = options.limit || this.config.pageSize;
+
+                    // save
+                    this.page  = options.page;
+                    this.start = options.start;
+
+                    api[method](this.config.url, options).then(function(response){
+                        var result = response.data;
+                        
+                        me.total = result.total;
+                        me.count = result.data.length;
+
+                        me.fire('load', result.data);
+                        def.resolve(result.data);
+                    });
+                } else {
+                    me.fire('load');
+                    def.resolve([]);
+                }
+
+                return def.promise;
+            };
+
+            Store.prototype.setParam = function(name, value) {
+                if (angular.isObject(name)) {
+                    for (var prop in name) {
+                        if (name.hasOwnProperty(prop)) {
+                            this.config.params[prop] = name[prop];
+                        }
+                    }
+                } else {
+                    this.config.params[name] = value;
+                }
+            };
+
+            Store.prototype.loadPage = function(page, options) {
+                options = options || {};
+                
+                this.page = page;
+
+                angular.extend(options, {
+                    page: page,
+                    start: (page - 1) * this.config.pageSize,
+                    limit: this.config.pageSize
+                });
+
+                return this.load(options);
+            };
+
+            Store.prototype.getPage = function() {
+                return this.page;
+            };
+
+            Store.prototype.getStart = function() {
+                return (this.page - 1) * this.config.pageSize;
+            };
+
+            Store.prototype.getPageSize = function() {
+                return this.config.pageSize;
+            };
+
+            Store.prototype.getCount = function() {
+                return this.count;
+            };
+
+            Store.prototype.getTotal = function() {
+                return this.total;
+            };
+
+            return Store;
         }
     }
 

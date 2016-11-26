@@ -6,7 +6,7 @@ use \Sys\Helper\File;
 class Diagram extends \Sys\Core\Module {
 
     public function findAction() {
-        $user = $this->auth->getUser();
+        $user = $this->auth->getCurrentUser();
 
         $data = array(
             'success' => TRUE,

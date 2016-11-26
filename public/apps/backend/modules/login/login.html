@@ -1,23 +1,34 @@
 <div class="center-block w-xxl w-auto-xs p-y-md">
     <div class="navbar">
         <div class="pull-center">
-            <div data-ng-include="'apps/backend/templates/navbar.brand.html'"></div>
+            <a class="navbar-brand">
+                <span class="hidden-folded inline">Login Admin</span>
+            </a>
         </div>
     </div>
+    
+    <div ng-show="message" class="box-color danger pos-rlt m-a">
+        <span class="arrow bottom b-danger"></span>
+        <div class="box-body">
+            {{ message }}
+        </div>
+    </div>
+
     <div class="p-a-md box-color r box-shadow-z1 text-color m-a">
         <div class="m-b">
-            Masuk dengan email dan password
+            Gunakan email dan password untuk menggunakan aplikasi.
         </div>
-        <form name="form">
+        <form name="form" data-ng-submit="login(form.$valid)" novalidate>
             <div class="md-form-group float-label">
-                <input type="email" class="md-input" data-ng-model="email" required>
-                <label>Email</label>
+                <input type="email" class="md-input text-md" data-ng-model="email" required>
+                <label>Alamat Email</label>
             </div>
             <div class="md-form-group float-label">
-                <input type="password" class="md-input" data-ng-model="passwd" required>
-                <label>Sandi</label>
+                <input type="password" class="md-input text-md" data-ng-model="passwd" required>
+                <label>Kata Sandi</label>
             </div>
-            <button data-ng-click="login()" type="submit" class="btn primary btn-block p-x-md">Masuk Aplikasi</button>
+            <p>Lupa kata sandi? <a data-ui-sref="forgot" class="link text-info _600">klik disini</a></p>
+            <button type="submit" data-ng-disabled="form.$invalid" class="btn primary btn-block p-x-md">Masuk Aplikasi</button>
         </form>
     </div>
 </div>

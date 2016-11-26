@@ -1,7 +1,7 @@
 <div data-ui-lightbox=".avatar" class="row">
     <div class="col-sm-2">
-        <a class="avatar" ng-href="{{ user.avatar_url }}">
-            <img class="img-thumbnail" alt="." src="{{ user.avatar | thumbnail:'/user/':96:96 }}">
+        <a class="avatar" data-ng-href="{{ user.avatar_url }}">
+            <img class="img-thumbnail" alt="." data-ng-src="{{ user.avatar | thumbnail:'/user/':96:96 }}">
         </a>
     </div>
     <div class="col-sm-10">

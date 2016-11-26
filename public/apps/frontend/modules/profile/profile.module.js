@@ -13,40 +13,36 @@
     }
 
     /** @ngInject */
-    function EditProfileController($rootScope, $scope, router, api, theme) {
+    function EditProfileController($rootScope, $scope, router, auth, api, theme) {
         theme.init($scope);
 
-        $scope.pass1 = '';
-        $scope.pass2 = '';
+        $scope.account = angular.copy($scope.user);
+        $scope.account.passwd1 = '';
+        $scope.account.passwd2 = '';
+        $scope.account.noavatar = false;
 
-        $scope.user.noavatar = false;
+        $scope.avatar = null;
+        $scope.avatar_name = "";
 
-        $scope.setAvatar = function() {
-            console.log('called');
-        };
-
-        $scope.saveProfile = function() {
+        $scope.updateAccount = function() {
             if ($scope.form1.$valid) {
-                var data, opts;
+                var opts = {}, data;
 
-                data = angular.copy($scope.user);
+                data = angular.copy($scope.account);
                 data.noavatar = data.noavatar ? '1' : '0';
 
                 delete data['token'];
 
-                if ($scope.userfile) {
-                    opts = {
-                        upload: [
-                            {key: 'userfile', file: $scope.userfile}
-                        ]
-                    };
+                if ($scope.avatar) {
+                    opts.upload = [
+                        { key: 'userfile', file: $scope.avatar }
+                    ];
                 }
 
-                api.post('/user/update-profile', data, opts).then(function(result){
+                api.post('/user/update-account', data, opts).then(function(result){
                     if (result.data.success) {
                         if (result.data.user) {
-                            delete result.data.noavatar;
-                            $rootScope.user = result.data.user;
+                            auth.save(result.data.user);
                         }
                         theme.toast('Perubahan data berhasil disimpan');    
                     } else {
@@ -57,45 +53,13 @@
             
         };
 
-        $scope.saveAccount = function() {
-            var valid = true;
-            if ($scope.pass1) {
-                if ($scope.pass1 != $scope.pass2) {
-                    valid = false;
-                } else {
-                    valid = true;
-                }
-            }
-
-            $scope.form2._pass2.$setValidity('verify', valid);
-
-            valid = valid && $scope.pass1 && $scope.pass2;
-
-            if (valid) {
-                var data = angular.copy($scope.user);
-                data.passwd = $scope.pass1;
-
-                delete data['token'];
-
-                api.post('/user/update-account', data).then(function(result){
-                    if (result.data.success) {
-                        theme.toast('Perubahan data berhasil disimpan');    
-                    } else {
-                        theme.toast(result.data.message, 'danger');    
-                    }
-                });
-            }
-
-            
-        };
-
         $scope.removeAccount = function() {
             theme.showConfirm('Konfirmasi', 'Anda yakin akan menghapus akun?').then(function(action){
                 if (action) {
                     api.post('/user/delete-account', {email: $scope.user.email}).then(function(result){
                         if (result.data.success) {
-                            $rootScope.user = null;
-                            router.go('home');
+                            auth.invalidate();
+                            router.go(router.getDefaultState());
                         }
                     });
                 }

@@ -4,13 +4,22 @@
 
     angular
         .module('core')
+        .filter('boolean', booleanFilter)
         .filter('thumbnail', thumbnailFilter)
         .filter('decodehtml', decodehtmlFilter)
         .filter('dateformat', dateformatFilter);
 
+    function booleanFilter() {
+        return function(input, truly, falsy) {
+            truly = angular.isUndefined(truly) ? 'Ya' : truly;
+            falsy = angular.isUndefined(falsy) ? 'Tidak' : falsy;
+            return +input ? truly : falsy;
+        };
+    }
+
     /** @ngInject */
-    function thumbnailFilter($rootScope, url) {
-        var BASE_URL = url.getServiceUrl();
+    function thumbnailFilter($rootScope, api) {
+        var BASE_URL = api.getBaseUrl();
         
         return function(image, path, width, height) {
             return BASE_URL + path + 'thumbnail/' + image + '/' + width + '/' + height;

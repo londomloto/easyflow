@@ -14,6 +14,8 @@ return array(
 
     'author' => 'Roso Sasongko <roso.sasongko@gmail.com>',  
 
+    'locale' => 'id_ID', // 'id_ID',
+
     /**
      * Nama file index: index.php
      */
@@ -27,7 +29,7 @@ return array(
     /**
      * Ekstensi url
      */
-    'suffix' => '.jsp',
+    'suffix' => '',
 
     'charset' => 'UTF-8',
 
@@ -54,37 +56,46 @@ return array(
     ),
 
     /**
+     * Setting
+     */
+    'setting' => array(
+        'source' => 'setting'
+    ),
+    
+    /**
      * Authentication
      */
     'auth' => array(
-        'user_table' => 'user',
-        'role_table' => 'role',
-        'locking' => TRUE,
-        'max_attempts' => 3,
-        'timeout' => 120
+        'source' => 'user'
     ),
 
     /**
      * Authorization
      */
     'role' => array(
-        'role_table' => 'role',
-        'user_table' => 'user'
+        'source_role' => 'role',
+        'source_caps' => 'capability',
+        'source_perm' => 'permission'
     ),
-
-    /**
-     * Database read/write
-     */
-    'database' => array(
-        'read' => 'db',
-        'write' => 'db'
-    ),
-
+    
     /**
      * Daftar service yang otomatis diload ketika aplikasi dimulai
      */
     'services' => array(
-        
+        'setting' => array('App\Service\Setting', TRUE),
+        'site' => array('App\Service\Site', TRUE),
+        'auth' => array('App\Service\Auth', TRUE),
+        'role' => array('App\Service\Role', TRUE)
+    ),
+
+    /**
+     * Events listener plugins
+     */
+    'plugins' => array(
+        'module' => 'App\Plugin\Module',
+        'database' => 'App\Plugin\Database',
+        'dispatcher' => 'App\Plugin\Dispatcher',
+        'application' => 'App\Plugin\Application'
     )
     
 );
