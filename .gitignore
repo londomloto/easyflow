@@ -1,4 +1,4 @@
 /server/node_modules
 /server/vendor
-/server/cache/template/**/*/
-template
+/server/cache/*
+!server/cache/.gitkeep
