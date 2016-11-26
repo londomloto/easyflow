@@ -45,28 +45,28 @@ return array(
         'name' => 'EASYSESSID',
         // 'cookie_lifetime' => 86400,
         'cookie_lifetime' => 1440,
-        'cookie_path' => '/'
+        'cookie_path' => '/',
     ),
 
     /**
      * Security setting
      */
     'security' => array(
-        'secret_key' => 'Lv4dmEWEWAjEyLaJkXz+BGvypPYcH/aSO3LMOCloAuM='
+        'secret_key' => 'Lv4dmEWEWAjEyLaJkXz+BGvypPYcH/aSO3LMOCloAuM=',
     ),
 
     /**
      * Setting
      */
     'setting' => array(
-        'source' => 'setting'
+        'source' => 'setting',
     ),
     
     /**
      * Authentication
      */
     'auth' => array(
-        'source' => 'user'
+        'source' => 'user',
     ),
 
     /**
@@ -75,17 +75,17 @@ return array(
     'role' => array(
         'source_role' => 'role',
         'source_caps' => 'capability',
-        'source_perm' => 'permission'
+        'source_perm' => 'permission',
     ),
     
     /**
      * Daftar service yang otomatis diload ketika aplikasi dimulai
      */
     'services' => array(
-        'setting' => array('App\Service\Setting', TRUE),
-        'site' => array('App\Service\Site', TRUE),
-        'auth' => array('App\Service\Auth', TRUE),
-        'role' => array('App\Service\Role', TRUE)
+        'setting' => 'App\Service\Setting',
+        'site' => 'App\Service\Site',
+        'auth' => 'App\Service\Auth',
+        'role' => 'App\Service\Role',
     ),
 
     /**
@@ -95,7 +95,7 @@ return array(
         'module' => 'App\Plugin\Module',
         'database' => 'App\Plugin\Database',
         'dispatcher' => 'App\Plugin\Dispatcher',
-        'application' => 'App\Plugin\Application'
-    )
+        'application' => 'App\Plugin\Application',
+    ),
     
 );

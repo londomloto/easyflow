@@ -153,7 +153,12 @@ class Application implements IApplication {
             $services = $this->_config->application->services->toArray();
 
             foreach($services as $name => $opts) {
+                if (is_string($opts)) {
+                    $opts = array($opts, TRUE);
+                }
+
                 $opts = array_pad($opts, 2, TRUE);
+                
                 array_unshift($opts, $name);
                 call_user_func_array(array($this, 'addService'), $opts);
             }
@@ -374,7 +379,7 @@ class Application implements IApplication {
         }
 
         if (count($segments) == 1) {
-            $module = $this->hasModule($this->_modules[$segments[0]]) ? $this->_modules[$segments[0]] : FALSE;
+            $module = $this->hasModule($segments[0]) ? $segments[0] : FALSE;
             $action = $request->getDefaultHandler();
         } else {
             

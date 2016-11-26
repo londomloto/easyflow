@@ -20,5 +20,5 @@ return array(
         'pass' => 'secret',
         'name' => 'test',
         'load' => FALSE
-    )
+    ),
 );
