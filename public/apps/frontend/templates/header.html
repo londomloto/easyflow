@@ -1,0 +1,48 @@
+<div class="container">
+    
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#app-navbar">
+            <span class="sr-only">Toggle navigation</span> Menu <i class="ion-android-more-vertical"></i>
+        </button>
+        <a class="navbar-brand" href="javascript:;">
+            <span class="icon"><i class="ion-shuffle"></i></span> 
+            <span class="text">easyflow</span>
+        </a>
+    </div>
+
+    <div class="collapse navbar-collapse" id="app-navbar">
+        <ul class="nav navbar-nav navbar-right">
+            <li data-ui-sref-active="active"><a data-ui-sref="home" >Beranda</a></li>
+            <li data-ui-sref-active="active"><a data-ui-sref="tutorial">Tutorial</a></li>
+            <li data-ui-sref-active="active"><a data-ui-sref="catalog.index" >Katalog</a></li>
+            <li data-ng-if=" ! user"><a ui-sref="register" >Daftar</a></li>
+            <li data-ng-if=" ! user"><a ui-sref="login" >Masuk</a></li>
+            <li data-ng-if="user">
+                <div class="avatar">
+                    <img alt="." ng-src="{{ user.avatar | thumbnail:'/user/':50:50 }}">    
+                </div>
+            </li>
+            <li ng-if="user" class="dropdown">
+                <a href="javascript:void(0)" data-target="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                    {{ user.fullname }}
+                    <b class="caret"></b>
+                    <div class="ripple-container"></div>
+                </a>
+                <ul class="dropdown-menu">
+                    <li><a ui-sref="profile.home({email: user.email})"><i class="ion-home"></i>&nbsp;&nbsp;Beranda Saya</a></li>
+                    <li><a ui-sref="profile.edit"><i class="ion-person"></i>&nbsp;&nbsp;Sunting Profil</a></li>
+                    <li><a ui-sref="profile.notification"><i class="ion-android-notifications"></i>&nbsp;&nbsp;Pesan Notifikasi</a></li>
+                    <li class="divider"></li>
+                    <li><a href="javascript:void(0)" data-ng-click="logout()" ><i class="ion-power"></i>&nbsp;&nbsp;Keluar Profil</a></li>
+                </ul>
+              </li>
+        </ul>
+    </div>
+</div>
+
+<!-- GLOBAL DIALOG -->
+<div data-ui-template="dialog-alert.html"></div>
+<div data-ui-template="dialog-info.html"></div>
+<div data-ui-template="dialog-error.html"></div>
+<div data-ui-template="dialog-confirm.html"></div>
+<!-- END OF GLOBAL DIALOG -->

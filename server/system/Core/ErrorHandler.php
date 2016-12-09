@@ -88,7 +88,8 @@ class ErrorHandler extends Component {
     }
 
     public function isJsonRequest() {
-        return $this->hasService('request') ? $this->getRequest()->isJson() : FALSE;
+        $request = $this->getRequest();
+        return $request ? $request->isJson() : FALSE;
     }
 
     public function handleError($errno, $errstr, $errfile, $errline) {
@@ -149,7 +150,7 @@ class ErrorHandler extends Component {
         if ( ! headers_sent()) {
             header("HTTP/1.1 {$code} {$name}");    
         }
-
+        
         if ($json) {
             $data = array(
                 'title' => $name,

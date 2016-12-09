@@ -1,0 +1,31 @@
+<div class="padding pos-rlt">
+    <div class="m-b row">
+        <div class="col-sm-6">
+            
+        </div>
+        <div class="col-sm-6 text-right">
+            <div data-ui-pagination data-template="pagination.html" data-store="inboxStore" data-display="10"></div>
+        </div>
+    </div>
+    <div class="list">
+        <div data-ng-repeat="item in messages" class="list-item b-l b-l-2x  white m-b-xs">
+            <div class="list-left">
+                <span class="w-48 rounded  {{ pickColor() }}">
+                  <span class="_500 text-md">{{ item.initial }}</span>
+                </span>
+            </div>
+            <div class="list-body">
+                <div class="pull-right text-muted text-xs">
+                    <span class="hidden-xs">{{ item.message_date | dateformat:'dd MMM yyyy' }}</span>
+                </div>
+                <div>
+                    <a data-ui-sref="main.mail.inbox.message({id: item.id})" class=""><span class="_600">{{ item.fullname }}</span> <span class="text-muted">&lt;{{ item.email }}&gt;</span></a>
+                </div>
+                <div class="text-ellipsis text-muted text-sm">
+                    <p class="text-md m-b-0"><a data-ui-sref="main.mail.inbox.message({id: item.id})" class=" text-info link">{{ item.subject }}</a></p>
+                    {{ item.message }}
+                </div>
+            </div>
+        </div>
+    </div>    
+</div>

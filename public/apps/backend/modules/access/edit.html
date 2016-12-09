@@ -7,7 +7,7 @@
             <form>
                 <div class="form-group">
                     <label>Kode Akses</label>
-                    <input data-ng-model="edit.name" type="text" class="form-control">
+                    <input data-ng-readonly="edit.name == 'admin'" data-ng-model="edit.name" type="text" class="form-control">
                 </div>
                 <div class="form-group">
                     <label>Nama Akses</label>
@@ -31,22 +31,20 @@
             <h4 class="m-a-0 m-b-sm text-md">Setting Permisi</h4>
             <hr>
             
-            <div class="text-right">
-                <div data-ui-pagination data-template="pagination.html" data-store="permStore" data-display="5"></div>
-            </div>
-
-            <div class="list-group list-group-gap m-t">
-                <li data-ng-repeat="item in permData" class="list-group-item">
+            <ul class="list-group list-group-gap" style="max-height: 460px; overflow: auto; overflow-x: hidden;">
+                <li data-ng-repeat="item in capabilities" class="list-group-item">
                     <div class="pull-right">
                         <label class="md-switch">
-                            <input data-ng-model="item.permission_active" data-ng-true-value="1" data-ng-false-value="0" type="checkbox">
+                            <input data-ng-model="item.capable" data-ng-true-value="1" data-ng-false-value="0" type="checkbox">
                             <i class="blue"></i>
                         </label>
                     </div>
-                    <p class="_700 m-b-0">{{ item.capability_title }}</p>
-                    <small>{{ item.capability_description || 'Tidak ada keterangan' }}</small>
+                    <div>
+                        <p class="text-md text-info m-b-0">{{ item.name }}</p>
+                        <p class="m-b-0">{{ item.label }}</p>
+                    </div>
                 </li>
-            </div>
+            </ul>
             
         </div>
     </div>

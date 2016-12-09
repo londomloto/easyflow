@@ -1,39 +1,5 @@
 
-<nav class="navbar navbar-default navbar-custom">
-    <div class="container">
-        
-        <div class="navbar-header" data-ui-template="brand.html"></div>
-
-        <div class="collapse navbar-collapse" id="app-navbar">
-            <ul class="nav navbar-nav navbar-right">
-                <li><a ui-sref="tutorial" >Tutorial</a></li>
-                <li><a ui-sref="register" >Publikasi</a></li>
-                <li data-ng-if=" ! user"><a ui-sref="register" >Daftar</a></li>
-                <li data-ng-if=" ! user"><a ui-sref="login" >Login</a></li>
-                <li data-ng-if="user">
-                    <div class="avatar">
-                        <img alt="." ng-src="{{ user.avatar | thumbnail:'/user/':50:50 }}">    
-                    </div>
-                </li>
-                <li ng-if="user" class="dropdown">
-                    <a href="javascript:void(0)" data-target="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                        {{ user.fullname }}
-                        <b class="caret"></b>
-                        <div class="ripple-container"></div>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a ui-sref="profile.home"><i class="ion-android-happy"></i>&nbsp;&nbsp;Halaman Profil</a></li>
-                        <li><a ui-sref="profile.edit"><i class="ion-edit"></i>&nbsp;&nbsp;Edit Profil</a></li>
-                        <li><a ui-sref="editor" target="_blank"><i class="ion-plus"></i>&nbsp;&nbsp;Buat Diagram Baru</a></li>
-                        <li><a ui-sref="profile.diagram"><i class="ion-erlenmeyer-flask"></i>&nbsp;&nbsp;Katalog Diagram</a></li>
-                        <li class="divider"></li>
-                        <li><a href="javascript:void(0)" data-ng-click="logout()" ><i class="ion-power"></i>&nbsp;&nbsp;Keluar</a></li>
-                    </ul>
-                  </li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<nav class="navbar navbar-default navbar-custom" data-ui-template="header.html"></nav>
 
 <header>
     <div class="container">
@@ -115,34 +81,35 @@
         <div class="row">
             <div class="col-lg-8 col-lg-offset-2">
                 
-                <form  id="contact-form">
+                <form data-ng-submit="sendMessage()" name="form" id="contact-form" novalidate>
 
                     <div class="row control-group">
-                        <div class="form-group label-floating">
-                            <label class="control-label" for="cf-input-1">Nama lengkap</label>
-                            <input class="form-control" id="cf-input-1" type="text" required>
+                        <div class="form-group" data-ng-class="{ 'invalid' : form.contact_fullname.$invalid && !form.contact_fullname.$pristine }">
+                            <label class="control-label">Nama lengkap</label>
+                            <input class="form-control" data-ng-model="contact.fullname" name="contact_fullname" type="text" required>
+                            <p data-ng-show="form.contact_fullname.$error.required && !form.contact_fullname.$pristine" class="help-block text-sm text-danger">Nama lengkap wajib diisi</p>
                         </div>
                     </div>
 
                     <div class="row control-group">
-                        <div class="form-group label-floating">
-                            <label class="control-label" for="cf-input-2">Alamat email</label>
-                            <input class="form-control" id="cf-input-2" type="text" required>
+                        <div class="form-group" data-ng-class="{ 'invalid' : form.contact_email.$invalid && !form.contact_email.$pristine }">
+                            <label class="control-label" >Alamat email</label>
+                            <input class="form-control" data-ng-model="contact.email" name="contact_email" type="text" required>
+                            <p data-ng-show="form.contact_email.$error.required && !form.contact_email.$pristine" class="help-block text-sm text-danger">Alamat email wajib diisi</p>
                         </div>
                     </div>
 
                     <div class="row control-group">
-                        <div class="form-group label-floating">
-                            <label class="control-label" for="cf-input-3">Tulis saran dan kritik Anda</label>
-                            <textarea rows="5" class="form-control" id="cf-input-3" required></textarea>
+                        <div class="form-group" data-ng-class="{ 'invalid' : form.contact_message.$invalid && !form.contact_message.$pristine }">
+                            <label class="control-label">Tulis saran dan kritik Anda (min: 40 karakter)</label>
+                            <textarea rows="5" class="form-control" data-ng-model="contact.message" data-ng-minlength="40" name="contact_message" required></textarea>
+                            <p data-ng-show="form.contact_message.$error.required && !form.contact_message.$pristine" class="help-block text-sm text-danger">Isi pesan wajib diisi</p>
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="form-group">
-                            <a href="javascript:void(0)" class="btn btn-raised btn-primary btn-lg">Kirim Pesan
-                                <div class="ripple-container"></div>
-                            </a>
+                            <button data-ng-disabled="form.$invalid" type="submit" class="btn btn-raised btn-primary btn-lg">Kirim Pesan</button>
                         </div>
                     </div>
                 </form>

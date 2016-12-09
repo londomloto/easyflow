@@ -50,28 +50,28 @@ class Setting extends \Sys\Core\Component {
         $this->getSecurity()->setConfig($security);
     }
 
-    public function get() {
-
+    public function get($key) {
+        
     }
 
-    public function set($name, $value) {
+    public function set($key, $value) {
         $success = FALSE;
 
-        if ( ! empty($name)) {
+        if ( ! empty($key)) {
             $source = $this->_config->source;
-            $keys = array_keys($name);
+            $keys = array_keys($key);
             $bulk = ! is_string($keys[0]);
 
             if ($bulk) {
-                $success = $this->_db->updateBatch($source, $name, 'name');
+                $success = $this->_db->updateBatch($source, $key, 'name');
             } else {
                 $success = $this->_db->update(
                     $source, 
                     array(
-                        'name' => $name,
+                        'name' => $key,
                         'value' => $value
                     ), 
-                    array('name' => $name)
+                    array('name' => $key)
                 );
             }
         }

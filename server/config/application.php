@@ -73,9 +73,7 @@ return array(
      * Authorization
      */
     'role' => array(
-        'source_role' => 'role',
-        'source_caps' => 'capability',
-        'source_perm' => 'permission',
+        'source' => 'role'
     ),
     
     /**
@@ -86,6 +84,7 @@ return array(
         'site' => 'App\Service\Site',
         'auth' => 'App\Service\Auth',
         'role' => 'App\Service\Role',
+        'notification' => 'App\Service\Notification',
     ),
 
     /**

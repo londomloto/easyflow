@@ -10,12 +10,11 @@ class Application  {
     }
 
     public function setupApp($app) {
-
-        $request = $app->getRequest();
+        $request  = $app->getRequest();
         $registry = $app->getRegistry();
-
-        if ($request->hasHeader('X-Contex')) {
-            $ctx = $request->getHeader('X-Contex');
+        
+        if ($request->hasHeader('X-Context')) {
+            $ctx = $request->getHeader('X-Context');
         } else if ($request->hasParam('context')) {
             $ctx = $request->getParam('context');
         } else {
@@ -24,7 +23,19 @@ class Application  {
 
         $registry->set('context', $ctx);
 
-        $app->getSetting()->apply();
+        $db = $app->getDefaultDatabase();
+
+        if ($db->isConnected()) {
+            $app->getSetting()->apply();
+        }
+
+        // add twig function
+        $template = $app->getTemplate();
+        $role = $app->getRole();
+        
+        $template->addFunction('can', function($perm) use ($role) {
+            return $role->can($perm);
+        });
     }
 
 }

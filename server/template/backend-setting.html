@@ -1,4 +1,4 @@
-{% set readonly = can.update_app ? '' : 'readonly' %}
+{% set readonly = can('update_app') ? '' : 'readonly' %}
 <form name="form" novalidate>
     <div class="row">
         <div class="col-md-6 col-sm-6 col-xs-6">
@@ -68,7 +68,7 @@
                         <label>Google</label>
                         <input data-ng-model="setting.google_page" type="text" class="form-control" {{ readonly }}>
                     </div>
-                    {% if can.update_app %}
+                    {% if can('update_app') %}
                     <button data-ng-click="updateSetting()" data-ng-disabled="form.$invalid" type="button" class="btn btn-info m-t">Simpan Perubahan</button>
                     <button data-ng-click="resetSetting()" type="button" class="btn btn-link m-t">Batalkan perubahan</button>
                     {% endif %}
@@ -90,7 +90,7 @@
                         <label>Nomor port</label>
                         <input data-ng-model="setting.smtp_port" name="smtp_port" type="text" class="form-control" required {{ readonly }}>
                     </div>
-                    {% if can.update_app %}
+                    {% if can('update_app') %}
                     <div class="form-group">
                         <label>Keamanan jaringan</label>
                         <div class="row">
@@ -122,7 +122,7 @@
                         <label>Sandi pengguna</label>
                         <input data-ng-model="setting.smtp_pass" name="smtp_pass" type="password" class="form-control" required {{ readonly }}>
                     </div>
-                    {% if can.update_app %}
+                    {% if can('update_app') %}
                     <button data-ng-click="updateSetting()" data-ng-disabled="form.$invalid" type="button" class="btn btn-info m-t">Simpan Perubahan</button>
                     <button data-ng-click="resetSetting()" type="button" class="btn btn-link m-t">Batalkan perubahan</button>
                     {% endif %}
@@ -136,14 +136,14 @@
                 </div>
                 <div class="box-body">
                     <div class="form-group" data-ng-class="{ 'has-danger' : form.secret_key.$invalid && !form.secret_key.$pristine }">
-                        {% if can.update_app %}
+                        {% if can('update_app') %}
                         <label>Kode rahasia ( <a data-ng-click="requestKey()" href="javascript:;" class="link text-info">klik di sini untuk memperbaharui kode rahasia</a> )</label>
                         {% else %}
                         <label>Kode rahasia</label>
                         {% endif %}
                         <input data-ng-model="setting.secret_key" name="secret_key" type="text" class="form-control" readonly required>
                     </div>
-                    {% if can.update_app %}
+                    {% if can('update_app') %}
                     <button data-ng-click="updateSetting()" data-ng-disabled="form.$invalid" type="submit" class="btn btn-info m-t">Simpan Perubahan</button>
                     <button data-ng-click="resetSetting()" type="button" class="btn btn-link m-t">Batalkan perubahan</button>
                     {% endif %}

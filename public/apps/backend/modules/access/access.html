@@ -1,7 +1,7 @@
 <div class="padding">
     
     <div class="row">
-        <div class="col-sm-7">
+        <div class="col-md-7 col-sm-12 col-xs-12">
             <div class="box">
                 <div class="box-header">
                     <h2>Hak Akses</h2>
@@ -48,105 +48,22 @@
                 </div>
             </div>
 
+        </div>
+
+        <div class="col-md-5 col-sm-12 col-xs-12">
             <div class="box">
-                <div class="box-header">
-                    <h2>Kapabilitas</h2>
-                    <small>Hak akses yang tersedia oleh aplikasi</small>
+                <div class="box-header b-b">
+                    <h2>Permisi yang tersedia</h2>
+                    <small>Berikut adalah referensi permisi yang tersedia oleh aplikasi</small>
                 </div>
-                <div class="row p-a">
-                    <div class="col-sm-6">
-                        <div class="input-group input-group-sm">
-                            <input data-ng-model="capQuery" data-ng-model-options="{ debounce: 300 }" class="form-control" type="text" placeholder="Pencarian...">
-                        </div>
-                    </div>
-                    <div class="col-sm-6 text-right">
-                        <a data-ng-click="addCap()" href="javascript:;" class="btn btn-sm btn-fw accent"><i class="ion-plus"></i> Tambah</a>
-                    </div>
-                </div>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>NO.</th>
-                            <th>KODE</th>
-                            <th>NAMA</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr data-ng-repeat="item in capData">
-                            <td>{{ capStore.getStart() + $index + 1 }}</td>
-                            <td><a data-ng-click="showCapInfo(item)" class="link" href="javascript:;">{{ item.name }}</a></td>
-                            <td>{{ item.title }}</td>
-                            <td class="text-right">
-                                <a data-ng-click="deleteCap(item)" href="javascript:;" class="btn btn-xs text-danger">Hapus</a>
-                                <a data-ng-click="editCap(item)" href="javascript:;" class="btn btn-xs white">Sunting</a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="dker p-a">
-                    <div class="row">
-                        <div class="col-sm-6">
-                            Menampilkan {{ capStore.getCount() }} dari {{ capStore.getTotal() }}
-                        </div>
-                        <div class="col-sm-6 text-right">
-                            <div data-ui-pagination data-store="capStore" data-display="5" data-template="pagination.html"></div>
-                        </div>
-                    </div>
-                </div>
+                <ul class="list-group no-radius no-border" style="max-height: 460px; overflow: auto; overflow-x: hidden;">
+                    <li data-ng-repeat="item in permissions" class="list-group-item">
+                        <p class="text-md text-info m-b-0">{{ item.name }}</p>
+                        <p class="m-b-0">{{ item.label }}</p>
+                    </li>
+                </ul>
             </div>
-
-        </div>
-
-        <div class="col-sm-5">
-            
         </div>
     </div>
 
-</div>
-
-<div data-ui-modal="capability-info" data-keyboard="false" data-backdrop="static" class="modal fade animate" role="modal">
-    <div class="modal-dialog zoom" role="dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>{{ capSelection.name }}</h3>
-            </div>
-            <div class="modal-body">
-                <p>{{ capSelection.description }}</p>
-            </div>
-            <div class="modal-footer">
-                <a data-ng-click="hideCapInfo()" href="javascript:;" class="btn btn-fw info">Tutup Jendela</a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div data-ui-modal="capability-editor" data-keyboard="false" data-backdrop="static" class="modal fade animate" role="modal">
-    <div class="modal-dialog zoom" role="dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Editor</h3>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="form-group">
-                        <label>Kode kapabilitas</label>
-                        <input data-ng-model="capSelection.name" type="text" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label>Nama kapabilitas</label>
-                        <input data-ng-model="capSelection.title" type="text" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label>Keterangan</label>
-                        <textarea data-ng-model="capSelection.description" rows="8" class="form-control"></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <a data-ng-click="saveCap()" href="javascript:;" class="btn btn-fw primary">Simpan</a>
-                <a data-ng-click="hideCapEditor()" href="javascript:;" class="btn btn-fw">Tutup Jendela</a>
-            </div>
-        </div>
-    </div>
 </div>

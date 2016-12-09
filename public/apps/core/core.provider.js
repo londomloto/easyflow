@@ -11,10 +11,95 @@
         .provider('loader', loaderProvider)
         .provider('googleApi', googleApiProvider)
         .provider('facebookApi', facebookApiProvider)
+        .provider('httpInterceptor', httpInterceptor)
         .provider('session', sessionProvider)
         .provider('theme', themeProvider)
         .provider('debounce', debounceProvider)
-        .provider('Store', StoreProvider);
+        .provider('Store', StoreProvider)
+        .provider('sse', sseProvider)
+        .provider('markdown', markdownProvider);
+
+    function httpInterceptor() {
+        var provider = this,
+            options = {
+                context: 'FRONTEND'
+            };
+
+        provider.$get = factory;
+        provider.setup = setup;
+
+        function setup(config) {
+            angular.extend(options, config || {});
+        }
+
+        /** @ngInject */
+        function factory($timeout, $injector, HTTP) {
+            var session, router, theme, auth;
+
+            // trick: circular dependency
+            $timeout(function(){
+                session = $injector.get('session');
+                router = $injector.get('router');
+                theme = $injector.get('theme');
+                auth = $injector.get('auth');
+            }); 
+
+            return {
+                request: function(config) {
+                    if (auth) {
+                        var user = auth.getCurrentUser();
+                        if (user) {
+                            config.headers['Authorization'] = 'Bearer ' + user.token;
+                        }
+                    }
+
+                    config.headers['X-Context'] = options.context;
+                    config.headers['X-Accept'] = config.headers['Accept'];
+
+                    return config;
+                },
+                response: function(response) {
+                    var status = +(response.data.status || response.status || HTTP.STATUS_OK);
+                    if (status !== HTTP.STATUS_OK) {
+                        response.data = response.data || {};
+                        if (status === HTTP.STATUS_NO_CONTENT) {
+                            response.data.success = true;
+                        } else {
+                            var message = response.data.message;
+                            if (message && theme) {
+                                theme.toast(message, 'danger');
+                            }
+                        }
+                    }
+                    return response;
+                },
+                responseError: function(rejection) {
+                    var message = rejection.data.message,
+                        status = rejection.status;
+
+                    if (status == HTTP.STATUS_UNAUTHORIZED) {
+                        if (message) {
+                            alert(message);
+                        }
+
+                        if (auth) {
+                            auth.invalidate();
+                        }
+
+                        if (router) {
+                            router.go(router.getLoginState());
+                        }
+                    } else {
+                        if (message && theme) {
+                            theme.toast(message, 'danger');
+                        }
+                    }
+
+                    return rejection;
+                }
+            };
+        };
+    }
 
     function debounceProvider() {
         var provider = this;
@@ -146,6 +231,7 @@
                 getDefaultUrl: getDefaultUrl,
                 getLoginState: getLoginState,
                 getLoginUrl: getLoginUrl,
+                getStates: getStates,
                 getParam: getParam,
                 getUrl: getUrl,
                 go: go
@@ -169,6 +255,10 @@
                 return options.loginState.url;
             }
 
+            function getStates() {
+                return $state.get();
+            }
+
             function getParam(name) {
                 var params = $state.params;
                 return params[name];
@@ -182,7 +272,7 @@
 
             function go(state, params) {
                 params = params || {};
-                $state.go(state, params);
+                return $state.go(state, params);
             }
 
         }
@@ -303,18 +393,14 @@
     }
 
     /** @ngInject */
-    function apiProvider($httpProvider, urlProvider) {
+    function apiProvider(urlProvider) {
         var provider = this,
             options = {
-                base: '',
-                context: 'FRONTEND'
+                base: ''
             };
 
         provider.$get = factory;
         provider.setup = setup;
-
-        // intercept HTTP status response
-        $httpProvider.interceptors.push(interceptor);
 
         function setup(config) {
             angular.merge(options, config || {});
@@ -334,63 +420,8 @@
             return options.base;
         }
 
-        function getContext() {
-            return options.context;
-        }
-
         /** @ngInject */
-        function interceptor($timeout, $injector, HTTP) {
-            var session, router, theme, auth;
-
-            // trick: circular dependency
-            $timeout(function(){
-                session = $injector.get('session');
-                router = $injector.get('router');
-                theme = $injector.get('theme');
-                auth = $injector.get('auth');
-            }); 
-
-            return {
-                request: function(config) {
-                    if (auth) {
-                        var user = auth.getCurrentUser();
-                        if (user) {
-                            config.headers['Authorization'] = 'Bearer ' + user.token;
-                        }
-                    }
-
-                    config.headers['X-Context'] = options.context;
-                    return config;
-                },
-                responseError: function(rejection) {
-                    var message = rejection.data.message;
-
-                    if (rejection.status == HTTP.STATUS_UNAUTHORIZED) {
-                        if (message) {
-                            alert(message);
-                        }
-
-                        if (auth) {
-                            auth.invalidate();
-                        }
-
-                        if (router) {
-                            router.go(router.getLoginState());
-                        }
-                    } else {
-                        if (message) {
-                            var title = rejection.data.title || 'Pesan Kesalahan';
-                            theme.showAlert(title, message);
-                        }
-                    }
-
-                    return rejection;
-                }
-            };
-        }
-
-        /** @ngInject */
-        function factory($rootScope, $http) {
+        function factory($timeout, $http, $q) {
             var service = { 
                 get: get,
                 del: del,
@@ -445,8 +476,7 @@
                 }, options || {});
 
                 if (data) {
-                    options.headers = options.headers || {};
-                    options.headers['Content-Type'] = 'application/json;charset=utf-8';
+                    options.json = true;
                     options.data = data;
                 }
 
@@ -454,13 +484,9 @@
             }
 
             function put(path, data, options) {
-                options = angular.extend({
-                    url: BASE_URL + path,
-                    data: data,
-                    method: 'PUT'
-                }, options || {});
-
-                return request(options);
+                options = options || {};
+                options.method = 'PUT';
+                return post(path, data, options);
             }
 
             function post(path, data, options) {
@@ -516,7 +542,37 @@
             }
 
             function request(options) {
-                return $http(options);
+                
+                if (options.download !== undefined) {
+                    delete options.download;
+
+                    var form = document.createElement('form'),
+                        def = $q.defer();
+
+                    form.setAttribute('action', options.url);
+                    form.setAttribute('method', options.method);
+                    // form.setAttribute('target', '_self');
+
+                    document.body.appendChild(form);
+                    form.submit();
+
+                    $timeout(function(){
+                        document.body.removeChild(form);
+                        def.resolve();
+                    });
+
+                    return def.promise;
+                } else {
+                    if (options.json !== undefined) {
+                        if (options.json === true) {
+                            options.headers = options.headers || {};
+                            options.headers['Content-Type'] = 'application/json;charset=utf-8';
+                        }
+                        delete options.json;
+                    }
+
+                    return $http(options);
+                }
             }
 
         }
@@ -569,30 +625,59 @@
                 return session.get(SESSKEY);
             }
 
-            function verify() {
+            function isExpire(user) {
+                var expdate = new Date(user.expired_date),
+                    current = new Date(),
+                    expired = false;
+
+                if (expdate.getTime() < current.getTime()) {
+                    expired = true;
+                }
+                expdate = current = null;
+                return expired;
+            }
+
+            function verify(sync) {
                 var user = session.get(SESSKEY),
                     def = $q.defer();
+
+                if (user && isExpire(user)) {
+                    user = null;
+                }
 
                 if (user) {
                     save(user);
                     def.resolve(user);
                 } else {
-                    if (loading) {
-                        loading.then(function(user){
-                            loading = null;
-                            def.resolve(user);
-                        });
-                    } else {
-                        loading = api.get('/auth/verify').then(function(response){
-                            var user = response.data.data;
-                            save(user);
-                            return user;
-                        });
+                    sync = sync === undefined ? true : sync;
+                    if (sync) {
+                        if (loading) {
+                            loading.then(function(user){
+                                loading = null;
+                                def.resolve(user);
+                            });
+                        } else {
+                            loading = api.get('/auth/verify').then(function(response){
+                                var user = response.data.data;
+                                save(user);
+                                return user;
+                            });
 
-                        loading.then(function(user){
-                            loading = null;
-                            def.resolve(user);
-                        });
+                            loading.then(function(user){
+                                loading = null;
+                                def.resolve(user);
+                            });
+                        }
+                    } else {
+                        if (loading) {
+                            loading.then(function(user){
+                                loading = null;
+                                def.resolve(user);
+                            });
+                        } else {
+                            save(null);
+                            def.resolve(user);    
+                        }
                     }
                 }
 
@@ -1040,12 +1125,14 @@
 
                     api[method](this.config.url, options).then(function(response){
                         var result = response.data;
+                        var data = result.data || [];
+                        var total = result.total || 0;
                         
-                        me.total = result.total;
-                        me.count = result.data.length;
+                        me.total = total;
+                        me.count = data.length;
 
-                        me.fire('load', result.data);
-                        def.resolve(result.data);
+                        me.fire('load', data);
+                        def.resolve(data);
                     });
                 } else {
                     me.fire('load');
@@ -1070,6 +1157,10 @@
             Store.prototype.loadPage = function(page, options) {
                 options = options || {};
                 
+                if (page < 1) {
+                    page = 1;
+                }
+                
                 this.page = page;
 
                 angular.extend(options, {
@@ -1083,6 +1174,11 @@
 
             Store.prototype.getPage = function() {
                 return this.page;
+            };
+
+            Store.prototype.getPages = function() {
+                var total = this.getTotal();
+                return Math.ceil(total / this.getPageSize())
             };
 
             Store.prototype.getStart = function() {
@@ -1103,6 +1199,48 @@
 
             return Store;
         }
+    }
+
+    function sseProvider() {
+        var provider = this;
+        provider.$get = factory;
+
+        /** @ngInject */
+        function factory($window) {
+            var source = null;
+            var service = {
+                connect: connect
+            };
+
+            return service;
+
+            function connect() {
+                if ($window.EventSource) {
+                    source = new EventSource('/server/pool/stream');
+                }
+            }
+        }
+    }
+
+    function markdownProvider() {
+        var provider = this;
+        var markdown;
+
+        provider.$get = function() {
+            if ( ! markdown) {
+                if (showdown) {
+                    showdown.setFlavor('github');
+                    var converter = new showdown.Converter();
+                    markdown = angular.bind(converter, converter.makeHtml);
+                } else {
+                    markdown = angular.indentity;
+                }
+            }
+
+            return function(text) {
+                return markdown(text);
+            }
+        };
     }
 
 }());

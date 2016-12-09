@@ -11,18 +11,24 @@ class Theme extends \Sys\Core\Module {
     }
 
     public function templateAction($template) {
-        if ( ! $this->auth->getCurrentUser()) {
-            echo '<div>'._('Your session has been expired').'</div>';
-        } else {
-            $template = str_replace(array('.html'), '', $template);
-            $caps = $this->role->getCapabilities();
-            
-            $content = $this->template->load($template, array(
-                'can' => $caps
-            ));
+        $template = str_replace(array('.html'), '', $template);
+        $result = array(
+            'success' => TRUE,
+            'status' => 200,
+            'data' => ''
+        );
 
-            echo $content;
+        // check session auth
+        if ( ! $this->auth->getCurrentUser()) {
+            
+            $result['success'] = FALSE;
+            $result['status'] = 401;
+
+        } else {
+            $result['data'] = $this->template->load($template);    
         }
+        
+        $this->response->setJsonContent($result);
     }
 
 }

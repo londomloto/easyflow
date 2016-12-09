@@ -52,8 +52,7 @@ class Editor extends \Sys\Core\Module {
             $data['message'] = 'Anda tidak diperkenankan melakukan tindakan ini';
         }
 
-        $this->response->responseJson();
-        return $data;
+        $this->response->setJsonContent($data);
     }
 
 }

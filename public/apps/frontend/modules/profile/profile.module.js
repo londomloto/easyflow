@@ -5,11 +5,147 @@
         .module('profile', ['app'])
         .controller('ProfileController', ProfileController)
         .controller('EditProfileController', EditProfileController)
-        .controller('DiagramController', DiagramController);
+        .controller('DiagramController', DiagramController)
+        .controller('EditDiagramController', EditDiagramController)
+        .controller('BookmarkController', BookmarkController)
+        .controller('BookmarkDetailController', BookmarkDetailController)
+        .controller('ForkingController', ForkingController)
+        .controller('ForkingDetailController', ForkingDetailController)
+        .controller('NotificationController', NotificationController);
 
     /** @ngInject */
-    function ProfileController($scope, theme) {
-        $scope.diagrams = [];
+    function ProfileController($scope, router, theme, api) {
+        $scope.menus = [];
+
+        var states = router.getStates();
+
+        angular.forEach(states, function(s){
+            if (/^profile\.[^.]+$/.test(s.name)) {
+                $scope.menus.push({
+                    text: s.title,
+                    icon: s.icon,
+                    state: s.name
+                });
+            }
+        });
+
+        ///////// COMMON /////////
+        
+        $scope.forkers = [];
+        $scope.comments = [];
+        $scope.comment = {message: ''};
+        $scope.diagram = {};
+
+        $scope.loadForkers = function() {
+            var id = router.getParam('id');
+            if (id) {
+                api.get('/user/forker/find/' + id).then(function(response){
+                    $scope.forkers = response.data.data;
+                });
+            }
+        };
+
+        $scope.loadComments = function() {
+            var id = router.getParam('id');
+            if (id) {
+                api.get('/user/comment/find/' + id).then(function(response){
+                    $scope.comments = response.data.data;
+                });
+            }
+        }; 
+
+        $scope.addComment = function() {
+            var id = router.getParam('id');
+
+            var data = {
+                message: $scope.comment.message
+            };
+
+            if (id) {
+                api.post('/user/comment/create/' + id, data).then(function(response){
+                    if (response.data.success) {
+                        $scope.loadComments();
+                        $scope.comment.message = '';
+                    }
+                });
+            }
+            
+        };
+
+        $scope.toggleCommentEditor = function(comment) {
+            comment.editing = comment.editing === 0 ? 1 : 0;
+        };
+
+        $scope.deleteComment = function(comment) {
+            var id = router.getParam('id');
+            if (id) {
+                theme.showConfirm(
+                    'Konfirmasi',
+                    'Anda yakin akan menghapus komentar ini?'
+                ).then(function(action){
+                    if (action) {
+                        var data = {
+                            id: comment.id
+                        };
+                        api.post('/user/comment/delete/' + id + '/' + comment.id, data).then(function(response){
+                            if (response.data.success) {
+                                $scope.loadComments();
+                            }
+                        });        
+                    }
+                });
+                
+            }
+        };  
+
+        $scope.updateComment = function(comment) {
+            var id = router.getParam('id');
+            if (id && comment.message) {
+                var data = {
+                    id: comment.id,
+                    message: comment.message
+                };
+                api.post('/user/comment/update/' + id + '/' + comment.id, data).then(function(response){
+                    if (response.data.success) {
+                        comment.editing = 0;
+                    }
+                });
+            }
+        };
+
+        $scope.fork = function() {
+            var data = angular.copy($scope.diagram);
+
+            api.post('/diagram/fork/' + data.slug, data).then(function(response){
+                if (response.data.data) {
+                    $scope.diagram.forked = response.data.data.forked;
+                    $scope.diagram.forks = response.data.data.forks;
+                    $scope.loadForkers();
+
+                    $scope.$broadcast('fork', {fork: $scope.diagram.forked});
+                }
+            });
+        };
+
+        $scope.bookmark = function() {
+            var data = angular.copy($scope.diagram);
+
+            api.post('/diagram/bookmark/' + data.slug, data).then(function(response){
+                if (response.data.data) {
+                    $scope.diagram.bookmarked = response.data.data.bookmarked;
+                    $scope.diagram.bookmarks = response.data.data.bookmarks;
+
+                    $scope.$broadcast('bookmark', {bookmark: $scope.diagram.bookmarked});
+                }
+            });
+        };
+
+        $scope.download = function(format) {
+            var slug = $scope.diagram.slug;
+            if (slug) {
+                api.get('/diagram/download/' + slug, {format: format}, {download: true});
+            }
+        };
     }
 
     /** @ngInject */
@@ -68,102 +204,190 @@
     }
 
     /** @ngInject */
-    function DiagramController($scope, api, theme) {
-        theme.init($scope);
-
+    function DiagramController($scope, Store) {
         $scope.diagrams = [];
-        $scope.total = 0;
 
-        $scope.selected = null;
-        $scope.lightbox = 0;
-        $scope.coverfile = null;
-        $scope.covername = null;
-        $scope.search = '';
-
-        $scope.$watch('search', function(q){
-            $scope.loadItems();
+        $scope.diagramStore = new Store({
+            url: '/user/diagram/find',
+            pageSize: 10
         });
 
-        $scope.loadItems = function() {
-            var params = {
-                query: $scope.search
-            };
+        $scope.diagramStore.on('load', function(data){
+            $scope.diagrams = data;
+        });
 
-            api.get('/user/diagram/find', params).then(function(response){
-                $scope.diagrams = response.data.data;
-                $scope.total = response.data.total;
-            });
-        };
+        $scope.diagramStore.load();
+    }
 
-        $scope.loadItems();
-
-        $scope.triggerLightbox = function() {
-            $scope.lightbox = $scope.diagrams.length;
-        };
+    function EditDiagramController($scope, router, theme, api) {
+        theme.init($scope);
         
-        $scope.saveSetting = function() {
-            if ($scope.form1.$valid) {
-                var data, opts;
+        $scope.reset = {};
+        $scope.cover = {file: null, name: ''};
 
-                data = angular.copy($scope.selected);
-
-                if ($scope.coverfile) {
-                    opts = {
-                        upload: [
-                            {key: 'userfile', file: $scope.coverfile}
-                        ]
-                    };
-                }
-
-                data.published = data.published ? '1' : '0';
-
-                api.post('/user/diagram/update', data, opts).then(function(result){
-                    if (result.data.success) {
-                        var data = result.data.data;
-                        
-                        for (var prop in data) {
-                            if (data.hasOwnProperty(prop)) {
-                                if (name == 'cover') {
-                                    $scope.selected[prop] = data.cover + '?t=' + (new Date()).getTime();
-                                } else if (name == 'published') {
-                                    $scope.selected[prop] = data[prop] == '1' ? true : false;
-                                } else {
-                                    $scope.selected[prop] = data[prop];
-                                }
-                            }
-                        }
-
-                        theme.toast('Perubahan data berhasil disimpan');    
-                        $scope.hideSetting();
-                    } else {
-                        theme.toast(result.data.message, 'danger');  
-                    }
-                });  
+        $scope.loadDiagram = function() {
+            var id = router.getParam('id');
+            if (id) {
+                api.get('/user/diagram/find/' + id).then(function(response){
+                    $scope.$parent.diagram = response.data.data;
+                    $scope.reset = angular.copy($scope.diagram);
+                });    
             }
         };
 
-        $scope.showSetting = function(diagram) {
-            $scope.selected = diagram;
-            $scope.selected.published = $scope.selected.published == '1' ? true : false;
-            theme.showModal('diagram-setting');
+        $scope.updateDiagram = function() {
+            var data = angular.copy($scope.diagram),
+                opts = {};
+
+            if ($scope.cover.file) {
+                opts.upload = [
+                    {key: 'userfile', file: $scope.cover.file}
+                ];
+            }
+
+            api.post('/diagram/update/' + data.id, data, opts).then(function(response){
+                if (response.data.success) {
+                    $scope.diagram = response.data.data;
+                    $scope.reset = angular.copy($scope.diagram);
+                    theme.toast('Data berhasil disimpan');
+                }
+            });
+
         };
 
-        $scope.hideSetting = function() {
-            theme.hideModal('diagram-setting');
+        $scope.resetDiagram = function() {
+            $scope.diagram = angular.copy($scope.reset);
         };
 
-        $scope.removeDiagram = function(diagram) {
-            theme.showConfirm('Konfirmasi', 'Anda yakin akan menghapus diagram ini?').then(function(action){
+        $scope.deleteDiagram = function() {
+            theme.showConfirm(
+                'Konfirmasi',
+                'Anda yakin akan menghapus diagram ini?'
+            ).then(function(action){
                 if (action) {
-                    api.post('/user/diagram/remove', angular.copy(diagram)).then(function(response){
-                        if (response.data.success) {
-                            var index = $scope.diagrams.indexOf(diagram);
-                            $scope.diagrams.splice(index, 1);
-                        }
+                    api.del('/diagram/delete/' + $scope.diagram.id).then(function(response){
+                        
                     });
+                }
+            })
+        };
+
+        $scope.onSelectCover = function(name) {
+            $scope.cover.name = name;
+        };
+
+        $scope.loadDiagram();
+        $scope.loadForkers();
+        $scope.loadComments();
+    }
+
+    /** @ngInject */
+    function BookmarkController($scope, Store) {
+        $scope.diagrams = [];
+
+        $scope.diagramStore = new Store({
+            url: '/user/bookmark/find'
+        });
+
+        $scope.diagramStore.on('load', function(data){
+            $scope.diagrams = data;
+        });
+
+        $scope.diagramStore.load();
+    }
+
+    /** @ngInject */
+    function BookmarkDetailController($scope, $timeout, Store, router, api) {
+        
+        $scope.loadDiagram = function() {
+            var id = router.getParam('id');
+            if (id) {
+                api.get('/user/bookmark/find/' + id).then(function(response){
+                    $scope.$parent.diagram = response.data.data;
+                });
+            }
+        };
+        
+        $scope.$on('bookmark', function(e, data){
+            if (data.bookmark === 0) {
+                router.go('profile.bookmark');
+            }
+        });
+
+        $scope.loadDiagram();
+        $scope.loadForkers();
+        $scope.loadComments();
+
+    }
+
+    /** @ngInject */
+    function ForkingController($scope, Store) {
+        $scope.diagrams = [];
+
+        $scope.diagramStore = new Store({
+            url: '/user/forking/find'
+        });
+
+        $scope.diagramStore.on('load', function(data){
+            $scope.diagrams = data;
+        });
+
+        $scope.diagramStore.load();
+    }
+
+    /** @ngInject */
+    function ForkingDetailController($scope, $timeout, Store, router, api) {
+        
+        $scope.loadDiagram = function() {
+            var id = router.getParam('id');
+            if (id) {
+                api.get('/user/forking/find/' + id).then(function(response){
+                    $scope.$parent.diagram = response.data.data;
+                });
+            }
+        };
+        
+        $scope.$on('fork', function(e, data){
+            if (data.fork === 0) {
+                router.go('profile.forking');
+            }
+        });
+
+        $scope.loadDiagram();
+        $scope.loadForkers();
+        $scope.loadComments();
+
+    }
+
+    /** @ngInject */
+    function NotificationController($scope, Store, api) {
+        $scope.notifications = [];
+
+        $scope.notifyStore = new Store({
+            url: '/user/notification/find'
+        });
+
+        $scope.notifyStore.on('load', function(data){
+            $scope.notifications = data;
+        });
+
+        $scope.remove = function(item) {
+            api.post('/user/notification/delete/' + item.id).then(function(response){
+                if(response.data.success) {
+                    $scope.notifyStore.load();
                 }
             });
         };
+
+        $scope.reject = function(item) {
+
+        };
+
+        $scope.approve = function(item) {
+
+        };
+
+        $scope.notifyStore.load();
     }
 
 }());

@@ -4,6 +4,8 @@
     angular
         .module('core')
         .constant('HTTP', {
+            STATUS_OK: 200,
+            STATUS_NO_CONTENT: 204,
             STATUS_BAD_REQUEST: 400,
             STATUS_UNAUTHORIZED: 401,
             STATUS_NOT_FOUND: 404,

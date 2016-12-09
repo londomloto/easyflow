@@ -8,8 +8,6 @@ class Dispatcher extends \Sys\Core\Component {
     
     protected $_module;
     protected $_action;
-    protected $_output;
-    protected $_retval;
     protected $_params;
 
     public function setModule(Module $module) {
@@ -119,17 +117,13 @@ class Dispatcher extends \Sys\Core\Component {
                 return FALSE;
             }
         }
+            
+        $result  = call_user_func_array(array($module, $method), $params);
         
-        ob_start();
+        $response = $this->getResponse();
+        $response->setReturn($result);
 
-        $this->_retval = call_user_func_array(array($module, $method), $params);
-        
-        if (ob_get_length()) {
-            $this->_output = ob_get_contents();
-            ob_end_clean();
-        }
-
-    }
+    }   
 
     public function getAction() {
         return $this->_action;
@@ -145,13 +139,5 @@ class Dispatcher extends \Sys\Core\Component {
 
     public function getParams() {
         return $this->_params;
-    }
-
-    public function getOutput() {
-        return $this->_output;
-    }
-
-    public function getReturn() {
-        return $this->_retval;
     }
 }

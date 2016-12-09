@@ -19,6 +19,7 @@ class Mysql implements IDatabase {
     protected $_eventBus;
     
     public function __construct($host, $user, $pass, $name, $port = NULL) {
+        $this->_conn = NULL;
         $this->_host = $host;
         $this->_user = $user;
         $this->_pass = $pass;
@@ -68,6 +69,10 @@ class Mysql implements IDatabase {
                 $eventBus->fire('database:disconnect', $this);
             }
         }
+    }
+
+    public function isConnected() {
+        return ! is_null($this->_conn);
     }
 
     public function validate() {
@@ -129,9 +134,11 @@ class Mysql implements IDatabase {
                     return TRUE;
                 }
             } else {
+                $stmt->close();
                 throw new \Exception($stmt->error);
             }
         } else {
+            $stmt->close();
             throw new \Exception($stmt->error);
         }
     }
@@ -365,6 +372,7 @@ class Mysql implements IDatabase {
 
         return $this->query($sql, $param);
     }
+    
 
     public function insertId() {
         $this->validate();

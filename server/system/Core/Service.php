@@ -86,7 +86,7 @@ class Service {
             throw new \Exception($message, 404);
         }
 
-        if ($this->_eventBus) {
+        if ($this->_eventBus && method_exists($instance, 'setEventBus')) {
             $instance->setEventBus($this->_eventBus);
         }
 

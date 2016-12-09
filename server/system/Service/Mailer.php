@@ -9,8 +9,8 @@ class Mailer extends \Sys\Core\Component {
     public function __construct(\Sys\Core\IApplication $app) {
         parent::__construct($app);
 
-        if ($this->getAppConfig()->application->has('mailer')) {
-            $this->_config = $this->getAppConfig()->application->mailer;
+        if ($app->getConfig()->application->has('mailer')) {
+            $this->_config = $app->getConfig()->application->mailer;
         } else {
             $this->_config = new \Sys\Core\Config(array(
                 'smtp_server' => 'server@domain.com',
@@ -37,14 +37,6 @@ class Mailer extends \Sys\Core\Component {
         // $this->_engine->SMTPDebug = 2;
 
         $this->applyConfig();
-    }
-
-    public function __call($method, $params) {
-        if (method_exists($this->_engine, $method)) {
-            return call_user_func_array(array($this->_engine, $method), $params);
-        } else {
-            throw new \Exception("Fungsi Sys\Service\Mailer->{$method}() tidak ada");
-        }
     }
 
     public function setConfig($name, $value = NULL) {

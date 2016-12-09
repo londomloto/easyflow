@@ -3,6 +3,8 @@ namespace App\Service;
 
 class Role extends \Sys\Core\Component {
 
+    protected $_permissions;
+
     public function __construct(\Sys\Core\IApplication $app) {
         parent::__construct($app);
 
@@ -10,61 +12,150 @@ class Role extends \Sys\Core\Component {
             $this->_config = $app->getConfig()->application->role;
         } else {
             $this->_config = new \Sys\Core\Config(array(
-                'source_role' => 'role',
-                'source_caps' => 'capability',
-                'source_perm' => 'permission'
+                'source' => 'role'
             ));
         }
 
+        $this->_permission = $app->getConfig()->permission;
         $this->_db = $app->getDefaultDatabase();
     }
 
-    public function handle($role) {
-        if ( ! $role) {
+    public function findBy($field, $value) {
+        $source = $this->_config->source;
+        $params = array($value);
+        return $this->_db->fetchOne("SELECT * FROM {$source} WHERE {$field} = ?", array($value));
+    }
+
+    public function findById($id) {
+        return $this->findBy('id', $id);
+    }
+
+    public function findByName($name) {
+        return $this->findBy('name', $name);
+    }
+
+    public function findDefault() {
+        return $this->findBy('is_default', 1);
+    }
+
+    public function getAvailablePermissions() {
+        $perms = array();
+
+        foreach($this->_permission as $key => $spec) {
+            $spec = $spec->toArray();
+            $spec['name'] = $key;
+            $perms[] = $spec;
+        }
+
+        return $perms;
+    }
+
+    public function getPermissions() {
+        $session = $this->getSession();
+
+        if ( ! $session->has('CURRENT_ROLE')) {
+            return array();
+        }
+
+        $perms = $session->get('CURRENT_PERMISSIONS');
+        $perms = json_decode($perms);
+
+        return $perms;
+    }
+
+    public function getPermissionWeight($name) {
+        $name = trim($name);
+
+        if ($this->_permission->has($name)) {
+            return pow(2, $this->_permission->{$name}->value);
+        }
+        return 0;
+    }
+
+    public function assignPermissionToRole($role, $perms) {
+        $bit = 0;
+
+        if ($role) {
+            
+            foreach($perms as $key) {
+                $bit |= $this->getPermissionWeight($key);
+            }
+        }
+
+        $source = $this->_config->source;
+        $this->_db->execute("UPDATE {$source} SET permission = ? WHERE id = ?", array($bit, $role->id));
+    }
+
+    public function assign($perms) {
+        $role = $this->getCurrentRole();
+        $this->assignPermissionToRole($role->name, $perms);
+    }
+
+    public function roleHasPermission($role, $perm) {
+        if ($role) {
+            $weight = $this->getPermissionWeight($perm);
+            return ((int)$role->permission & $weight);
+        }
+        return 0;
+    }
+
+    public function has($perm) {
+        $role = $this->getCurrentRole();
+        return $this->roleHasPermission($perm);
+    }
+
+    public function roleCanPerform($role, $perm) {
+        if ($role) {
+
+            $self = $this;
+            $perm = explode('&', $perm);
+            
+            if (count($perm) > 0) {
+                $curr = (int)$role->permission;
+                $able = TRUE;
+
+                // array_every
+                foreach($perm as $p) {
+                    $able = !!($curr & $this->getPermissionWeight($p));
+                    if ( ! $able) {
+                        break;
+                    }
+                }
+
+                return $able;
+            } else {
+                return FALSE;
+            }
+        }
+        return FALSE;
+    }
+
+    public function can($perm) {
+        $role = $this->getCurrentRole();
+        return $this->roleCanPerform($role, $perm);
+    }
+
+    public function handle($name) {
+        if ( ! $name) {
             $this->invalidate();
             return;
         }
 
         $session = $this->getSession();
 
-        if ($session->has('CURRENT_ROLE')) {
-            if ($session->get('CURRENT_ROLE') == $role) {
-                return;
-            }
+        if ($session->has('CURRENT_ROLE') && $session->get('CURRENT_ROLE') == $name) {
+            return;
         }
 
-        $sourceRole = $this->_config->source_role;
-        $sourceCaps = $this->_config->source_caps;
-        $sourcePerm = $this->_config->source_perm;
-
-        $role = $this->_db->fetchOne("SELECT * FROM {$sourceRole} WHERE name = ?", array($role));
+        $role = $this->findByName($name);
 
         if ($role) {
-            
-            $session->set('CURRENT_ROLE', $role->name);
-
-            $sql = "
-                SELECT 
-                    `a`.`name` AS `name`,
-                    IFNULL(`b`.`active`, 0) AS `active`
-                FROM
-                    `{$sourceCaps}` `a`
-                    LEFT JOIN `{$sourcePerm}` `b` ON (`a`.`id` = `b`.`capability_id` AND `b`.`role_id` = ?)
-            ";
-
-            $caps = $this->_db->fetchAll($sql, array($role->id));
-            $data = array();
-
-            foreach($caps as $row) {
-                $data[$row->name] = $row->active;
-            }
-
-            $session->set('CURRENT_CAPS', json_encode($data));
+            $session->set('CURRENT_ROLE', $role);
         }
     }
 
     public function refresh() {
-        $user = $this->getServiceInstance('auth')->getCurrentUser();
+        $user = $this->getAuth()->getCurrentUser();
         $role = $this->getCurrentRole();
 
         if ($user && $role) {
@@ -77,9 +168,7 @@ class Role extends \Sys\Core\Component {
 
     public function invalidate() {
         $session = $this->getSession();
-
         $session->remove('CURRENT_ROLE');
-        $session->remove('CURRENT_CAPS');
     }
 
     public function getCurrentRole() {
@@ -87,33 +176,10 @@ class Role extends \Sys\Core\Component {
         return $session->get('CURRENT_ROLE');
     }
 
-    public function can($capability) {
-        $caps = $this->getCapabilities();
-        return isset($caps->{$capability}) ? !!$caps->{$capability} : FALSE;
-    }
-
-    public function authorize($capability) {
-        $user = $this->getAuth()->getCurrentUser();
-
-        if ($user) {
-            $this->handle($user->role);
+    public function validate($perm) {
+        if ( ! $this->can($perm)) {
+            throw new \Exception(_("You don't have permission to perform this action"), 403);
         }
-        
-        if ( ! $this->can($capability)) {
-            throw new SecurityException(_("You don't have permission to perform this action"), 403);
-        }
-    }
-
-    public function getCapabilities() {
-        $session = $this->getSession();
-        if ( ! $session->has('CURRENT_ROLE')) {
-            return array();
-        }
-
-        $caps = $session->get('CURRENT_CAPS');
-        $caps = json_decode($caps);
-
-        return $caps;
     }
     
 }

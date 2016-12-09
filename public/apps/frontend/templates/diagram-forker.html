@@ -1,0 +1,17 @@
+<div class="row m-t">
+    <div data-ng-repeat="item in forkers track by item.id">
+        <div data-ng-if="$index % 4 == 0" class="clearfix"></div>
+        <div class="col-sm-3">
+            <div style="padding: 5px; border: solid 1px #dfdfdf; border-radius: 4px; line-height: 1.05em; position: relative;">
+                <div data-ng-if="item.type == 'owner'" style="position: absolute; right: 10px; top: 10px;">
+                    <a title="Pemilik diagram" href="javascript:;" class="btn btn-fab btn-fab-mini btn-danger"><i class="ion-star fab-icon"></i></a>
+                </div>
+                <img data-ng-src="{{ item.avatar | thumbnail:'/user/':200:200 }}" style="width: 100%">
+                <div class="text-center" style="padding: 10px">
+                    <div class="_600 m-b-0"><a data-ui-sref="user.view({email: item.email})">{{ item.fullname }}</a></div>
+                    <span class="text-sm _300 text-muted">{{ item.email }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

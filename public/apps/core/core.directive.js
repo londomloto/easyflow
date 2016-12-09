@@ -15,10 +15,12 @@
         .directive('uiModal', uiModal)
         .directive('uiDialog', uiDialog)
         .directive('uiLightbox', uiLightbox)
-        .directive('uiPagination', uiPagination);
+        .directive('uiPagination', uiPagination)
+        .directive('uiNocontext', uiNocontext)
+        .directive('uiMarkdown', uiMarkdown);
 
     /** @ngInject */
-    function uiTemplate($templateRequest, $compile, loader, theme, api) {
+    function uiTemplate($templateRequest, $compile, $timeout, loader, router, api, HTTP) {
         var directive = {
             link: link,
             scope: true
@@ -30,17 +32,26 @@
             var remote = attrs.remote ? attrs.remote : 'false';
             var path, name;
 
+            // set element to hide
+            var displayMode = element.css('display');
+            
             if (remote == 'true') {
                 name = attrs.uiTemplate;
                 path = api.getBaseUrl() + '/theme/template/' + name;
 
-                $templateRequest(path).then(function(html){
-                    var template = angular.element(html);
+                api.get('/theme/template/' + name).then(function(response){
+                    if (response.data.success) {
+                        var template = angular.element(response.data.data);
 
-                    element.append(template);
-                    $compile(template)(scope);
-                    
-                    theme.registerTemplate(path);
+                        element.append(template);
+                        $compile(template)(scope);
+
+                        show();
+                    } else {
+                        if (response.data.status == HTTP.STATUS_UNAUTHORIZED) {
+                            router.go(router.getLoginState());
+                        }
+                    }
                 });
             } else {
                 path = loader.getBase() + '/templates/' + attrs.uiTemplate;
@@ -49,7 +60,21 @@
                     var template = angular.element(html);
                     element.append(template);
                     $compile(template)(scope);
+
+                    show();
                 });
+            }
+
+            hide();
+
+            function hide() {
+                element.css('display', 'none');
+            }
+
+            function show() {
+                $timeout(function(){
+                    element.css('display', displayMode);
+                }, 1);
             }
         }
     }
@@ -91,7 +116,7 @@
                 return;
             }
 
-            var equalGetter = $parse(attrs.uiMatch);
+            var matchGetter = $parse(attrs.uiMatch);
             
             scope.$watch(getTargetValue, function(){
                 ctrl.$$parseAndValidate();
@@ -101,8 +126,11 @@
                 var source = modelValue || viewValue;
                 var target = getTargetValue();
                 var result;
-
+                
                 if ( ! source) {
+                    if (target) {
+                        return false;
+                    }
                     return true;
                 }
 
@@ -111,7 +139,7 @@
             };
 
             function getTargetValue() {
-                var value = equalGetter(scope);
+                var value = matchGetter(scope);
                 if (angular.isObject(value) && value.hasOwnProperty('$viewValue')) {
                     value = value.$viewValue;
                 }
@@ -133,16 +161,26 @@
                 callback = attrs.onSelect ? $parse(attrs.onSelect)(scope) : null;
 
             element.on('change', function(){
-                scope.$apply(function(){
-                    if (callback) {
-                        // parse filename
-                        var path = element[0].value,
-                            name = path.split(/(\\|\/)/g).pop();
+                var file = element[0].files[0],
+                    name = element[0].value;
 
-                        callback(name);
-                    }
-                    model.assign(scope, element[0].files[0]);
-                });
+                if (callback) {
+                    name = name.split(/(\\|\/)/g).pop();
+
+                    var reader = new FileReader();
+
+                    reader.onload = function() {
+                        var data = reader.result
+                        reader = null;
+                        callback(name, data);
+                        scope.$apply();
+                    };
+
+                    reader.readAsDataURL(file);
+                }
+                
+                model.assign(scope, file);
+                scope.$apply();
             });
         }
     }
@@ -160,6 +198,7 @@
 
         function link(scope, element, attrs) {
             var key = attrs.uiImage;
+
             scope.$watch(key, function(file){
                 if (file && supportReader) {
                     var reader = new $window.FileReader();
@@ -398,7 +437,7 @@
     }
 
     /** @ngInject */
-    function uiPagination($parse, $templateRequest, $compile, loader) {
+    function uiPagination($parse, $templateRequest, $compile, $timeout, loader) {
         var directive = {
             link: link,
             scope: true,
@@ -418,7 +457,9 @@
             loadTemplate();
 
             function onStoreLoad() {
-                render();
+                $timeout(function(){
+                    render();    
+                });
             }
 
             function getPagingInfo() {
@@ -454,7 +495,7 @@
 
                 var pageStart;
 
-                if (paging.pages > 1) {
+                //if (paging.pages > 1) {
                     pageStart = paging.page;
 
                     if (paging.page < display) {
@@ -490,10 +531,58 @@
                         page: paging.pages
                     });
 
-                }   
+                //}   
 
                 scope.pages = pages;
                 scope.page = paging.page;
+            }
+        }
+    }
+
+    /** @ngInject */
+    function uiNocontext($parse) {
+        var directive = {
+            link: link,
+            restrict: 'A'
+        };
+
+        return directive;
+
+        function link(scope, element, attrs) {
+            var expr = attrs.uiNocontext;
+
+            element.on('contextmenu', function(e){
+                if (expr) {
+                    var disabled = $parse(expr)(scope);
+                    if (disabled) {
+                        e.preventDefault();
+                    }
+                } else {
+                    e.preventDefault();    
+                }
+            });
+        }
+    }
+
+    /** @ngInject */
+    function uiMarkdown($sanitize, markdown) {
+        var directive = {
+            link: link,
+            restrict: 'A'
+        };
+
+        return directive;
+
+        function link(scope, element, attrs) {
+            var model = attrs.uiMarkdown, text;
+            if (model) {
+                scope.$watch(model, function(text){
+                    var html = $sanitize(markdown(text));
+                    element.html(html);
+                });  
+            } else {
+                text = $sanitize(markdown(element.html()));
+                element.html(text);
             }
         }
     }

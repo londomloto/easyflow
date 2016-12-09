@@ -1,0 +1,50 @@
+<div class="padding">
+    <div class="box">
+        <!-- <div class="box-header">
+            <h3>Table with elements</h3>
+        </div> -->
+        <div class="row p-a">
+            <div class="col-sm-12">
+                <button data-ng-click="deleteSelection()" class="btn btn-sm white">Hapus terpilih</button>
+                <button data-ng-click="emptyTrash()" class="btn btn-sm white">Kosongkan kotak sampah</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table b-t m-b-0">
+                <!-- <thead>
+                    <tr>
+                        <th style="width: 20px;">
+                            
+                        </th>
+                        <th>PENGIRIM</th>
+                        <th>SUBJEK</th>
+                        <th>TANGGAL</th>
+                    </tr>
+                </thead> -->
+                <tbody>
+                    <tr data-ng-repeat="item in messages">
+                        <td style="width: 20px;">
+                            <label class="md-check" style="margin-top: 3px;">
+                                <input data-ng-model="item.selected" type="checkbox">
+                                <i class="blue"></i>
+                            </label>
+                        </td>
+                        <td>
+                            <span class="_700">{{ item.fullname }}</span><br>
+                            <span class="text-muted">{{ item.email }}</span>
+                        </td>
+                        <td>{{ item.subject }}</td>
+                        <td>{{ item.message_date | dateformat:'dd MMM yyyy' }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <footer class="dker p-a">
+            <div class="row">
+                <div class="col-sm-12 text-right">
+                    <div data-ui-pagination data-template="pagination.html" data-display="5" data-store="trashStore"></div>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>

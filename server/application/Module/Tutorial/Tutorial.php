@@ -35,8 +35,7 @@ class Tutorial extends \Sys\Core\Module {
             $result['data'] = $tutorials;
         }
         
-        $this->response->responseJson();
-        return $result;
+        $this->response->setJsonContent($result);
     }
 
     public function createAction() {
@@ -56,9 +55,7 @@ class Tutorial extends \Sys\Core\Module {
             );
         }
 
-        $this->response->responseJson();
-
-        return $result;
+        $this->response->setJsonContent($result);
     }
 
     /**
@@ -69,11 +66,15 @@ class Tutorial extends \Sys\Core\Module {
 
         if ($this->request->hasFiles()) {
             $this->uploader->setup(array(
-                'path' => PUBPATH.'tutorial/',
+                'path' => PUBPATH.'tutorial'.DS,
                 'type' => 'mp4'
             ));
 
             if ($this->uploader->upload()) {
+                // remove existing
+                if ( ! empty($post['video'])) {
+                    \Sys\Helper\File::delete(PUBPATH.'tutorial'.DS.$post['video']);
+                }
                 $upload = $this->uploader->getResult();
                 $post['video'] = $upload['file_name'];
                 $post['video_type'] = $upload['file_type'];
@@ -86,8 +87,7 @@ class Tutorial extends \Sys\Core\Module {
 
         $result['success'] = $this->db->update('tutorial', $post, array('id' => $post['id']));
 
-        $this->response->responseJson();
-        return $result;
+        $this->response->setJsonContent($result);
     }
 
     public function deleteAction($id) {

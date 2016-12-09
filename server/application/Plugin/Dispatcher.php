@@ -9,17 +9,22 @@ class Dispatcher {
         $action = $dispatcher->getAction();
         $module = $dispatcher->getModule();
 
-        if ($action->authenticate) {
-            $this->authenticateAction($module);
-        }
-        
+        $this->validateAction($module, $action);
     }
 
-    public function authenticateAction($module) {
+    public function validateAction($module, $action) {
         $user = $module->auth->getCurrentUser();
-        if ( ! $user) {
-            throw new \Exception(_('Your session has been expired!'), 401);
+
+        if ($user) {
+            $module->role->handle($user->role);
         }
+
+        if ($action->authenticate) {
+            if ( ! $user) {
+                throw new \Exception(_('Your session has been expired!'), 401);
+            }    
+        }
+        
     }
 
     public function onAfterDispatch($event) {

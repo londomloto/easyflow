@@ -21,7 +21,12 @@
                 if (action) {
                     var data = angular.copy(tutorial);
                     api.del('/tutorial/' + tutorial.id, data).then(function(response){
-                        console.log(response);
+                        if (response.data.success) {
+                            var index = $scope.tutorials.indexOf(tutorial);
+                            if (index > -1) {
+                                $scope.tutorials.splice(index, 1);
+                            }
+                        }
                     });
                 }
             });

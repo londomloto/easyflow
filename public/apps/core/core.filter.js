@@ -4,10 +4,19 @@
 
     angular
         .module('core')
+        .filter('url', urlFilter)
         .filter('boolean', booleanFilter)
         .filter('thumbnail', thumbnailFilter)
         .filter('decodehtml', decodehtmlFilter)
-        .filter('dateformat', dateformatFilter);
+        .filter('dateformat', dateformatFilter)
+        .filter('trust', trustFilter);
+
+    /** @ngInject */
+    function trustFilter($sce) {
+        return function(html) {
+            return $sce.trustAsHtml(html);
+        };
+    }
 
     function booleanFilter() {
         return function(input, truly, falsy) {
@@ -18,7 +27,15 @@
     }
 
     /** @ngInject */
-    function thumbnailFilter($rootScope, api) {
+    function urlFilter(api) {
+        var BASE_URL = api.getBaseUrl();
+        return function(file, path) {
+            return BASE_URL + path + file;
+        }
+    }
+
+    /** @ngInject */
+    function thumbnailFilter(api) {
         var BASE_URL = api.getBaseUrl();
         
         return function(image, path, width, height) {

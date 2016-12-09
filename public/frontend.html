@@ -12,18 +12,11 @@
         <link rel="stylesheet" type="text/css" href="assets/vendor/pace/pace.css">
         <link rel="stylesheet" type="text/css" href="assets/vendor/ionicons/ionicons.css">
         <link rel="stylesheet" type="text/css" href="assets/vendor/roboto/roboto.css">
-        <link rel="stylesheet" type="text/css" href="assets/vendor/montserrat/fonts.css">
-        <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap/v3/css/bootstrap.css">
-        <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap/v3/css/ripples.css">
-        <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap/v3/css/material.css">
-        <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap/v3/css/snackbar.css">
-        <link rel="stylesheet" type="text/css" href="assets/vendor/bootstrap/v3/css/bootstrap-social.css">
-        <link rel="stylesheet" type="text/css" href="assets/css/frontend.css">
-
-        <script id="header-files"></script>
+        
+        <script id="head-files"></script>
         
     </head>
-    <body class="{{ state.style }}" data-ng-cloak>
+    <body class="{{ state.style }}">
 
         <div data-ui-view></div>
         
@@ -43,12 +36,10 @@
         <script src="assets/vendor/pace/pace.min.js"></script>
         <script src="assets/vendor/jquery/jquery.js"></script>
         <script src="assets/vendor/angular/angular.js"></script>
+        <script src="assets/vendor/angular/angular-sanitize.min.js"></script>
         <script src="assets/vendor/ui-router/angular-ui-router.js"></script>
+        <script src="assets/vendor/ui-breadcrumbs/ui-breadcrumbs.js"></script>
         <script src="assets/vendor/oclazyload/oclazyload.js"></script>
-        <script src="assets/vendor/bootstrap/v3/js/bootstrap.js"></script>
-        <script src="assets/vendor/bootstrap/v3/js/ripples.js"></script>
-        <script src="assets/vendor/bootstrap/v3/js/material.js"></script>
-        <script src="assets/vendor/bootstrap/v3/js/snackbar.js"></script>
         <!-- END VENDOR -->
         
         <!-- CORE MODULE -->
@@ -58,7 +49,7 @@
         <script src="apps/core/core.directive.js"></script>
         <script src="apps/core/core.filter.js"></script>
         <!-- END CORE MODULE -->
-
+        
         <!-- APP MODULE -->
         <script src="apps/frontend/app.module.js"></script>
         <script src="apps/frontend/app.constant.js"></script>
@@ -69,13 +60,6 @@
 
         <!-- END APP MODULE -->
         <script id="body-files"></script>
-
-        <!-- GLOBAL DIALOG -->
-        <div data-ui-template="dialog-alert.html"></div>
-        <div data-ui-template="dialog-info.html"></div>
-        <div data-ui-template="dialog-error.html"></div>
-        <div data-ui-template="dialog-confirm.html"></div>
-        <!-- END OF GLOBAL DIALOG -->
-
+        
     </body>
     </html>

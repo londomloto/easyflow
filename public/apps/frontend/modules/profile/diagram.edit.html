@@ -1,0 +1,60 @@
+<div>
+    
+    <div class="row">
+        <div class="col-sm-12">
+            <h3>{{ diagram.name }}</h3>
+        </div>
+    </div>
+    
+    
+    <div class="m-t" data-ui-tabs>
+        <div data-ui-pane data-title="Diagram" class="">
+            <p class="m-t">Klik tombol di bawah ini untuk menyunting diagram dengan editor</p>
+            <a data-ui-sref="editor" target="_blank" class="btn btn-primary btn-raised btn-lg">Sunting dengan editor</a>
+            <a data-ng-click="download('svg')" href="javascript:;" class="btn btn-link btn-default btn-lg">Unduh SVG</a>
+            <a data-ng-click="download('jpg')" href="javascript:;" class="btn btn-link btn-default btn-lg">Unduh JPG</a>
+
+            <div class="cover m-t" style="background: #EEEEEE;">
+                <img data-ng-src="{{ diagram.cover_url }}" style="width: 100%">
+            </div>
+        </div>
+        <div data-ui-pane data-title="Konfigurasi" class="">
+            <form data-ng-submit="updateDiagram()" class="m-t" novalidate name="form">
+                <div class="form-group">
+                    <label class="control-label">Nama diagram</label>
+                    <input data-ng-model="diagram.name" type="text" class="form-control" required>
+                </div>    
+                <div class="form-group">
+                    <label class="control-label">Keterangan</label>
+                    <textarea rows="6" data-ng-model="diagram.description" class="form-control"></textarea>
+                </div> 
+                <div class="form-group">
+                    <label class="control-label">Gambar sampul</label>
+                    <input type="file" data-ui-file="cover.file" data-on-select="onSelectCover" class="form-control">
+                    <input class="form-control" data-ng-model="cover.name" type="text" readonly>
+                </div>   
+                <div class="form-group">
+                    <label class="control-label">Publikasikan</label>
+                    <div class="checkbox">
+                        <label><input data-ng-model="diagram.published" data-ng-true-value="1" data-ng-false-value="0" type="checkbox"> Publikasikan diagram ini</label>
+                    </div>
+                </div>
+                <div class="m-t"></div> 
+                <button type="submit" data-ng-disabled="form.$invalid" class="btn btn-lg btn-raised btn-primary">Simpan perubahan</button>
+                <a href="javascript:;" data-ng-click="resetDiagram()" class="btn btn-lg btn-default btn-link">Batalkan perubahan</a>
+            </form>
+            <h4 class="m-t">Penghapusan</h4>
+            <hr>
+            <p>Menghapus diagram akan menghapus seluruh dokumen - dokumen yang berkaitan dengan diagram.</p>
+            <a href="javascript:;" data-ng-click="deleteDiagram()" class="btn btn-raised btn-danger btn-lg">Hapus diagram</a>
+        </div>
+        
+        <div data-ui-pane data-title="Kontributor" class="">
+            <div data-ui-template="diagram-forker.html"></div>
+        </div>
+        <div data-ui-pane data-title="Komentar" class="">
+            <div data-ui-template="diagram-comment.html"></div>
+        </div>
+    </div>
+
+</div>

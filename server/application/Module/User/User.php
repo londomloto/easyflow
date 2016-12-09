@@ -3,11 +3,13 @@ namespace App\Module\User;
 
 use Sys\Library\Uploader,
     Sys\Helper\File,
+    Sys\Helper\Text,
     App\Module\Site\Site;
 
 class User extends \Sys\Core\Module {
 
     const AVATAR_DIR = PUBPATH.'avatar'.DS;
+    const AVATAR_DEFAULT = 'avatar.png';
     
     /**
      * @Authenticate
@@ -34,14 +36,90 @@ class User extends \Sys\Core\Module {
                 'total' => 0
             );
 
-            $users = $this->db->fetchAll("SELECT SQL_CALC_FOUND_ROWS {$columns} FROM user");
+            $sql = "SELECT SQL_CALC_FOUND_ROWS {$columns} FROM user WHERE 1 = 1";
+            $where = array();
+            $params = array();
+
+            if ($this->request->hasParam('filters')) {
+                $filters = json_decode($this->request->getParam('filters'));
+
+                foreach($filters as $filter) {
+                    if ( ! empty($filter->value)) {
+                        switch($filter->comparison) {
+                            case 'contains':
+                                $params[] = "%{$filter->value}%";
+                                $where[]  = "{$filter->field} LIKE ?";
+                                break;
+                        }
+                    }
+                }
+
+                if (count($where)) {
+                    $sql .= " AND (" . implode(" AND ", $where) . ")";
+                }
+            }
+
+            $sql .= " ORDER BY fullname ASC";
+
+            $start = $this->request->getParam('start');
+            $limit = $this->request->getParam('limit');
+
+            if ($start != '' && $limit != '') {
+                $sql .= " LIMIT $start, $limit";
+            }
+
+            $users = $this->db->fetchAll($sql, $params);
 
             $result['data'] = $users;
             $result['total'] = $this->db->foundRows();
         }
 
-        $this->response->responseJson();
-        return $result;    
+        $this->response->setJsonContent($result);
+    }
+    
+    /**
+     * @Authenticate
+     */
+    public function createAction() {
+        $this->role->validate('create_user');
+
+        $post = $this->request->getPost();
+        self::validatePasswordChange($post);
+
+        $result = array(
+            'success' => FALSE,
+            'message' => ''
+        );
+
+        $found = self::findByEmail($post['email']);
+
+        if ($found) {
+            $result['status'] = 500;
+            $result['message'] = _('Data already exists!');
+        } else {
+
+            if ($this->request->hasFiles()) {
+                $this->uploader->setup(array(
+                    'path' => self::AVATAR_DIR
+                ));
+
+                if ($this->uploader->upload()) {
+                    $upload = $this->uploader->getResult();
+                    $post['avatar'] = $upload['file_name'];
+                }
+            }
+
+            $post['register_date'] = date('Y-m-d H:i:s');
+            $post['active'] = 1;
+
+            if ( ! isset($post['avatar'])) {
+                $post['avatar'] = self::AVATAR_DEFAULT;
+            }
+
+            $result['success'] = $this->db->insert('user', $post);
+        }
+
+        $this->response->setJsonContent($result);
     }
 
     /**
@@ -60,15 +138,45 @@ class User extends \Sys\Core\Module {
             ));
 
             if ($this->uploader->upload()) {
+
+                // delete existing
+                if ( ! empty($post['avatar']) && ! empty($post['avatar'])) {
+                    File::delete(self::AVATAR_DIR.$post['avatar']);
+                }
+
                 $upload = $this->uploader->getResult();
                 $post['avatar'] = $upload['file_name'];
             }
         }
 
+        self::validatePasswordChange($post);
+
         $result['success'] = $this->db->update('user', $post, array('id' => $post['id']));
 
-        $this->response->responseJson();
-        return $result;    
+        $this->response->setJsonContent($result);
+    }
+
+    public function deleteAction($id) {
+        $user = self::findById($id);
+        $error = FALSE;
+
+        if ($user) {
+            if ($user->role == 'admin') {
+                $error = _('Unable to delete admin account');
+            } else {
+                if ( ! $this->db->delete('user', array('id' => $id))) {
+                    $error = $this->db->getError();
+                }
+            }
+        } else {
+            $error = _('No data to delete');
+        }
+
+        if ($error) {
+            throw new \Exception($error);
+        } else {
+            $this->response->send204();
+        }
     }
 
     /**
@@ -85,11 +193,6 @@ class User extends \Sys\Core\Module {
         
         if (count($post) > 0) {
             
-            if (isset($post['noavatar']) && $post['noavatar'] == '1' && ! empty($post['avatar'])) {
-                File::delete(self::AVATAR_DIR.$post['avatar']);
-                $post['avatar'] = '';
-            }
-
             if ($file) {
 
                 $this->uploader->setup(array(
@@ -97,23 +200,18 @@ class User extends \Sys\Core\Module {
                 ));
 
                 if (($this->uploader->upload())) {
+
+                    // delete existing
+                    if ( ! empty($post['avatar']) && ! empty($post['avatar'])) {
+                        File::delete(self::AVATAR_DIR.$post['avatar']);
+                    }
+
                     $upload = $this->uploader->getResult();
                     $post['avatar'] = $upload['file_name'];
                 }
             }
 
-            if (
-                isset($post['passwd1'], $post['passwd2']) && 
-                $post['passwd1'] != '' && 
-                $post['passwd2'] != '' && 
-                $post['passwd1'] == $post['passwd2']
-            ) {
-                $salt = $this->security->generateSalt();
-                $hash = $this->security->generateHash($post['passwd1'], $salt);
-
-                $post['passwd'] = $hash;
-                $post['passwd_salt'] = $salt;
-            }
+            self::validatePasswordChange($post);
 
             $keys = array('email' => $post['email']);
 
@@ -128,8 +226,7 @@ class User extends \Sys\Core\Module {
             $result['message'] = _('Invalid parameters');
         }
 
-        $this->response->responseJson();
-        return $result;
+        $this->response->setJsonContent($result);
     }
 
     public function deleteAccountAction() {
@@ -147,8 +244,31 @@ class User extends \Sys\Core\Module {
             $result['message'] = $this->db->getError();
         }
 
-        $this->response->responseJson();
-        return $result;
+        $this->response->setJsonContent($result);
+    }
+
+    public function viewAction() {
+        $result = array(
+            'success' => FALSE,
+            'data' => NULL
+        );
+
+        $email = $this->request->getParam('email');
+
+        if ($email) {
+            
+            $user = self::findByEmail($email);
+
+            if ($user) {
+                $result['success'] = TRUE;
+                $result['data'] = $user;
+            } else {
+                throw new \Exception("Error Processing Request", 1);
+                
+            }
+        }
+
+        $this->response->setJsonContent($result);
     }
 
     public function thumbnailAction($image, $width = 96, $height = 96) {
@@ -172,7 +292,7 @@ class User extends \Sys\Core\Module {
             if ($user) {
                 
                 $security = $this->getSecurity();
-                $token  = $security->generateToken(array('email' => $email), 120);
+                $token  = $security->generateToken(array('email' => $email));
                 $redir .= (stristr($redir, '?') !== FALSE ? '&' : '?') . "token={$token}";
                     
                 $message = $this->template->load('email-request-password', array(
@@ -198,45 +318,8 @@ class User extends \Sys\Core\Module {
             $result['message'] = _('Invalid application context');
         }
 
-        $this->response->responseJson();
-        return $result;
+        $this->response->setJsonContent($result);
         
-        /*$email = $this->request->getParam('email');
-        $url = $this->request->getParam('url');
-        $user = self::findByEmail($email);
-        $site = $this->site->getCurrentSite();
-
-        $result = array(
-            'success' => FALSE,
-            'message' => ''
-        );
-
-        if ($user) {
-            $token = $this->site->generateToken(array('email' => $email), 86400);
-            $link  = $url . '&token=' . $token;
-            
-            $message = $this->template->load('email_request_password', array(
-                'user' => $user,
-                'site' => $site,
-                'link' => $link
-            ));
-            
-            $this->mailer->from($site->author_email, $site->author);
-            $this->mailer->to($user->email);
-            $this->mailer->subject(_('Password reset request'));
-            $this->mailer->message($message);
-
-            if ($this->mailer->send()) {
-                $result['success'] = TRUE;
-            } else {
-                $result['message'] = $this->mailer->getError();
-            }
-        } else {
-            $result['message'] = _("The email you entered doesn't match the registration info");    
-        }
-
-        $this->response->responseJson();
-        return $result;*/
     }
 
     public function recoverPassAction() {
@@ -265,16 +348,16 @@ class User extends \Sys\Core\Module {
 
                 $result['success'] = TRUE;
 
-                $site = Site::current();
+                $site = Site::getCurrentSite();
                 $user->passwd_real = $post['passwd'];
 
                 // send email
-                $message = $this->template->load('email_recover_password', array(
+                $message = $this->template->load('email-recover-password', array(
                     'site' => $site,
                     'user' => $user
                 ));
 
-                $this->mailer->from($site->author_email, $site->author);
+                $this->mailer->from($site->email, $site->author);
                 $this->mailer->to($user->email);
                 $this->mailer->subject(_('Password recovery'));
                 $this->mailer->message($message);
@@ -287,8 +370,7 @@ class User extends \Sys\Core\Module {
             $result['message'] = _('Invalid parameters');
         }
 
-        $this->response->responseJson();
-        return $result;
+        $this->response->setJsonContent($result);
     }
 
     public function verifyTokenAction() {
@@ -306,18 +388,39 @@ class User extends \Sys\Core\Module {
             $result['message'] = _('Invalid parameters');
         }
 
-        $this->response->responseJson();
-        return $result;
+        $this->response->setJsonContent($result);
     }
 
     ///////// API's /////////
     
-    public static function current() {
-        
-    }
-
     public static function columns() {
         return 'id,email,fullname,sex,job_title,bio,avatar,role,register_date,active,last_login,last_ip';
+    }
+
+    public static function getQuerySelect($paging = FALSE, $secure = TRUE) {
+        $sql = "SELECT";
+
+        if ($paging) {
+            $sql .= " SQL_CALC_FOUND_ROWS";
+        }
+
+        if ($secure) {
+            $sql .= " id, email, fullname, sex, job_title, bio, avatar, role, register_date, active, last_login, last_ip";
+        } else {
+            $sql .= " *";
+        }
+
+        $sql .= " FROM user";
+
+        return Text::compact($sql);
+    }
+
+    public static function getAssetsDir() {
+        return PUBPATH.'avatar'.DS;
+    }
+
+    public static function getAssetsUrl() {
+        return self::getInstance()->url->getBaseUrl().'public/avatar/';
     }
 
     public static function getAvatarUrl($user) {
@@ -337,9 +440,31 @@ class User extends \Sys\Core\Module {
         return $user;
     }
 
+    public static function findById($id, $secure = TRUE) {
+        $columns = $secure ? self::columns() : '*';
+        return self::getInstance()->db->fetchOne("SELECT {$columns} FROM user WHERE id = ?", array($id));
+    }
+
     public static function findByEmail($email, $secure = TRUE) {
         $columns = $secure ? self::columns() : '*';
         return self::getInstance()->db->fetchOne("SELECT {$columns} FROM user WHERE email = ?", array($email));
+    }
+
+    public static function validatePasswordChange(&$post) {
+        if (
+            isset($post['passwd1'], $post['passwd2']) && 
+            $post['passwd1'] != '' && 
+            $post['passwd2'] != '' && 
+            $post['passwd1'] == $post['passwd2']
+        ) {
+            $module = self::getInstance();
+
+            $salt = $module->security->generateSalt();
+            $hash = $module->security->generateHash($post['passwd1'], $salt);
+
+            $post['passwd'] = $hash;
+            $post['passwd_salt'] = $salt;
+        }
     }
 
 }

@@ -9,8 +9,9 @@ class Session extends \Sys\Core\Component {
 
     public function __construct(\Sys\Core\IApplication $app) {
         parent::__construct($app);
+        
         $this->_started = FALSE;
-        $this->_config  = $this->getAppConfig()->application->session;
+        $this->_config  = $app->getConfig()->application->session;
     }
 
     public function isStarted() {
@@ -88,7 +89,6 @@ class Session extends \Sys\Core\Component {
         );
 
         session_start();
-        
         $this->_started = TRUE;
         
         if ($this->isValid()) {
@@ -98,6 +98,10 @@ class Session extends \Sys\Core\Component {
                         ? $_SERVER['HTTP_X_FORWARDED_FOR'] 
                         : $_SERVER['REMOTE_ADDR'];
                 $_SESSION['USERAGENT'] = $_SERVER['HTTP_USER_AGENT'];
+
+                $_SESSION['STARTDATE'] = time();
+                $_SESSION['STOPDATE']  = $_SESSION['STARTDATE'] + $config->cookie_lifetime;
+
                 $this->regenerate();
             } else if (rand(1, 100) <= 5) {
                 $this->regenerate();
@@ -106,8 +110,20 @@ class Session extends \Sys\Core\Component {
             $_SESSION = array();
             session_destroy();
             session_start();
-            $this->_started = TRUE;
         }
+    }
+
+    public function info() {
+        $start = isset($_SESSION['STARTDATE']) ? $_SESSION['STARTDATE'] : time();
+        $stop  = isset($_SESSION['STOPDATE']) ? $_SESSION['STOPDATE'] : $start;
+
+        $info = array(
+            'session_name' => session_name(),
+            'session_start' => date('Y-m-d H:i:s', $start),
+            'session_expired' => date('Y-m-d H:i:s', $stop)
+        );
+        
+        return $info;
     }
 
     public function destroy() {
@@ -172,16 +188,17 @@ class Session extends \Sys\Core\Component {
         session_write_close();
 
         session_id($id);
-        
-        // I don't know to handle multiple Set-Cookie by calling session_start()
-        // https://bugs.php.net/bug.php?id=38104
-        ini_set('session.use_cookies', 0);
         session_start();
+
+        if (isset($_SESSION['STARTDATE'], $_SESSION['STOPDATE'])) {
+            $current = time();
+            $elapsed = $current - $_SESSION['STARTDATE'];
+            $_SESSION['STARTDATE'] = $current;
+            $_SESSION['STOPDATE']  = $_SESSION['STOPDATE'] + $elapsed;
+        }
 
         unset($_SESSION['OBSOLETE']);
         unset($_SESSION['EXPIRES']);
-
-        $this->_started = TRUE;
     }
 
     public function isValid() {

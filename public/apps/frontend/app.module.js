@@ -3,7 +3,8 @@
 
     angular
         .module('app', [
-            'core'
+            'core',
+            'ui.router.breadcrumbs'
         ])
         .controller('AppController', AppController)
         .run(run);
@@ -24,17 +25,17 @@
     /** @ngInject */
     function run($rootScope, router, auth) {
         auth.verify();
-
+        
         $rootScope.$on('$stateChangeStart', function(evt, state){
             if (state.authenticate) {
-                if ( ! auth.isAuthenticated()) {
-                    auth.verify().then(function(user){
-                        if ( ! user) {
-                            evt.preventDefault();
-                            router.go(router.getLoginState());
-                        }
-                    });
-                }
+                auth.verify().then(function(user){
+                    if ( ! user) {
+                        evt.preventDefault();
+                        router.go(router.getLoginState());
+                    }
+                });
+            } else {
+                auth.verify(false);
             }
         });
 

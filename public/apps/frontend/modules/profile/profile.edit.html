@@ -1,24 +1,26 @@
 
-
-<h3>Data Pribadi</h3>
-<p>Gunakan form berikut untuk melengkapi profil Anda.</p>
-<br>
-
-<div ng-show="form1.$submitted && form1.$invalid" class="alert alert-dismissible alert-danger">
-    <button type="button" class="close" data-dismiss="alert">×</button>
-    <strong>Oops!</strong>
-    <a href="javascript:void(0)" class="alert-link">Beberapa inputan tidak benar</a>, silahkan periksa kembali.
+<div class="row ng-scope">
+    <div class="col-sm-12">
+        <h3>Data Pribadi</h3>
+        <div class="spacer"></div>
+    </div>
 </div>
+
+
 
 <form name="form1" novalidate>
     <div class="form-group">
-        <label class="control-label" for="cf-input-1">Nama lengkap</label>
-        <input data-ng-model="account.fullname" name="user_fullname" class="form-control" id="cf-input-1" type="text" required>
+        <label class="control-label">Nama lengkap</label>
+        <input data-ng-model="account.fullname" name="user_fullname" class="form-control" type="text" required>
+        <p data-ng-show="form1.user_fullname.$error.required" class="help-block text-danger text-sm">Nama lengkap wajib diisi</p>
     </div>
 
     <div class="form-group">
         <label class="control-label" for="cf-input-2">Jenis Kelamin</label>
-        <input data-ng-model="account.sex" class="form-control" id="cf-input-2" type="text">
+        <select class="form-control">
+            <option value="pria">Pria</option>
+            <option value="wanite">Wanita</option>
+        </select>
     </div>
 
     <div class="form-group">
@@ -45,7 +47,7 @@
     </div>
 
     <div class="form-group label-floating">
-        <button type="submit" data-ng-click="updateAccount()" class="btn btn-raised btn-primary btn-lg">
+        <button data-ng-disabled="form1.$invalid" type="submit" data-ng-click="updateAccount()" class="btn btn-raised btn-primary btn-lg">
             Simpan perubahan
         </button>
     </div>
@@ -54,8 +56,7 @@
 <hr>
 
 <h3>Data Akun</h3>
-<p>Gunakan form berikut untuk merubah password saat ini atau menghapus akun Anda.</p>
-<br>
+<div class="spacer"></div>
 
 <form name="form2" novalidate>
 

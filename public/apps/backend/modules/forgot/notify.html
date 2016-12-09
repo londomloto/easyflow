@@ -3,12 +3,31 @@
         <div class="pull-center"></div>
     </div>
     <div class="p-a-md box-color r box-shadow-z1 text-color m-a">
-        <div class="m-b">
+        <div class="m-b" data-ng-if="state.params.type == 'request'">
             Terima kasih
             <p class="text-xs m-t">
-                Sebuah pesan sudah kami kirimkan ke alamat email Anda berisi instruksi untuk melakukan pembaharuan sandi.
+                Sebuah pesan berisi instruksi untuk melakukan pembaharuan sandi sudah kami kirimkan ke 
+                alamat email Anda.
             </p>
         </div>
+
+        <div class="m-b" data-ng-if="state.params.type == 'expired'">
+            Oops!
+            <p class="text-xs m-t">
+                Maaf, token pembaharuan sandi Anda sudah kadaluarsa. Silahan lakukan permintaan ulang.
+            </p>
+            <p>
+                <a data-ui-sref="forgot" class="btn primary btn-block p-x-md">Minta ulang sandi</a>
+            </p>
+        </div>
+
+        <div class="m-b" data-ng-if="state.params.type == 'recover'">
+            Terima kasih
+            <p class="text-xs m-t">
+                Sandi Anda sudah diperbaharui. Silahkan gunakan untuk masuk ke dalam aplikasi.
+            </p>
+        </div>
+
     </div>
     <div class="p-v-lg text-center">Kembali ke <a data-ui-sref="login" class="text-primary _600">halaman login</a></div>    
 </div>

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: easyflow 1.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-11-26 18:28+0700\n"
-"PO-Revision-Date: 2016-11-26 18:30+0700\n"
+"POT-Creation-Date: 2016-12-05 18:06+0700\n"
+"PO-Revision-Date: 2016-12-05 18:08+0700\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: id_ID\n"
@@ -19,48 +19,82 @@ msgstr ""
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Poedit-SourceCharset: UTF-8\n"
 
+#: application/Module/Access/Access.php:56 application/Module/User/User.php:98
+msgid "Data already exists!"
+msgstr "Data sudah ada!"
+
+#: application/Module/Access/Access.php:106
+msgid "Unable to delete data"
+msgstr "Tidak dapat menghapus data"
+
+#: application/Module/Access/Access.php:109
+#: application/Module/User/User.php:172
+msgid "No data to delete"
+msgstr "Tidak ada data yang dihapus"
+
 #: application/Module/Auth/Auth.php:21
 msgid "User have never logged in"
 msgstr "Pengguna tidak pernah login"
 
-#: application/Module/Auth/Auth.php:47 application/Module/Auth/Auth.php:82
-#: application/Module/Auth/Auth.php:158 application/Module/User/User.php:128
-#: application/Module/User/User.php:287 application/Module/User/User.php:306
+#: application/Module/Auth/Auth.php:46 application/Module/Auth/Auth.php:79
+#: application/Module/Auth/Auth.php:154 application/Module/User/User.php:226
+#: application/Module/User/User.php:346 application/Module/User/User.php:364
 msgid "Invalid parameters"
 msgstr "Parameter tidak valid"
 
-#: application/Module/Auth/Auth.php:123
+#: application/Module/Auth/Auth.php:119
 #, php-format
 msgid "%s, welcome to %s"
 msgstr "%s, selamat datang di %s"
 
-#: application/Module/Theme/Theme.php:19
-msgid "Your session has been expired"
-msgstr "Sesi Anda sudah habis"
+#: application/Module/Diagram/Diagram.php:76
+msgid "You don't have permission to update diagram"
+msgstr "Anda tidak memilik akses untuk menyunting diagram"
 
-#: application/Module/Tutorial/Tutorial.php:107
-msgid "Failed to delete tutorial"
-msgstr "Gagal menghapus tutorial"
-
-#: application/Module/User/User.php:186
-msgid "Password reset request"
-msgstr "Permintaan pembaharuan sandi"
-
-#: application/Module/User/User.php:195
-msgid "The email you entered doesn't match the registration info"
-msgstr "Email anda masukan tidak sesuai dengan data pendaftaran"
-
-#: application/Module/User/User.php:198
+#: application/Module/Mail/Inbox.php:72 application/Module/User/User.php:294
 msgid "Invalid application context"
 msgstr "Kontek aplikasi tidak valid"
 
-#: application/Module/User/User.php:279
+#: application/Module/Mail/Mail.php:15
+#, php-format
+msgid "Criticisms and suggestions from %s"
+msgstr "Kritik dan saran dari %s"
+
+#: application/Module/Mail/Mail.php:19
+msgid "An error ocurred while sending message"
+msgstr "Terjadi kesalahan dalam pengiriman pesan"
+
+#: application/Module/Setting/Setting.php:47
+msgid "You don't have permission to update application settings"
+msgstr "Anda tidak memiliki akses untuk menyunting setting aplikasi"
+
+#: application/Module/Tutorial/Tutorial.php:103
+msgid "Failed to delete tutorial"
+msgstr "Gagal menghapus tutorial"
+
+#: application/Module/User/User.php:165
+msgid "Unable to delete admin account"
+msgstr "Gagal menghapus akun admin"
+
+#: application/Module/User/User.php:282
+msgid "Password reset request"
+msgstr "Permintaan pembaharuan sandi"
+
+#: application/Module/User/User.php:291
+msgid "The email you entered doesn't match the registration info"
+msgstr "Email anda masukan tidak sesuai dengan data pendaftaran"
+
+#: application/Module/User/User.php:338
 msgid "Password recovery"
 msgstr "Pembaharuan sandi"
 
-#: application/Module/User/User.php:284
+#: application/Module/User/User.php:343
 msgid "The email address is not registered"
 msgstr "Alamat email ini tidak terdaftar"
+
+#: application/Plugin/Dispatcher.php:24
+msgid "Your session has been expired!"
+msgstr "Sesi Anda sudah habis!"
 
 #: application/Service/Auth.php:80
 msgid "You don't have permission to access this application"
@@ -78,7 +112,7 @@ msgstr "Alamat email ini tidak tersedia"
 msgid "An error occurred while creating account"
 msgstr "Terjadi kegagalan dalam pembuatan akun"
 
-#: application/Service/Role.php:103
+#: application/Service/Role.php:178
 msgid "You don't have permission to perform this action"
 msgstr "Anda tidak memiliki izin untuk melakukan tindakan ini"
 
@@ -86,27 +120,87 @@ msgstr "Anda tidak memiliki izin untuk melakukan tindakan ini"
 msgid "Hello world"
 msgstr "Halo dunia"
 
-#: system/Core/Application.php:48
+#: config/permission.php:6
+msgid "Access backend application menu"
+msgstr "Mengakses menu aplikasi dari backend"
+
+#: config/permission.php:10
+msgid "Add user"
+msgstr "Menambah pengguna"
+
+#: config/permission.php:14
+msgid "Delete tutorial"
+msgstr ""
+
+#: config/permission.php:18
+msgid "Add tutorial"
+msgstr ""
+
+#: config/permission.php:22
+msgid "Edit user"
+msgstr ""
+
+#: config/permission.php:26
+msgid "Delete user"
+msgstr ""
+
+#: config/permission.php:30
+msgid "Edit account"
+msgstr ""
+
+#: config/permission.php:34
+msgid "Delete account"
+msgstr ""
+
+#: config/permission.php:38
+msgid "Access backend access menu"
+msgstr ""
+
+#: config/permission.php:42
+msgid "Login to frontend"
+msgstr ""
+
+#: config/permission.php:46
+msgid "Login to backend"
+msgstr ""
+
+#: config/permission.php:50
+msgid "Access backend user menu"
+msgstr ""
+
+#: config/permission.php:54
+msgid "Edit application setting"
+msgstr ""
+
+#: config/permission.php:58
+msgid "Edit access data"
+msgstr ""
+
+#: config/permission.php:62
+msgid "Add access data"
+msgstr ""
+
+#: system/Core/Application.php:47
 #, php-format
 msgid "Service '%s' not found"
 msgstr "Layanan '%s' tidak ditemukan"
 
-#: system/Core/Application.php:52 system/Core/Component.php:31
+#: system/Core/Application.php:51 system/Core/Component.php:41
 #, php-format
 msgid "Call to undefined method or service '%s'"
 msgstr "Memanggil fungsi '%s' yang tidak didefinisikan"
 
-#: system/Core/Application.php:323
+#: system/Core/Application.php:339
 #, php-format
 msgid "Service %s doesn't found!"
 msgstr "Layanan %s tidak ditemukan!"
 
-#: system/Core/Application.php:340
+#: system/Core/Application.php:364
 #, php-format
 msgid "Module %s doesn't found!"
 msgstr "Modul %s tidak ditemukan!"
 
-#: system/Core/Application.php:384
+#: system/Core/Application.php:408
 #, php-format
 msgid "Path %s doesn't found"
 msgstr "Alamat %s tidak ditemukan"
@@ -125,7 +219,7 @@ msgstr "Peringatan"
 
 #: system/Core/ErrorHandler.php:46
 msgid "Notify"
-msgstr "Perhatikan"
+msgstr "Perhatian"
 
 #: system/Core/ErrorHandler.php:48
 msgid "Debug"
@@ -176,41 +270,37 @@ msgstr "Antrian tidak valid"
 msgid "Trying to cancel a non-cancelable event"
 msgstr "Mencoba membatalkan event yang tidak mendukung pembatalan"
 
-#: system/Core/Module.php:84
-msgid "Your session has been expired!"
-msgstr "Sesi Anda sudah habis!"
-
-#: system/Core/Service.php:92
+#: system/Core/Service.php:85
 #, php-format
-msgid "Service '%s' doesn't found!"
-msgstr "Layanan '%s' tidak ditemukan!"
+msgid "Service '%s' not found!"
+msgstr "Layanan '%s' tidak ditemukan"
 
-#: system/Db/Mysql.php:60
+#: system/Db/Mysql.php:80
 msgid "Database not connected"
 msgstr "Database tidak terhubung"
 
-#: system/Db/Mysql.php:235
+#: system/Db/Mysql.php:250
 msgid "Bulk update: missing data"
 msgstr "Updata masal: tidak ada data"
 
-#: system/Db/Mysql.php:240
+#: system/Db/Mysql.php:255
 msgid "Bulk update: missing index"
 msgstr "Update masal: tidak ada index"
 
-#: system/Service/Dispatcher.php:30
+#: system/Service/Dispatcher.php:31
 #, php-format
 msgid "Method %s->%s() doesn't exists!"
 msgstr "Fungsi %s->%s() tidak ditemukan!"
 
-#: system/Service/Dispatcher.php:91
+#: system/Service/Dispatcher.php:92
 #, php-format
 msgid "Call to undefined method %s::%s()"
 msgstr "Fungsi %s::%s() tidak terdefinisi"
 
-#: system/Service/Dispatcher.php:106
+#: system/Service/Dispatcher.php:107
 #, php-format
 msgid "Missing required parameter '%s' for method %s::%s()"
-msgstr "Parameter '%s' yang diperlukan untuk fungsi %s::%s tidak ada"
+msgstr "Parameter '%s' yang diperlukan untuk fungsi %s::%s() tidak ada"
 
 #: system/Service/Security.php:361
 msgid "Access token is not ready yet"
@@ -219,6 +309,15 @@ msgstr "Kode akses belum siap digunakan"
 #: system/Service/Security.php:364
 msgid "Access token has been expired"
 msgstr "Kode akses sudah kadaluarsa"
+
+#~ msgid "Nothing data to delete"
+#~ msgstr "Tidak ada data yang akan dihapus"
+
+#~ msgid "Your session has been expired"
+#~ msgstr "Sesi Anda sudah habis"
+
+#~ msgid "Service '%s' doesn't found!"
+#~ msgstr "Layanan '%s' tidak ditemukan!"
 
 #~ msgid "Call to private method %s::%s()"
 #~ msgstr "Memanggil fungsi %s::%s() yang disembunyikan"

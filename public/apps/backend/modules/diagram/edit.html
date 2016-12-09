@@ -1,0 +1,176 @@
+<div>
+    <div class="item">
+        <div class="item-bg">
+            <img data-ng-src="{{ diagram.cover_url }}" class="blur opacity-3">
+        </div>  
+        <div class="p-a-md">
+            <div class="row m-t">
+                <div class="col-sm-7">
+                    <a href="" class="pull-left m-r-md">
+                        <span class="avatar w-96">
+                            <img data-ng-src="{{ diagram.user_avatar | thumbnail:'/user/':96:96 }}">
+                        </span>
+                    </a>
+                    <div class="clear m-b">
+                        <h3 class="m-a-0 m-b-xs">{{ diagram.user_fullname }}</h3>
+                        <p class="text-muted"><span class="m-r">{{ diagram.user_email }}</span></p>
+                        <a data-ui-sref="main.user.edit({id: diagram.user_id})" class="btn btn-sm warn btn-rounded m-b">Lihat profil</a>
+                    </div>
+                </div>
+                <div class="col-sm-5">
+                    <p class="text-md _700 m-b-0">{{ diagram.name }}</p>
+                    <p class="profile-status">{{ diagram.description }}</p>
+                    <div data-ui-lightbox="a">
+                        <a data-ng-href="{{ diagram.cover_url }}" class="btn btn-sm white">Lihat gambar</a>    
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="dker p-x">
+        <div class="row">
+            <div class="col-sm-6 push-sm-6">
+                <div class="p-y text-center text-sm-right">
+                    <a href="" class="inline p-x text-center">
+                        <span class="h4 block m-a-0">{{ diagram.forks }}</span>
+                        <small class="text-xs text-muted">Kontributor</small>
+                    </a>
+                    <a href="" class="inline p-x b-l b-r text-center">
+                        <span class="h4 block m-a-0">{{ diagram.bookmarks }}</span>
+                        <small class="text-xs text-muted">Bookmark</small>
+                    </a>
+                    <a href="" class="inline p-x text-center">
+                        <span class="h4 block m-a-0">{{ diagram.downloads }}</span>
+                        <small class="text-xs text-muted">Download</small>
+                    </a>
+                </div>
+            </div>
+            <div class="col-sm-6 pull-sm-6">
+                <div class="p-y-md clearfix nav-active-primary">
+                    <ul class="nav nav-pills nav-sm">
+                        <li class="nav-item active">
+                          <a class="nav-link" href="" data-toggle="tab" data-target="#tab_1">Sunting</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" href="" data-toggle="tab" data-target="#tab_2">Kontributor</a>
+                        </li>
+                        <li class="nav-item">
+                          <a class="nav-link" href="" data-toggle="tab" data-target="#tab_3">Komentar</a>
+                        </li>
+                      </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="padding" style="min-height: 800px;">
+        <div class="row">
+            <div class="col-sm-12 col-md-8">
+                <div class="tab-content">
+                    <div id="tab_1" class="tab-pane p-v-sm active">
+                        
+                        <form name="form" data-ng-submit="updateDiagram()" novalidate>
+                            <div class="form-group">
+                                <label>Nama diagram</label>
+                                <input data-ng-model="diagram.name" name="name" type="text" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Keterangan</label>
+                                <textarea rows="6" data-ng-model="diagram.description" name="description" class="form-control"></textarea>
+                            </div>
+                            <div class="row">
+                                <div class="form-group col-sm-6">
+                                    <label>Tanggal dibuat</label>
+                                    <input data-ng-model="diagram.created_date" 
+                                           data-ui-date 
+                                           data-format="DD MMMM YYYY" type="text" class="form-control">
+                                </div>
+                                <div class="form-group col-sm-6">
+                                    <label>Terakhir di update</label>
+                                    <input data-ng-model="diagram.updated_date" 
+                                           data-ui-date 
+                                           data-format="DD MMMM YYYY" type="text" class="form-control">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="md-check">
+                                    <input data-ng-model="diagram.published" data-ng-true-value="1" data-ng-false-value="0" type="checkbox">
+                                    <i class="blue"></i> Publikasikan diagram ini
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>Gambar Sampul</label>
+                                <div class="form-file">
+                                    <input type="file" data-ui-file="cover.file" data-on-select="onSelectCover">
+                                    <button class="btn white">Pilih file ...</button>
+                                    <span>{{ cover.name }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="m-t"></div>
+                            <button type="submit" data-ng-disabled="form.$invalid" class="btn info">Simpan perubahan</button> 
+                            <a href="javascript:;" data-ng-click="resetDiagram()" class="btn btn-link text-info" type="button" >Batalkan perubahan</a>
+                        </form>
+
+                    </div>
+                    <div id="tab_2" class="tab-pane p-v-sm">
+                        
+                        <div class="row">
+                            <div class="col-xs-6 col-sm-4 col-md-3" data-ng-repeat="item in forkers track by item.id">
+                                <div class="box p-a-xs">
+                                    <a data-ui-sref="main.user.edit({id: item.id})">
+                                        <img data-ng-src="{{ item.avatar | thumbnail:'/user/':200:200 }}" alt="" class="img-responsive">   
+                                    </a>
+                                    <div class="p-a-sm">
+                                        <a data-ui-sref="main.user.edit({id: item.id})" class="_700 link">{{ item.fullname }}</a><br>
+                                        <small class="text-muted">{{ item.email }}</small>
+                                    </div>
+                                </div>
+                            </div>    
+                        </div>
+
+                        
+
+                    </div>
+                    <div id="tab_3" class="tab-pane p-v-sm">
+                        
+                        <div class="box">
+                            <div class="box-header">
+                                <h3>Komentar <span class="label success">{{ comments.length }}</span></h3>
+                            </div>    
+                            <div class="box-body">
+                                <div class="streamline m-b m-l">
+                                    <div data-ng-repeat="item in comments track by item.id" class="sl-item">
+                                        <div class="sl-left">
+                                            <img data-ng-src="{{ item.user_avatar | thumbnail:'/user/':40:40 }}" class="img-circle">
+                                        </div>
+                                        <div class="sl-content">
+                                            <div class="sl-date text-muted">{{ item.post_date | dateformat:'dd MMMM yyyy HH:mm' }}</div>
+                                            <div class="sl-author"><a href="">{{ item.user_fullname }}</a></div>
+                                            <div data-ui-markdown="item.message"></div>
+                                            <div class="sl-footer">
+                                                <a data-ng-click="deleteComment(item)" class="btn danger btn-xs" href="javascript:;">
+                                                    <i class="ion-android-delete text-muted"></i> Hapus
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>    
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-12 col-md-4">
+                
+
+
+
+
+
+
+
+            </div>
+        </div>
+    </div>
+</div>

@@ -8,5 +8,9 @@ class Site extends \Sys\Core\Component {
         return "CURRENT_{$context}_SITE";
     }
 
+    public function getCurrentSite() {
+        $sesskey = $this->getSessionKey();
+        return $this->session->get($sesskey);
+    }
 
 }

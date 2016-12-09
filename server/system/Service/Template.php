@@ -21,6 +21,11 @@ class Template extends \Sys\Core\Component {
         }
     }
 
+    public function addFunction($name, $defs) { 
+        $function = new \Twig_SimpleFunction($name, $defs);
+        $this->_engine->addFunction($function);
+    }
+
     public function load($path, $data = array()) {
         if (strripos($path, '.html') === FALSE) {
             $path .= '.html';

@@ -9,8 +9,8 @@ class Auth extends \Sys\Core\Component {
     public function __construct(\Sys\Core\IApplication $app) {
         parent::__construct($app);
 
-        if ($this->getAppConfig()->application->has('auth')) {
-            $this->_config = $this->getAppConfig()->application->auth;
+        if ($app->getConfig()->application->has('auth')) {
+            $this->_config = $app->getConfig()->application->auth;
             $this->_config->def('locking', TRUE);
             $this->_config->def('attempts', 3);
             $this->_config->def('timeout', 120);
@@ -23,7 +23,7 @@ class Auth extends \Sys\Core\Component {
             ));
         }
 
-        $this->_db = $this->getApp()->getDefaultDatabase();
+        $this->_db = $app->getDefaultDatabase();
         $this->_error = NULL;
     }
 
@@ -58,6 +58,7 @@ class Auth extends \Sys\Core\Component {
                     ));
 
                     $user->token = $token;
+                    $user->last_login = date('Y-m-d H:i:s');
                     
                     // save to session
                     $this->save($user);
@@ -67,7 +68,7 @@ class Auth extends \Sys\Core\Component {
                         $source, 
                         array(
                             'token' => $token,
-                            'last_login' => date('Y-m-d H:i:s'),
+                            'last_login' => $user->last_login,
                             'last_ip' => $this->getRequest()->getClientAddress()
                         ),
                         array(
@@ -124,11 +125,13 @@ class Auth extends \Sys\Core\Component {
             // create password
             $salt = $security->generateSalt();
             $hash = $security->generateHash($spec['passwd'], $salt);
+            $role = $this->getRole()->findDefault();
 
             $spec['passwd'] = $hash;
             $spec['passwd_salt'] = $salt;
             $spec['register_date'] = date('Y-m-d H:i:s');
             $spec['avatar'] = 'avatar.png';
+            $spec['role'] = $role ? $role->name : 'user';
 
             if ($this->_db->insert('user', $spec)) {
                 $user = $this->_db->fetchOne("SELECT * FROM user WHERE email = ?", array($spec['email']));
@@ -154,6 +157,8 @@ class Auth extends \Sys\Core\Component {
         $url = $this->getUrl();
 
         $data = new \stdClass();
+        $info = $session->info();
+        $data->expired_date = $info['session_expired'];
 
         // avatar url
         $data->avatar_url = '';

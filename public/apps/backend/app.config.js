@@ -9,6 +9,7 @@
     
     /** @ngInject */
     function config(
+        httpInterceptorProvider,
         routerProvider, 
         loaderProvider, 
         siteProvider, 
@@ -17,6 +18,10 @@
         CLIENT,
         SERVER
     ) {
+
+        httpInterceptorProvider.setup({
+            context: CLIENT.CONTEXT
+        });
 
         siteProvider.setup({
             context: CLIENT.CONTEXT
@@ -27,8 +32,7 @@
         });
 
         apiProvider.setup({
-            base: SERVER.BASE,
-            context: CLIENT.CONTEXT
+            base: SERVER.BASE
         });
 
         loaderProvider.setup({
@@ -36,49 +40,81 @@
         });
 
         loaderProvider.register([
+            ///////// STYLES /////////
+            {
+                name: 'backend.styles',
+                files: [
+                    'assets/vendor/bootstrap/v4/css/bootstrap.css',
+                    'assets/vendor/bootstrap/v3/css/snackbar.css',
+                    'assets/css/backend.css'
+                ],
+                insertBefore: '#head-files'
+            },
             {
                 name: 'tutorial.styles',
                 files: [
                     'assets/vendor/videojs/video-js.min.css',
                     'assets/css/backend-tutorial.css'
                 ],
-                insertBefore: '#header-files'
+                insertBefore: '#head-files'
             },
             {
                 name: 'user.styles',
                 files: [
                     'assets/vendor/simplelightbox/simplelightbox.css'
                 ],
-                insertBefore: '#header-files'
+                insertBefore: '#head-files'
             },
-
             {
-                name: 'login.module',
+                name: 'diagram.styles',
+                files: [
+                    'assets/vendor/simplelightbox/simplelightbox.css',
+                    'assets/vendor/datetimepicker/css/datetimepicker.css'
+                ],
+                insertBefore: '#head-files'
+            },
+            ///////// SCRIPTS /////////
+            {
+                name: 'backend.scripts',
+                files: [
+                    'assets/vendor/tether/tether.min.js',
+                    'assets/vendor/bootstrap/v4/js/bootstrap.js',
+                    'assets/vendor/bootstrap/v3/js/snackbar.js'
+                ],
+                insertBefore: '#body-files'
+            },
+            {
+                name: 'login.scripts',
                 files: ['apps/backend/modules/login/login.module.js'],
                 insertBefore: '#body-files'
             },
             {
-                name: 'forgot.module',
+                name: 'forgot.scripts',
                 files: ['apps/backend/modules/forgot/forgot.module.js'],
                 insertBefore: '#body-files'
             },
             {
-                name: 'dashboard.module',
+                name: 'dashboard.scripts',
                 files: ['apps/backend/modules/dashboard/dashboard.module.js'],
                 insertBefore: '#body-files'
             },
             {
-                name: 'setting.module',
+                name: 'mail.scripts',
+                files: ['apps/backend/modules/mail/mail.module.js'],
+                insertBefore: '#body-files'
+            },
+            {
+                name: 'setting.scripts',
                 files: ['apps/backend/modules/setting/setting.module.js'],
                 insertBefore: '#body-files'
             },
             {
-                name: 'access.module',
+                name: 'access.scripts',
                 files: ['apps/backend/modules/access/access.module.js'],
                 insertBefore: '#body-files'
             },
             {
-                name: 'user.module',
+                name: 'user.scripts',
                 files: [
                     'assets/vendor/simplelightbox/simple-lightbox.js',
                     'apps/backend/modules/user/user.module.js'
@@ -86,7 +122,18 @@
                 insertBefore: '#body-files'
             },
             {
-                name: 'tutorial.module',
+                name: 'diagram.scripts',
+                files: [
+                    'assets/vendor/simplelightbox/simple-lightbox.js',
+                    'assets/vendor/moment/moment.js',
+                    'assets/vendor/datetimepicker/js/datetimepicker.min.js',
+                    'assets/vendor/showdown/showdown.min.js',
+                    'apps/backend/modules/diagram/diagram.module.js'
+                ],
+                insertBefore: '#body-files'
+            },
+            {
+                name: 'tutorial.scripts',
                 files: [
                     'assets/vendor/videojs/video.min.js',
                     'apps/backend/modules/tutorial/tutorial.module.js'
@@ -111,8 +158,16 @@
             'main': {
                 url: '/main',
                 templateUrl: 'apps/backend/modules/main/main.html',
-                abstract: true
-                // authenticate: true
+                abstract: true,
+                resolve: {
+                    /** @ngInject */
+                    dependencies: function($rootScope, loader) {
+                        return loader.load([
+                            'backend.styles',
+                            'backend.scripts'
+                        ]);
+                    }
+                }
             },
             'main.dashboard': {
                 url: '/dashboard',
@@ -122,7 +177,59 @@
                 controller: 'DashboardController as dashboardCtl',
                 resolve: {
                     dependencies: function(loader) {
-                        return loader.load(['dashboard.module']);
+                        return loader.load(['dashboard.scripts']);
+                    }
+                }
+            },
+            'main.mail': {
+                url: '/mail',
+                breadcrumb: 'Perpesanan',
+                authenticate: true,
+                templateUrl: 'apps/backend/modules/mail/mail.html',
+                controller: 'MailController as mailCtl',
+                resolve: {
+                    dependencies: function(loader) {
+                        return loader.load(['mail.scripts']);
+                    }
+                }
+            },
+            'main.mail.inbox': {
+                url: '/inbox',
+                breadcrumb: 'Pesan Masuk',
+                authenticate: true,
+                views: {
+                    '@main.mail': {
+                        templateUrl: 'apps/backend/modules/mail/inbox.html',
+                        controller: 'InboxController as inboxCtl'
+                    }
+                }
+            },
+            'main.mail.inbox.message': {
+                url: '/:id',
+                breadcrumb: 'Lihat Pesan',
+                authenticate: true,
+                views: {
+                    '@main.mail': {
+                        templateUrl: 'apps/backend/modules/mail/message.html',
+                        controller: 'InboxController as inboxCtl'
+                    }
+                }
+            },
+            'main.mail.outbox': {
+                url: '/outbox',
+                breadcrumb: 'Pesan Keluar',
+                authenticate: true,
+                templateUrl: 'apps/backend/modules/mail/outbox.html',
+                controller: 'OutboxController as outboxCtl'
+            },
+            'main.mail.trash': {
+                url: '/trash',
+                breadcrumb: 'Kotak Sampah',
+                authenticate: true,
+                views: {
+                    '@main.mail': {
+                        templateUrl: 'apps/backend/modules/mail/trash.html',
+                        controller: 'TrashController as trashCtl'
                     }
                 }
             },
@@ -134,7 +241,7 @@
                 controller: 'SettingController as settingCtl',
                 resolve: {
                     dependencies: function(loader) {
-                        return loader.load(['setting.module']);
+                        return loader.load(['setting.scripts']);
                     }
                 }
             },
@@ -146,7 +253,7 @@
                 controller: 'AccessController as accessCtl',
                 resolve: {
                     dependencies: function(loader) {
-                        return loader.load(['access.module']);
+                        return loader.load(['access.scripts']);
                     }
                 }
             },
@@ -182,8 +289,19 @@
                     dependencies: function(loader) {
                         return loader.load([
                             'user.styles',
-                            'user.module'
+                            'user.scripts'
                         ]);
+                    }
+                }
+            },
+            'main.user.add': {
+                url: '/add',
+                breadcrumb: 'Tambah',
+                authenticate: true,
+                views: {
+                    '@main': {
+                        templateUrl: 'apps/backend/modules/user/add.html',
+                        controller: 'AddUserController as addUserCtl'
                     }
                 }
             },
@@ -194,14 +312,35 @@
                 views: {
                     '@main': {
                         templateUrl: 'apps/backend/modules/user/edit.html',
-                        controller: 'UserEditController as userEditCtl'
+                        controller: 'EditUserController as editUserCtl'
                     }
                 }
             },
-            'main.admin': {
-                url: '/admin',
-                breadcrumb: 'Administrator',
-                authenticate: true
+            'main.diagram': {
+                url: '/diagram',
+                breadcrumb: 'Diagram',
+                authenticate: true,
+                templateUrl: 'apps/backend/modules/diagram/diagram.html',
+                controller: 'DiagramController as diagramCtl',
+                resolve: {
+                    dependencies: function(loader) {
+                        return loader.load([
+                            'diagram.styles',
+                            'diagram.scripts'
+                        ]);
+                    }
+                }
+            },
+            'main.diagram.edit': {
+                url: '/edit/:id',
+                breadcrumb: 'Sunting',
+                authenticate: true,
+                views: {
+                    '@main': {
+                        templateUrl: 'apps/backend/modules/diagram/edit.html',
+                        controller: 'EditDiagramController as editDiagramCtl'
+                    }
+                }
             },
             'main.tutorial': {
                 url: '/tutorial',
@@ -213,7 +352,7 @@
                     dependencies: function(loader) {
                         return loader.load([
                             'tutorial.styles',
-                            'tutorial.module'
+                            'tutorial.scripts'
                         ]);
                     }
                 }
@@ -247,7 +386,11 @@
                 controller: 'LoginController as loginCtl',
                 resolve: {
                     dependencies: function(loader) {
-                        return loader.load(['login.module']);
+                        return loader.load([
+                            'backend.styles',
+                            'backend.scripts',
+                            'login.scripts'
+                        ]);
                     }
                 }
             },
@@ -257,12 +400,16 @@
                 controller: 'ForgotController as forgotCtl',
                 resolve: {
                     dependencies: function(loader) {
-                        return loader.load(['forgot.module']);
+                        return loader.load([
+                            'backend.styles',
+                            'backend.scripts',
+                            'forgot.scripts'
+                        ]);
                     }
                 }
             },
             'forgot.recover': {
-                url: '/recover?token',
+                url: '/recover?email&token',
                 views: {
                     '@': {
                         templateUrl: 'apps/backend/modules/forgot/recover.html',

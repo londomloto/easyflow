@@ -1,0 +1,68 @@
+<div class="padding">
+    <div class="row">
+        <div class="col-md-3 push-md-9">
+            <div class="box">
+                <div class="box-header">Pencarian</div>
+                <div class="box-body">
+                    <form>
+                        <div class="form-group">
+                            <label>Nama Diagram</label>
+                            <input data-ng-model="query.name" type="text" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Keterangan Diagram</label>
+                            <input data-ng-model="query.description" type="text" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Pembuat Diagram</label>
+                            <input data-ng-model="query.user_fullname" type="text" class="form-control">
+                        </div>
+                        <button data-ng-click="diagramStore.load()" class="btn btn-fw primary">Cari Diagram</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-9 pull-md-3" data-ui-lightbox=".lightbox" data-trigger="diagrams">
+            <div class="row">
+                <div data-ng-repeat="item in diagrams" >
+                    <div data-ng-if="$index % 2 == 0" class="clearfix"></div>
+                    <div class="col-md-6 col-xs-12 col-sm-12" >
+                        <div class="box">
+                            <div class="item dark">
+                                <div class="item-overlay active p-a">
+                                    <a href="" class="pull-left text-u-c label label-md" data-ng-class="item.published == 1 ? 'primary' : 'info'">{{ item.published ? 'PUBLIK' : 'PRIVAT' }}</a>
+                                </div>
+                                <a class="lightbox" href="{{ item.cover_url }}">
+                                    <img title="{{ item.name }}" data-ng-src="{{ item.cover | thumbnail:'/diagram/':400:200 }}" class="w-full">
+                                </a>
+                                <div class="bottom p-a-xs">
+                                    <a href="" class="text-md block p-x-sm">{{ item.user_fullname }}</a>
+                                </div>
+                            </div>
+                            <div class="m-r pos-rlt pull-right" style="margin-top: -30px; margin-bottom: -30px;">
+                                <img data-ng-src="{{ item.user_avatar | thumbnail:'/user/':56:56 }}" class="img-circle w-56 white">
+                            </div>
+                            <div class="p-a">
+                                <div class="text-muted m-b-xs">
+                                    <span class="m-r">{{ item.created_date | dateformat:'dd MMM yyyy' }}</span>
+                                    <a href="javascript:;" title="Kontributor" class="m-r"><i class="ion-person-stalker text-info"></i> {{ item.forks }}</a>
+                                    <a href="javascript:;" title="Bookmark" class="m-r"><i class="ion-heart text-danger"></i> {{ item.bookmarks }}</a>
+                                </div>
+                                <div class="m-b h-2x"><a href="" class="_800">{{ item.name }}</a></div>
+                                <p class="h-3x">{{ item.description }}</p>
+                                <div><a data-ui-sref="main.diagram.edit({id: item.id})" class="btn btn-xs white">Sunting</a></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-12 col-xs-12 col-md-12 text-center">
+                    <div data-ui-pagination data-template="pagination.html" data-store="diagramStore" data-display="10"></div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>

@@ -4,50 +4,27 @@
         <div class="col-sm-6">
             <h4 class="m-a-0 m-b-sm text-md">Hak Akses</h4>
             <hr>
-            <form>
-                <div class="form-group">
+            <form name="form" data-ng-submit="saveRole()" novalidate>
+                <div class="form-group" data-ng-class="{ 'has-danger' : form.name.$invalid && !form.name.$pristine }">
                     <label>Kode Akses</label>
-                    <input data-ng-model="edit.name" type="text" class="form-control">
+                    <input data-ng-model="add.name" name="name" type="text" class="form-control" required>
                 </div>
-                <div class="form-group">
+                <div class="form-group" data-ng-class="{ 'has-danger' : form.title.$invalid && !form.title.$pristine }">
                     <label>Nama Akses</label>
-                    <input data-ng-model="edit.title" type="text" class="form-control">
+                    <input data-ng-model="add.title" name="title" type="text" class="form-control" required>
                 </div>
                 <div class="form-group">
                     <label>Keterangan</label>
-                    <textarea data-ng-model="edit.description" class="form-control"></textarea>
+                    <textarea data-ng-model="add.description" class="form-control"></textarea>
                 </div>
                 <div class="form-group">
                     <label class="md-check">
-                        <input data-ng-model="edit.is_default" data-ng-true-value="1" data-ng-false-value="0" type="checkbox">
+                        <input data-ng-model="add.is_default" data-ng-true-value="1" data-ng-false-value="0" type="checkbox">
                         <i class="blue"></i> Setting sebagai default
                     </label>
                 </div>
-                <button data-ng-click="saveRole()" type="submit" class="btn btn-info m-t">Simpan Perubahan</button>
+                <button data-ng-disabled="form.$invalid" type="submit" class="btn btn-info m-t">Simpan Perubahan</button>
             </form>
-        </div>
-
-        <div class="col-sm-6">
-            <h4 class="m-a-0 m-b-sm text-md">Setting Permisi</h4>
-            <hr>
-            
-            <div class="text-right">
-                <div data-ui-pagination data-template="pagination.html" data-display="5" data-store="capStore"></div>
-            </div>
-
-            <div class="list-group list-group-gap m-t">
-                <li data-ng-repeat="item in capData" class="list-group-item">
-                    <div class="pull-right">
-                        <label class="md-switch">
-                            <input data-ng-model="item.active" data-ng-true-value="1" data-ng-false-value="0" type="checkbox">
-                            <i class="blue"></i>
-                        </label>
-                    </div>
-                    <p class="_700 m-b-0">{{ item.title }}</p>
-                    <small>{{ item.description || 'Tidak ada keterangan' }}</small>
-                </li>
-            </div>
-            
         </div>
     </div>
 

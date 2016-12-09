@@ -397,8 +397,12 @@ class Application implements IApplication {
 
             if ( ! empty($params)) {
                 $action = array_shift($params);
+                if (is_numeric($action)) {
+                    array_unshift($params, $action);
+                    $action = $request->getPreferredHandler();
+                }
             } else {
-                $action = $request->getDefaultHandler();
+                $action = $request->getPreferredHandler();
             }
         }
 
@@ -419,29 +423,41 @@ class Application implements IApplication {
      * Handle request
      */
     public function handle() {
-        $res = $this->getResponse();
-        $req = $this->getRequest();
-        $dis = $this->getDispatcher();
+        $request = $this->getRequest();
+        $dispatcher = $this->getDispatcher();
         $url = $this->getUrl();
-        $cfg = $this->getConfig()->application;
+        $config = $this->getConfig()->application;
 
         $url->parse();
-        $req->parse();
+        $request->parse();
 
         $segments = $url->getSegments();
 
         if ($url->getPath() == '/') {
-            $segments = explode('/', $cfg->default);
+            $segments = explode('/', $config->default);
         }
         
-        $locate = $this->locateModule($segments);
+        $found = $this->locateModule($segments);
 
-        $dis->setModule($locate['module']);
-        $dis->dispatch($locate['action'], $locate['params']);
-        $res->setContent($dis->getOutput());
-        $res->setReturn($dis->getReturn());
+        ob_start();
 
-        return $res;
+        $dispatcher->setModule($found['module']);
+        $dispatcher->dispatch($found['action'], $found['params']);
+
+        $response = $this->getResponse();
+        
+        $buffer = NULL;
+
+        if (ob_get_length()) {
+            $buffer = ob_get_contents();
+            ob_end_clean();
+        }
+
+        if ( ! is_null($buffer)) {
+            $response->prependContent($buffer);
+        }
+        
+        return $response;
     }
 
     public function isDebug() {
@@ -469,7 +485,6 @@ class Application implements IApplication {
         $this->_initModule();
 
         $this->getEventBus()->fire('application:initialize', $this);
-
         $this->handle()->send();
     }
 

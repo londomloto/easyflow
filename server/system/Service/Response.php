@@ -1,39 +1,33 @@
 <?php
 namespace Sys\Service;
 
+use Sys\Helper\Text,
+    Sys\Helper\File;
+
 class Response extends \Sys\Core\Component {
 
     const RESPONSE_TEXT = 0;    // text/html
     const RESPONSE_JSON = 1;    // application/json
+    const RESPONSE_FILE = 2;
 
     protected $_content;
     protected $_retval;
     protected $_responseType;
+    protected $_headers;
 
     public function __construct(\Sys\Core\IApplication $app) {
         parent::__construct($app);
 
         $this->_responseType = self::RESPONSE_TEXT;
-        $this->_content = NULL;
+        $this->_content = '';
         $this->_retval = NULL;
+        $this->_headers = array();
     }
     
-    public function setContent($content) {
-        $this->_content = $content;
-    }
-
-    public function setReturn($retval) {
-        $this->_retval = $retval;
-    }
-
     public function hasHeader($header) {
         $header = strtoupper(strtr($header, '-', '_'));
         return isset($_SERVER[$header]) || isset($_SERVER['HTTP_'.$header]);
     } 
-
-    public function setHeader($header, $value) {
-        header("{$header}: {$value}");
-    }
 
     public function getHeader($header) {
         $header = strtoupper(strtr($header, '-', '_'));
@@ -49,8 +43,64 @@ class Response extends \Sys\Core\Component {
         return '';
     }
 
+    public function setHeader($header, $value, $replace = TRUE) {
+        $this->_headers[] = array(
+            'name' => $header,
+            'value' => $value,
+            'replace' => $replace
+        );
+    }
+
     public function getMethod() {
         return $_SERVER['REQUEST_METHOD'];
+    }
+
+    public function responseText() {
+        $this->_responseType = self::RESPONSE_TEXT;
+        $this->setContentType('text/html', 'UTF-8');
+    }
+
+    public function responseJson() {
+        $this->_responseType = self::RESPONSE_JSON;
+        $this->setContentType('application/json', 'UTF-8');
+    }
+
+    public function responseFile() {
+        $this->_responseType = self::RESPONSE_FILE;
+    }
+
+    public function setContentType($type, $charset = NULL) {
+        if (is_null($charset)) {
+            $this->setHeader('Content-Type', $type);
+        } else {
+            $this->setHeader('Content-Type', $type . '; charset=' . $charset);
+        }
+    }
+
+    public function setContent($content) {
+        $this->_content = $content;
+    }
+
+    public function prependContent($content) {
+        $this->_content = $content . $this->_content;
+    }
+
+    public function appendContent($content) {
+        $this_content .= $content;
+    }
+
+    public function setJsonContent($content) {
+        $this->responseJson();
+        $this->setContent(json_encode($content, JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK));
+    }
+
+    public function setFileContent($content) {
+        $this->responseFile();
+        $this->setContent($content);
+    }
+
+    public function setReturn($retval) {
+        $this->_retval = $retval;
     }
 
     public function getContent() {
@@ -61,12 +111,30 @@ class Response extends \Sys\Core\Component {
         return $this->_retval;
     }
 
-    public function responseText() {
-        $this->_responseType = self::RESPONSE_TEXT;
-    }
+    public function sendHeaders() {
+        if ( ! headers_sent()) {
+            foreach($this->_headers as $item) {
+                $key = $item['name'];
+                $val = $item['value'];
+                $rep = $item['replace'];
 
-    public function responseJson() {
-        $this->_responseType = self::RESPONSE_JSON;
+                if ( ! is_null($val)) {
+                    header("{$key}: {$val}", $rep);
+                } else {
+                    if (Text::contains($key, ':')) {
+                        header("{$key}", $rep);
+                    } else {
+                        header("{$key}: ", $rep);
+                    }
+                }
+            }
+
+            $this->_headers = array();
+            return TRUE;
+        }
+
+        $this->_headers = array();
+        return FALSE;
     }
     
     public function send() {
@@ -87,29 +155,48 @@ class Response extends \Sys\Core\Component {
                 $this->setHeader('Access-Control-Allow-Headers', $this->getHeader('Access-Control-Request-Headers'));
             }
 
+            $this->sendHeaders();
             exit(0);
         }
 
-        if ($this->_responseType == self::RESPONSE_JSON) {
-            $this->setHeader('Content-Type', 'application/json');
-        }
-        
-        if ( ! is_null($this->_content)) {
-            echo $this->_content;   
+        $content = $this->_content;
+        $responseType = $this->_responseType;
+
+        if ( ! is_null($content)) {
+            switch($responseType) {
+                case self::RESPONSE_JSON:
+                    if (is_array($content) || is_object($content)) {
+                        $content = json_encode($content, JSON_PRETTY_PRINT | JSON_NUMERIC_CHECK);
+                    }
+                    break;
+                case self::RESPONSE_FILE:
+                    $mime = File::getType($content);
+                    $name = basename($content);
+                    $size = filesize($content);
+
+                    $this->setHeader('Pragma', 'public'); // compat
+                    $this->setHeader('Cache-Control', 'must-revalidate, post-check=0, pre-check=0');
+                    $this->setHeader('Expires', '0');
+                    $this->setHeader('Last-Modified', gmdate('D, d M Y H:i:s', filemtime($content)).' GMT');
+                    $this->setHeader('Cache-Control', 'private', FALSE);
+                    $this->setContentType($mime);
+                    $this->setHeader('Content-Description', 'File Transfer');
+                    $this->setHeader('Content-Disposition', 'attachment; filename='.$name);
+                    $this->setHeader('Content-Transfer-Encoding', 'binary');
+                    $this->setHeader('Content-Length', $size);
+                    $this->setHeader('Connection', 'close');
+                    // $this->setHeader('Content-Encoding', 'none');
+                    
+                    $content = file_get_contents($content);
+                    break;
+            }
+        } else {
+            $content = '';
         }
 
-        if ( ! is_null($this->_retval)) {
-            if ((is_array($this->_retval) || is_object($this->_retval))) {
-                if ($this->_responseType == self::RESPONSE_JSON) {
-                     echo json_encode($this->_retval, JSON_PRETTY_PRINT);
-                } else {
-                    // force error to user;
-                    echo $this->_retval;
-                }
-            } else {
-                echo $this->_retval;
-            }
-        }
+        $this->sendHeaders();
+        echo $content;
+        exit();
     }
     
     public function send204() {

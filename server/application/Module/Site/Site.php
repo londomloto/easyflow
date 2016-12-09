@@ -4,6 +4,13 @@ namespace App\Module\Site;
 class Site extends \Sys\Core\Module {
     
     public function testAction() {
+        
+
+        $this->notification->forkRequest(
+            \App\Module\Diagram\Diagram::findById(4),
+            \App\Module\User\User::findByEmail('londomloto.io@gmail.com'),
+            \App\Module\User\User::findByEmail('roso.sasongko@gmail.com')
+        );
 
     }
 
@@ -15,7 +22,7 @@ class Site extends \Sys\Core\Module {
     public function verifyAction() {
         $session = $this->getSession();
         $sesskey = $this->getSessionKey();
-        $site = self::buildFromSetting();
+        
         if ( ! $session->has($sesskey)) {
             $site = self::buildFromSetting();
             $this->session->set($sesskey, $site);
@@ -28,9 +35,9 @@ class Site extends \Sys\Core\Module {
             'data' => $site
         );
 
-        $this->response->responseJson();
-        return $result;
+        $this->response->setJsonContent($result);
     }
+    
 
     public static function buildFromSetting() {
         $settings = self::getInstance()->db->fetchAll("SELECT * FROM setting WHERE section = 'site'");

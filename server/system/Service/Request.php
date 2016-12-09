@@ -298,8 +298,14 @@ class Request extends \Sys\Core\Component {
             return $default;
         }
 
-        if (isset($_SERVER['HTTP_ACCEPT'])) {
-            $accepts = $this->sortAccept($_SERVER['HTTP_ACCEPT']);
+        $httpAccept = isset($_SERVER['HTTP_X_ACCEPT']) 
+            ? $_SERVER['HTTP_X_ACCEPT'] 
+            : (isset($_SERVER['HTTP_ACCEPT'])
+                ? $_SERVER['HTTP_ACCEPT'] 
+                : FALSE);
+
+        if ($httpAccept) {
+            $accepts = $this->sortAccept($httpAccept);
 
             foreach($accepts as $type => $q) {
                 if (substr($type, -2) != '/*') {
@@ -331,20 +337,20 @@ class Request extends \Sys\Core\Component {
 
     public function getPreferredType() {
         $preferred = array(
-            'application/xhtml+xml',
-            'application/xml',
-            'application/json',
             'text/html',
-            'text/plain'
+            'text/plain',
+            'application/json',
+            'application/xml',
+            'application/xhtml+xml'
         );
 
         return $this->getAcceptedType($preferred);
     }
 
     public function sortAccept($header) {
-        $matches = array();
+        $matches = array(); 
         $parts = explode(',', $header);
-
+        
         foreach($parts as $option) {
             $option = array_map('trim', explode(';', $option));
             $l = strtolower($option[0]);
@@ -365,13 +371,19 @@ class Request extends \Sys\Core\Component {
         return $matches;
     }
 
-    public function getDefaultHandler() {
+    public function getPreferredHandler() {
         $method = $this->getMethod();
-        if ($method == 'GET') {
-            return 'find';
-        } else {
-            return strtolower($method);
+        switch($method) {
+            case 'GET':
+                return 'find';
+            case 'POST':
+                return 'create';
+            case 'PUT':
+                return 'update';
+            case 'DELETE':
+                return 'delete';
         }
+        return strtolower($method);
     }
 
 }

@@ -1,6 +1,8 @@
 <?php
 namespace Sys\Service;
 
+use Sys\Helper\Kernel;
+
 class Security extends \Sys\Core\Component {
 
     protected $_gpc;
@@ -35,7 +37,7 @@ class Security extends \Sys\Core\Component {
         parent::__construct($app);
 
         $this->_gpc = get_magic_quotes_gpc();
-        $this->_config = $this->getAppConfig()->application->security;
+        $this->_config = $app->getConfig()->application->security;
 
         if ( ! $this->_config->has('secret_key')) {
             $this->_config->set('secret_key', 'Lv4dmEWEWAjEyLaJkXz+BGvypPYcH/aSO3LMOCloAuM=');
@@ -48,7 +50,7 @@ class Security extends \Sys\Core\Component {
     }
 
     protected function _decodeEntity($match) {
-        $charset = $this->getAppConfig()->application->charset;
+        $charset = $this->_app->getConfig()->application->charset;
         $match = preg_replace('|\&([a-z\_0-9\-]+)\=([a-z\_0-9\-/]+)|i', $this->xssHash().'\\1=\\2', $match[0]);
         return str_replace($this->xssHash(), '&', $this->decodeEntity($match, $charset));
     }
@@ -145,7 +147,7 @@ class Security extends \Sys\Core\Component {
 
         isset($charset) OR $charset = $this->charset;
 
-        $flag = is_php('5.4')
+        $flag = Kernel::php('5.4')
             ? ENT_COMPAT | ENT_HTML5
             : ENT_COMPAT;
 
@@ -156,7 +158,7 @@ class Security extends \Sys\Core\Component {
                 if ( ! isset($_entities)) {
                     $_entities = array_map(
                         'strtolower',
-                        is_php('5.3.4')
+                        Kernel::php('5.3.4')
                             ? get_html_translation_table(HTML_ENTITIES, $flag, $charset)
                             : get_html_translation_table(HTML_ENTITIES, $flag)
                     );  
@@ -274,13 +276,21 @@ class Security extends \Sys\Core\Component {
     }
 
     public function generateBytes($length = 32) {
-        return openssl_random_pseudo_bytes($length);
+        if (function_exists('random_bytes')) {
+            $bytes = random_bytes($length);
+        } else if (function_exists('openssl_random_pseudo_bytes')) {
+            $bytes = openssl_random_pseudo_bytes($length);
+        } else {
+            throw new \Exception(_('No cryptographically secure random function available'));
+        }
+        return $bytes;
     }
 
     /**
      * Useful for generating secret key
      */
     public function generateKey($encoder = 'base64_encode', $length = 32) {
+        if (is_null($encoder)) $encoder = 'base64_encode';
         return $encoder($this->generateBytes($length));
     }
     

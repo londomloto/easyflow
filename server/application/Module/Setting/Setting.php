@@ -11,34 +11,43 @@ class Setting extends \Sys\Core\Module {
 
         $result['data'] = $this->setting->load();
         
-        $this->response->responseJson();
-        return $result;
+        $this->response->setJsonContent($result);
     }
 
+    /**
+     * @Authenticate
+     */
     public function saveAction() {
+
         $result = array(
             'success' => FALSE,
             'message' => NULL
         );
 
-        $post = $this->request->getPost();
-        $rows = array();
+        if ($this->role->can('update_app')) {
 
-        foreach($post as $key => $val) {
-            $rows[] = array(
-                'name'  => $key,
-                'value' => $val
-            );
+            $post = $this->request->getPost();
+            $rows = array();
+
+            foreach($post as $key => $val) {
+                $rows[] = array(
+                    'name'  => $key,
+                    'value' => $val
+                );
+            }
+
+            $result['success'] = $this->setting->set($rows);
+
+            if ( ! $result['succes']) {
+                $result['message'] = $this->db->getError();
+            }
+
+        } else {
+            $result['status'] = 403;
+            $result['message'] = _("You don't have permission to update application settings");
         }
 
-        $result['success'] = $this->setting->set($rows);
-
-        if ( ! $result['succes']) {
-            $result['message'] = $this->db->getError();
-        }
-
-        $this->response->responseJson();
-        return $result;
+        $this->response->setJsonContent($result);
     }
 
     public function generateKeyAction() {
@@ -47,8 +56,7 @@ class Setting extends \Sys\Core\Module {
             'data' => $this->security->generateKey()
         );
 
-        $this->response->responseJson();
-        return $result;
+        $this->response->setJsonContent($result);
     }
 
 }

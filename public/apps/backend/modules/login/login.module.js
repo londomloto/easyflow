@@ -5,12 +5,10 @@
         .controller('LoginController', LoginController);
 
     /** @ngInject */
-    function LoginController($scope, router, theme, auth) {
+    function LoginController($scope, router, auth) {
         $scope.email = '';
         $scope.passwd = '';
         $scope.message = '';
-
-        theme.invalidateTemplates();
 
         $scope.login = function(valid) {
             if (valid) {

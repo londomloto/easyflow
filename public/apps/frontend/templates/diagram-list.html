@@ -1,0 +1,51 @@
+<div class="row" data-ui-lightbox=".lightbox-item" data-trigger="diagrams">
+    <div ng-repeat="item in diagrams track by item.id">
+        <div data-ng-if="$index % 2 == 0" class="clearfix"></div>
+        <div class="col-md-6 col-sm-12 col-xs-12">
+            <div class="thumbnail">
+                <div class="cover">
+                    <img  alt="." data-ng-src="{{ item.cover | thumbnail:'/diagram/':400:200 }}" style="width: 100%;">
+                    <a class="zoom lightbox-item" href="{{ item.cover_url }}">
+                        <img title="{{ item.name }}" class="hidden">
+                        <span><i class="ion-android-search"></i></span>
+                    </a>
+                    
+                </div>
+
+                <div style="background: #009D8E; padding: 8px 15px;">
+                    <a data-ui-sref="user.view({email: item.user_email})" class="_700" style="color: #fff;">
+                        <span class="">{{ item.user_fullname }}</span>
+                    </a>
+                </div>
+                
+                <div style="float: right; margin-right: 10px; margin-top: -30px;">
+                    <div data-ng-hide="user.id == item.user_id" style="display: inline-block;">
+                        <a data-ng-click="bookmark(item)" href="javascript:;" title="Bookmark" class="btn btn-default btn-fab">
+                            <i class="ion-heart fab-icon" data-ng-class="item.bookmarked == 1 ? 'text-danger' : 'text-primary'"></i>
+                        </a>
+                        <a data-ng-click="fork(item)"  href="javascript:;" class="btn btn-default btn-fab">
+                            <i class="fab-icon" data-ng-class="{ 'ion-person text-danger' : item.forked == 1, 'ion-person-add text-primary' : item.forked == 0}"></i>
+                        </a>    
+                    </div>
+                    <a data-ui-sref="profile.view({email: item.user_email})" class="btn btn-fab">
+                        <img data-ng-src="{{ item.user_avatar | thumbnail:'/user/':56:56 }}">
+                    </a>
+                </div>
+                
+                <div class="clearfix caption">
+                    <h4>{{ item.name }}</h4>
+                    <div class="_300 text-muted">
+                        <span class="m-r">{{ item.created_date | dateformat:'dd MMM yyyy' }}</span>
+                        <span class="m-r"><i class="ion-heart text-danger"></i> {{ item.bookmarks }}</span>
+                        <span class="m-r"><i class="ion-person text-primary"></i> {{ item.forks }}</span>
+                    </div>
+                    <p class="text-sm m-t">{{ item.short_description }}</p>
+                    <hr>
+                    <div class="text-center">
+                        <a class="btn btn-default btn-sm btn-link m-a-0 text-info" data-ui-sref="{{ item.link }}" title="Lihat detail diagram">Lihat detail diagram</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

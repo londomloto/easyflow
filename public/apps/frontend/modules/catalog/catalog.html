@@ -1,0 +1,85 @@
+<nav class="navbar navbar-default navbar-custom" data-ui-template="header.html"></nav>
+
+<section class="p-a-0" style="margin-bottom: 100px;">
+    <div class="b-t b-b" style="background: #f5f5f5; margin-top: -20px; margin-bottom: 30px;">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-9 col-md-offset-3">
+                    <ul data-breadcrumbs class="breadcrumb no-radius" style="margin-bottom: 0; padding-left: 0px;">
+                        
+                        <li data-ng-repeat="breadcrumb in breadcrumbs" class="nav-item nav-breadcrumb">
+                            <a data-ui-sref="{{ breadcrumb.stateName }}" class="nav-link clear" data-ng-class="breadcrumb.class">
+                                {{ breadcrumb.text }}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>    
+        </div>
+        
+    </div>    
+
+    <div class="container">
+
+        <div class="row">
+            <div class="col-md-3">
+                <h4 class="">Pencarian</h4>
+                <div class="spacer"></div>
+                <div style="margin-bottom: 30px;">
+                    <div class="form-group">
+                        <label class="control-label">Nama diagram</label>
+                        <input data-ng-model="query.name" type="text" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Keterangan diagram</label>
+                        <input data-ng-model="query.description" type="text" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Nama pembuat</label>
+                        <input data-ng-model="query.user_fullname" type="text" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label">Urutkan berdasarkan</label>
+                        <select data-ng-model="query.sort" class="form-control">
+                            <optgroup label="Ascending">
+                                <option value="a.name ASC">Nama diagram</option>
+                                <option value="a.created_date ASC">Tanggal pembuatan</option>
+                                <option value="forks ASC">Jumlah kolaborator</option>
+                                <option value="bookmarks ASC">Jumlah bookmark</option>
+                            </optgroup>
+                            <optgroup label="Descending">
+                                <option value="a.name DESC">Nama diagram</option>
+                                <option value="a.created_date DESC">Tanggal pembuatan</option>
+                                <option value="forks DESC">Jumlah kolaborator</option>
+                                <option value="bookmarks DESC">Jumlah bookmark</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <a data-ng-click="find()" href="javascript:;" class="btn btn-raised btn-primary btn-lg">Tampilkan data</a>
+                </div>
+
+                <h4 class="">Top Kreator</h4>
+                <div class="spacer"></div>
+
+                <div data-ui-lightbox=".img-wrapper" data-trigger="creators" class="row" style="margin-left: -4px; margin-right: -4px">
+                    <div data-ng-repeat="item in creators">
+                        <div class="col-sm-4" style="padding-left: 4px; padding-right: 4px; padding-bottom: 8px;">
+                            <a data-ng-href="{{ item.avatar_url }}" class="img-wrapper">
+                                <img alt="." title="{{ item.fullname }}" data-ng-src="{{ item.avatar | thumbnail:'/user/':100:100 }}" style="width: 100%">
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="" class="btn btn-primary btn-raised btn-lg">Lihat selengkapnya</a>
+                
+            </div>
+            <div class="col-md-9" data-ui-view>
+                
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<footer class="text-center" data-ui-template="footer.html"></footer>

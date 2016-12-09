@@ -31,14 +31,14 @@
 
         $rootScope.$on('$stateChangeStart', function(evt, state){
             if (state.authenticate) {
-                if ( ! auth.isAuthenticated()) {
-                    auth.verify().then(function(user){
-                        if ( ! user) {
-                            evt.preventDefault();
-                            router.go(router.getLoginState());
-                        }
-                    });
-                }
+                auth.verify().then(function(user){
+                    if ( ! user) {
+                        evt.preventDefault();
+                        router.go(router.getLoginState());
+                    }
+                });
+            } else {
+                auth.verify(false);
             }
         });
     }

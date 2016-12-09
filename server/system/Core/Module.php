@@ -6,11 +6,7 @@ abstract class Module extends Component {
     protected static $_loaded = array();
     protected static $_instances = array();
     protected static $_actions = array();
-
-    public function __construct(IApplication $app) {
-        parent::__construct($app);
-    }
-
+    
     public function start() {
         $class = get_called_class();
 
@@ -75,53 +71,7 @@ abstract class Module extends Component {
         $class = get_called_class();
         return self::$_actions[$class];
     }
-
-    public function __get($name) {
-        
-        $prop = '_'.$name;
-
-        if ( ! isset($this->{$prop})) {
-
-            if ($this->hasDatabase($name)) {
-                $instance = $this->getDatabaseInstance($name);
-            } else if ($this->hasService($name)) {
-                $instance = $this->getServiceInstance($name);
-            }
-
-            $this->{$prop} = $instance;
-        }
-
-        return $this->{$prop};
-    }
     
-    /**
-     * HTTP GET
-     */
-    public function findAction($id = NULL) {
-
-    }
-
-    /**
-     * HTTP POST
-     */
-    public function postAction() {
-
-    }
-
-    /**
-     * HTTP PUT
-     */
-    public function putAction($id) {
-
-    }
-
-    /**
-     * HTTP DELETE
-     */
-    public function deleteAction($id) {
-        
-    }
-
     public static function getInstance() {
         $class = get_called_class();
 
@@ -133,12 +83,13 @@ abstract class Module extends Component {
 
         $modules = array_filter(
             $app->getModules(),
-            function($service) {
+            function($service) use ($class) {
                 return $service->getDefinition() == $class;
             }
         );
 
         $modules = array_values($modules);
+        
         $name = $modules[0]->getName();
         $name = substr($name, 7);
 

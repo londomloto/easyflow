@@ -2,7 +2,8 @@
 namespace App\Module\Auth;
 
 use App\Module\User\User,
-    App\Module\Site\Site;
+    App\Module\Site\Site,
+    Sys\Helper\File;
 
 class Auth extends \Sys\Core\Module {
     
@@ -21,8 +22,7 @@ class Auth extends \Sys\Core\Module {
             $result['message'] = _('User have never logged in');
         }
 
-        $this->response->responseJson();
-        return $result;
+        $this->response->setJsonContent($result);
     }
     
     /**
@@ -47,17 +47,15 @@ class Auth extends \Sys\Core\Module {
             $result['message'] = _('Invalid parameters');
         }
 
-        $this->response->responseJson();
-        return $result;
+        $this->response->setJsonContent($result);
     }
 
     public function logoutAction() {
         $this->auth->logout();
-        $this->response->responseJson();
         
-        return array(
+        $this->response->setJsonContent(array(
             'success' => TRUE
-        );
+        ));
     }
 
     public function registerAction() {
@@ -82,8 +80,7 @@ class Auth extends \Sys\Core\Module {
             $result['message'] = _('Invalid parameters');
         }
         
-        $this->response->responseJson();
-        return $result;
+        $this->response->setJsonContent($result);
     }
 
     public function socialAction() {
@@ -111,7 +108,7 @@ class Auth extends \Sys\Core\Module {
                     // send notification email
                     $user->passwd_real = $post['passwd'];
                     
-                    $site = Site::current();
+                    $site = Site::getCurrentSite();
 
                     $message = $this->template->load('email_account_created', array(
                         'site' => $site,
@@ -136,6 +133,11 @@ class Auth extends \Sys\Core\Module {
             // update avatar
             if ($post['avatar']) {
                 if ($upload = $this->uploadAvatar($post['avatar'])) {
+                    // delete exs
+                    if ( ! empty($result['data']->avatar)) {
+                        File::delete(User::getAssetsDir().$result['data']->avatar);
+                    }
+                    
                     $avatar = $upload['file_name'];
                     
                     $this->db->update(
@@ -158,8 +160,7 @@ class Auth extends \Sys\Core\Module {
             $result['message'] = _('Invalid parameters');
         }
 
-        $this->response->responseJson();
-        return $result;
+        $this->response->setJsonContent($result);
     }
     
     public function uploadAvatar($url) {

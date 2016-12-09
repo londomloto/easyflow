@@ -1,0 +1,38 @@
+<div class="padding">
+    <div class="row">
+        <div class="col-sm-6 col-xs-12">
+            <h4 class="text-md m-b-0 _600">{{ message.fullname }}</h4>
+            <p class="p-a-0 m-a-0"><a href="mailto: {{ message.email }}">{{ message.email }}</a></p>
+            <p class="m-b-0">Subjek: {{ message.subject }}</p>
+        </div>
+        <div class="col-sm-6 col-xs-12">
+            <div class="text-right">
+                <span class="text-muted m-b">{{ message.message_date | dateformat:'dd MMMM yyyy' }}</span><br>
+                <a data-ng-click="deleteMessage(message)" href="javascript:;" class="link text-info">
+                    <i class="ion-android-delete"></i> Hapus pesan
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12 col-xs-12">
+            <hr>
+            <div class="text-md _300" style="min-height: 300px;">
+                {{ message.message }}    
+            </div>
+            <div class="box collapse in">
+                <form name="form" data-ng-submit="sendReply()" novalidate>
+                    <div class="b-b">
+                        <input data-ng-model="reply.subject" name="reply_subject" type="text" class="form-control no-border" required>
+                    </div>
+                    <div>
+                        <textarea data-ng-model="reply.message" name="reply_message" class="form-control no-border" placeholder="Tulis isi balasan..." required></textarea>
+                    </div>
+                    <div class="box-footer clearfix">
+                        <button type="submit" data-ng-disabled="form.$invalid" class="btn btn-info pull-right btn-sm">Kirim Balasan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

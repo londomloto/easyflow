@@ -1,21 +1,5 @@
-<nav class="navbar navbar-default navbar-custom">
-    <div class="container">
-        
-        <div class="navbar-header" data-ng-include="'apps/frontend/templates/brand.html'"></div>
+<nav class="navbar navbar-default navbar-custom navbar-border" data-ui-template="header.html"></nav>
 
-        <div class="collapse navbar-collapse" id="app-navbar">
-            <ul class="nav navbar-nav navbar-right">
-                <li>
-                    <a ui-sref="home"><i class="ion-android-arrow-back"></i> Kembali ke halaman depan</a>
-                </li>
-            </ul>
-        </div>
-        <!-- /.navbar-collapse -->
-    </div>
-    <!-- /.container-fluid -->
-</nav>
-
-<!-- Contact Section -->
 <section id="tutorial-section">
     <div class="container">
         <div class="row">
@@ -30,7 +14,7 @@
         <div data-ng-repeat="item in tutorials" class="row tutorial-item">
             <div data-ng-if="$index % 2 == 0">
                 <div class="col-sm-6">
-                    <h4>{{ item.title }}</h4>
+                    <h3 class="text-normal">{{ item.title }}</h3>
                     <p>{{ item.description }}</p>
                 </div>
                 <div class="col-sm-6">
@@ -47,7 +31,7 @@
                            data-type="{{ item.video_type }}" class="video-js vjs-default-skin"></video>
                 </div>
                 <div class="col-sm-6">
-                    <h4>{{ item.title }}</h4>
+                    <h3 class="text-normal">{{ item.title }}</h3>
                     <p>{{ item.description }}</p>
                 </div>    
             </div>
@@ -57,7 +41,4 @@
     </div>
 </section>
 
-<!-- Footer -->
-<footer class="text-center" data-ng-include src="'apps/frontend/templates/footer.html'">
-    
-</footer>
+<footer class="text-center" data-ui-template="footer.html"></footer>

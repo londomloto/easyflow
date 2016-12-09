@@ -1,0 +1,72 @@
+<div>
+    <div class="row">
+        <div class="col-sm-12">
+            <h3>{{ diagram.name }}</h3>
+            <div class="m-b">
+                <span class="m-r">{{ diagram.created_date | dateformat: 'dd MMM yyyy' }}</span>
+                <span title="Bookmark" class="m-r"><i class="ion-heart"></i> {{ diagram.bookmarks }}</span>
+                <span title="Kontribusi orang lain"><i class="ion-person"></i> {{ diagram.forks }}</span>
+            </div>
+            <p>{{ diagram.description }}</p>
+        </div>
+    </div>
+
+    <div class="m-t" data-ui-tabs>
+        <div data-ui-pane data-title="Diagram" class="">
+            <div data-ng-if="diagram.owned">
+                <h4 class="m-t">Sunting dan unduh</h4>
+                <a data-ui-sref="editor" target="_blank" class="btn btn-primary btn-raised btn-lg">
+                    <i class="ion-edit"></i> Sunting dengan editor
+                </a>
+                <a data-ng-click="download('svg')" href="javascript:;" class="btn btn-link btn-default btn-lg">Unduh SVG</a>
+                <a data-ng-click="download('jpg')" href="javascript:;" class="btn btn-link btn-default btn-lg">Unduh JPG</a>    
+            </div>
+            
+            <div data-ng-if="!diagram.owned">
+                <div data-ng-if="diagram.forked">
+                    <h4 class="m-t">Kontribusi dan bookmark</h4>
+
+                    <a data-ng-if="!diagram.owned" data-ng-click="fork()" href="javascript:;" class="btn btn-danger btn-raised btn-lg">
+                        <i class="ion-person"></i> 
+                        <span>Hapus kontribusi</span>
+                    </a>
+                    <h4 class="m-t">Sunting dan unduh</h4>
+
+                    <a data-ui-sref="editor" target="_blank" class="btn btn-primary btn-raised btn-lg">
+                        <i class="ion-edit"></i> Sunting dengan editor
+                    </a>
+                    <a data-ng-click="download('svg')" href="javascript:;" class="btn btn-link btn-default btn-lg">Unduh SVG</a>
+                    <a data-ng-click="download('jpg')" href="javascript:;" class="btn btn-link btn-default btn-lg">Unduh JPG</a>    
+                </div>
+
+                <div data-ng-if="!diagram.forked">
+                    <h4 class="m-t">Kontribusi dan bookmark</h4>
+
+                    <a data-ng-click="fork()" href="javascript:;" class="btn btn-primary btn-raised btn-lg">
+                        <i class="ion-person"></i> Minta kontribusi
+                    </a>
+
+                    <a data-ng-click="bookmark()" href="javascript:;" class="btn btn-raised btn-lg" data-ng-class="diagram.bookmarked ? 'btn-danger' : 'btn-primary'">
+                        <i class="ion-heart"></i> Bookmark
+                    </a>
+                </div>
+            </div>
+            
+            <h4 class="m-t">Gambar pratinjau</h4>
+
+            <div class="cover m-t" style="background: #EEEEEE; position: relative; overflow: hidden;">
+                <img data-ui-nocontext data-ng-src="{{ diagram.cover_url }}" style="width: 100%">
+                <div class="cover-overlay"></div>
+            </div>
+        </div>
+        
+        <div data-ui-pane data-title="Kontributor" class="">
+            <div data-ui-template="diagram-forker.html"></div>
+        </div>
+
+        <div data-ui-pane data-title="Komentar">
+            <div  data-ui-template="diagram-comment.html"></div>
+        </div>
+
+    </div>
+</div>

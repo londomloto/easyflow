@@ -1,30 +1,52 @@
 
-<nav class="navbar navbar-default navbar-custom" data-ui-template="brand-simple.html"></nav>
+<nav class="navbar navbar-default navbar-custom" data-ui-template="header.html"></nav>
 
-<section id="profile-section">
-    <div class="row">
-        <div class="col-sm-10 col-sm-offset-1">
+<section id="profile-section"  style="min-height: 800px; margin-bottom: 100px;">
+    <div class="b-t b-b" style="background: #f5f5f5; margin-top: -20px; margin-bottom: 30px;">
+        <div class="container">
             <div class="row">
-                <aside class="side-section col-xs-3">
-                    <nav id="side-nav" >
-                        <ul>
-                            <li><a data-ui-sref-active="active" data-ui-sref="profile.home"><i class="ion-home"></i>&nbsp;&nbsp;Halaman Profile</a></li>
-                            <li><a data-ui-sref-active="active" data-ui-sref="profile.edit"><i class="ion-edit"></i>&nbsp;&nbsp;Edit Profile</a></li>
-                            <li><a data-ui-sref-active="active" data-ui-sref="profile.diagram"><i class="ion-erlenmeyer-flask"></i>&nbsp;&nbsp;Katalog Diagram</a></li>
-                            <li><a data-ui-sref-active="active" data-ui-sref="tutorial"><i class="ion-easel"></i>&nbsp;&nbsp;Tutorial</a></li>
-                            <li class="divider"></li>
-                            <li><a href="javascript:void(0)" data-ng-click="logout()"><i class="ion-power"></i>&nbsp;&nbsp;Keluar</a></li>
-                        </ul>
-                    </nav>
+                <div class="col-md-9 col-md-offset-3">
+                    <ul data-breadcrumbs class="breadcrumb no-radius" style="margin-bottom: 0; padding-left: 0;">
+                        <li class="nav-item nav-breadcrumb">Profil</li>
+                        <li data-ng-repeat="breadcrumb in breadcrumbs" class="nav-item nav-breadcrumb">
+                            <a data-ui-sref="{{ breadcrumb.stateName }}" class="nav-link clear" data-ng-class="breadcrumb.class">
+                                {{ breadcrumb.text }}
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3">
+                <aside class="side-section">
+                    <ul class="nav nav-pills nav-stacked">
+                        <li data-ng-repeat="item in menus track by item.state" data-ui-sref-active="active">
+                            <a data-ui-sref="{{ item.state }}">
+                                <i class="{{ item.icon }}"></i> {{ item.text }}
+                            </a>
+                        </li>
+                        
+                        <li class="divider"></li>
+
+                        <li>
+                            <a href="javascript:void(0)" data-ng-click="logout()"><i class="ion-power"></i> Keluar Profil</a>
+                        </li>
+                    </ul>
 
                 </aside>
-                <section class="content-section col-xs-9" ui-view>
-                    
-                </section>
             </div>
-            
+            <div class="col-md-9" data-ui-view>
+                
+            </div>
         </div>
     </div>
+
+    
     
 </section>
 
