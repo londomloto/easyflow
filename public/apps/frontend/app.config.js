@@ -58,8 +58,6 @@
                     'assets/vendor/animate/animate.min.css',
                     'assets/vendor/bootstrap/v4/css/bootstrap.css',
                     'assets/vendor/bootstrap/v3/css/snackbar.css',
-
-                    'assets/vendor/bpmn/bpmn.css',
                     'assets/vendor/graph/css/graph.css',
                     'assets/css/editor.css'
                 ],
@@ -246,6 +244,7 @@
                     'assets/vendor/graph/src/popup/dialog.js',
 
                     'apps/frontend/modules/editor/editor.module.js',
+                    'apps/frontend/modules/editor/editor.service.js',
                     'apps/frontend/modules/editor/editor.directive.js'
                 ],
                 insertBefore: '#body-files'

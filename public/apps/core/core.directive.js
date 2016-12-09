@@ -260,39 +260,32 @@
         var directive = {
             link: link,
             restrict: 'A',
-            controller: Controller,
-            controllerAs: 'vm'
+            scope: true
         };
 
         return directive;
 
-        function Controller() {
-            var vm = this;
+        function link(scope, element, attrs) {
+            var instance = element.modal('hide').data('bs.modal'),
+                name = attrs.uiModal;
 
-            vm.name = null;
-            vm.modal = null;
-
-            vm.register = function() {
-                theme.registerModal(vm);
+            scope.show = function() {
+                instance.show();
             };
 
-            vm.show = function() {
-                if (vm.modal) {
-                    vm.modal.show();
-                }
+            scope.hide = function() {
+                instance.hide();
             };
 
-            vm.hide = function() {
-                if (vm.modal) {
-                    vm.modal.hide();
-                }
-            };
-        }
+            theme.registerModal(name, scope);
 
-        function link(scope, element, attrs, ctrl) {
-            ctrl.name  = attrs.uiModal;
-            ctrl.modal = $(element).modal('hide').data('bs.modal');
-            ctrl.register();
+            element.on('show.bs.modal', function(e){
+                theme.fireModal(name, 'show');
+            });
+
+            element.on('hide.bs.modal', function(e){
+                theme.fireModal(name, 'hide');
+            });
         }
     }
 
@@ -301,58 +294,37 @@
         var directive = {
             link: link,
             restrict: 'A',
-            controller: Controller,
-            controllerAs: 'vm'
+            scope: true
         };
 
         return directive;
 
-        /** @ngInject */
-        function Controller($scope) {
-            var vm = this;
-
-            vm.name = null;
-            vm.modal = null;
-            vm.action = null;
-            vm.callback = null;
-
-            vm.register = function() {
-                theme.registerModal(vm);
-            };
-
-            vm.show = function(title, message, callback) {
-                $scope.title = title;
-                $scope.message = message;
-
-                vm.callback = callback;
-
-                if (vm.modal) {
-                    vm.modal.show();
-                }
-            };
-
-            vm.onhide = function() {
-                if (vm.callback) {
-                    vm.callback(vm.action);
-                }
-            };
-
-            $scope.hide = function(action) {
-                vm.action = action;
-                if (vm.modal) {
-                    vm.modal.hide();
-                }
-            };
-        }
-
         function link(scope, element, attrs, ctrl) {
-            ctrl.name = attrs.uiDialog;
-            ctrl.modal = element.modal('hide').data('bs.modal');
-            ctrl.register();
+            var instance = element.modal('hide').data('bs.modal'),
+                name = attrs.uiDialog;
 
-            element.on('hidden.bs.modal', function(){
-                ctrl.onhide();
+            var callback, action;
+
+            scope.show = function(title, message, callback) {
+                scope.title = title;
+                scope.message = message;
+                callback = callback;
+
+                instance.show();
+            };
+
+            scope.hide = function(action) {
+                action = action;
+                instance.hide();
+            };
+
+            element.on('hide.bs.modal', function(){
+                if (callback) {
+                    callback(action);
+                }
             });
+
+            theme.registerModal(name, scope);
         }
     }
 

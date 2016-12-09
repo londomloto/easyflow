@@ -1,63 +1,54 @@
-
-<div data-ui-editor>
+<div>
     <div id="aside" class="app-aside xs modal fade nav-dropdown">
-    <div class="left navside dark dk" layout="column">
-        <div class="navbar no-radius primary text-center">
-            <a class="navbar-brand">
-                easyflow
-            </a>
+        <div class="left navside dark dk" layout="column">
+            <div class="navbar no-radius primary text-center">
+                <a class="navbar-brand">
+                    easyflow
+                </a>
+            </div>
+            <div flex class="hide-scroll">
+                <div data-uipallet class="ui-pallet">
+                    
+                </div>
+            </div>
+            <div class="b-t" flex-no-shrink></div>
         </div>
-        <div flex class="hide-scroll">
-            <div data-ui-pallet class="ui-pallet">
-                
+    </div>
+
+    <div id="content" class="app-content box-shadow-z0" role="main">
+        <div class="app-header box-shadow">
+            <div class="navbar">
+                <a data-toggle="modal" data-target="#aside" class="navbar-item pull-left hidden-lg-up">
+                    <i class="ion-navicon-round icon-md"></i>
+                </a>
+                <div class="ui-caption hidden-sm-down">
+                    <p class="text-md m-b-0 _700 text-accent">Example Diagram</p>
+                    <span class="text-sm _300">Type your example diagram description here.</span>
+                </div>
+                <div class="ui-toolbar hidden-sm-down">
+                    <a href="javascript:;" data-ng-click="open()" title="Open diagram"><i class="ion-folder"></i></a>
+                </div>
+                <div class="ui-toolbar hidden-sm-down">
+                    <a href="javascript:;" data-ng-click="create()" title="New diagram"><i class="ion-android-add"></i></a>
+                    <a href="javascript:;" data-ng-click="update()" title="Save diagram"><i class="ion-android-done"></i></a>
+                </div>
+                <div class="ui-toolbar">
+                    <a data-uitool="panzoom" data-ng-click="activateTool('panzoom')" href="javascript:;" title="Activate hand tool"><i class="bpmn-icon-hand-tool"></i></a>
+                    <a data-uitool="collector" data-ng-click="activateTool('collector')" href="javascript:;" title="Activate lasso tool"><i class="bpmn-icon-lasso-tool"></i></a>
+                    <a data-uitool="linker" data-ng-click="activateTool('linker')" href="javascript:;" title="Activate link tool"><i class="bpmn-icon-connection-multi"></i></a>
+                    <a href="javascript:;" data-ng-click="trash()" title="Delete selection"><i class="bpmn-icon-trash"></i></a>
+                    <a href="javascript:;" data-ng-click="export()" title="Save as Image"><i class="ion-ios-printer-outline"></i></a>
+                    <a href="javascript:;" data-ng-click="config()" title="Editor config"><i class="ion-ios-gear-outline"></i></a>
+                </div>
             </div>
         </div>
-        <div class="b-t" flex-no-shrink></div>
+        <div class="app-body">
+            <div data-uipaper class="ui-paper"></div>
+        </div>
     </div>
 </div>
 
-<div id="content" class="app-content box-shadow-z0" role="main">
-    <div class="app-header box-shadow">
-        <div class="navbar">
-            <a data-toggle="modal" data-target="#aside" class="navbar-item pull-left hidden-lg-up">
-                <i class="ion-navicon-round icon-md"></i>
-            </a>
-            <div class="ui-caption hidden-sm-down">
-                <p class="text-md m-b-0 _700 text-accent">Example Diagram</p>
-                <span class="text-sm _300">Type your example diagram description here.</span>
-            </div>
-            <div class="ui-toolbar hidden-sm-down">
-                <a href="javascript:;" data-ng-click="goHome()" title="Kembali ke halaman portal"><i class="ion-ios-home-outline"></i></a>
-            </div>
-            <div class="ui-toolbar hidden-sm-down">
-                <a href="javascript:;" data-ng-click="createDiagram()" title="New diagram"><i class="ion-android-add"></i></a>
-                <a href="javascript:;" data-ng-click="updateDiagram()" title="Save diagram"><i class="ion-android-done"></i></a>
-            </div>
-            <div class="ui-toolbar">
-                <a href="#" data-tool="panzoom" title="Activate hand tool"><i class="bpmn-icon-hand-tool"></i></a>
-                <a href="#" data-tool="collector" title="Activate lasso tool"><i class="bpmn-icon-lasso-tool"></i></a>
-                <a href="#" data-tool="linker" title="Activate link tool"><i class="bpmn-icon-connection-multi"></i></a>
-                <a href="#" data-util="trash" title="Delete selection"><i class="bpmn-icon-trash"></i></a>
-                <a href="javascript:;" data-util="export" title="Save as Image"><i class="ion-ios-printer-outline"></i></a>
-                <a href="javascript:;" data-util="config" title="Editor config"><i class="ion-ios-gear-outline"></i></a>
-            </div>
-        </div>
-    </div>
-    <div class="app-body">
-        <div data-ui-paper class="ui-paper"></div>
-    </div>
-</div>
-</div>
-
-
-<!-- GLOBAL DIALOG -->
-<div data-ui-template="dialog-alert.html"></div>
-<div data-ui-template="dialog-info.html"></div>
-<div data-ui-template="dialog-error.html"></div>
-<div data-ui-template="dialog-confirm.html"></div>
-<!-- END OF GLOBAL DIALOG -->
-
-<!-- CREATE DIAGRAM -->
+<!-- MODALS -->
 <div data-ui-modal="create-diagram" class="modal fade animate">
     <div class="modal-dialog zoom">
         <div class="modal-content">
@@ -75,10 +66,46 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button data-ng-click="createDiagram()" class="btn primary">Save Diagram</button>
+                <button data-click="createDiagram()" class="btn primary">Save Diagram</button>
                 <button data-ng-click="hideModal('create-diagram')" class="btn white">Close</button>
             </div>
         </div>
     </div>
 </div>
-<!-- END OF CREATE DIAGRAM -->
+
+<div data-ui-modal="open-diagram" class="modal fade animate">
+    <div class="modal-dialog modal-lg zoom">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4>Open diagram</h4>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-xs-6 col-sm-4 col-md-3" data-ng-repeat="item in diagrams track by item.id">
+                        <div class="box dker">
+                            <div class="box-header">
+                                <h3 class="_600">{{ item.name }}</h3>
+                                <small>Activity Diagram</small>
+                            </div>
+                            <div class="box-tool">
+                                <ul class="nav">
+                                    <li class="nav-item inline">
+                                      <a class="nav-link text-muted">
+                                        <i class="ion-close-round" style="font-size: 14px;"></i>
+                                      </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="box-body p-t-0">
+                                <button class="btn btn-xs btn-outline b-info text-info">Open diagram</button>
+                                <!-- <p class="m-a-0">{{ item.description }}</p> -->
+                            </div>
+                          </div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>    
+<!-- END OF MODALS -->

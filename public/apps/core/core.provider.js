@@ -993,24 +993,39 @@
                 });
             }
 
-            function registerModal(modal) {
-                modals[modal.name] = modal;
+            function registerModal(name, modal) {
+                modals[name] = {
+                    modal: modal,
+                    listeners: {
+                        show: null,
+                        hide: null
+                    }
+                };
+            }
+
+            function fireModal(name, eventType) {
+                var found = modals[name];
+                if (found) {
+                    var handler = found.listeners[eventType];
+                    if (handler && handler.then) {
+                        handler.resolve();
+                    }
+                }
             }
 
             function showAlert(title, message) {
-                var modal = modals['alert'];
-                if (modal) {
-                    modal.show(title, message);
+                var found = modals['alert'];
+                if (found) {
+                    found.modal.show(title, message);
                 }
             }
 
             function showConfirm(title, message) {
                 var def = $q.defer();
+                var found = modals['confirm'];
 
-                var modal = modals['confirm'];
-
-                if (modal) {
-                    modal.show(title, message, function(action){
+                if (found) {
+                    found.modal.show(title, message, function(action){
                         def.resolve(action == 'yes' ? true : false);
                     });
                 } else {
@@ -1021,17 +1036,27 @@
             }
 
             function showModal(name) {
-                var modal = modals[name];
-                if (modal) {
-                    modal.show();
+                var def = $q.defer();
+                var found = modals[name];
+
+                if (found) {
+                    found.listeners.show = def;
+                    found.modal.show();
                 }
+
+                return def.promise;
             }
 
             function hideModal(name) {
-                var modal = modals[name];
-                if (modal) {
-                    modal.hide();
+                var def = $q.defer();
+                var found = modals[name];
+                
+                if (found) {
+                    found.listeners.hide = def;
+                    found.modal.hide();
                 }
+
+                return def.promise;
             }
         }
     }
