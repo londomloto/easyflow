@@ -10,8 +10,8 @@
         .directive('uiTemplate', uiTemplate)
         .directive('uiTitle', uiTitle)
         .directive('uiVideo', uiVideo)
-        .directive('uiFile', uiFile)
         .directive('uiImage', uiImage)
+        .directive('uiFile', uiFile)
         .directive('uiModal', uiModal)
         .directive('uiDialog', uiDialog)
         .directive('uiLightbox', uiLightbox)
@@ -147,44 +147,7 @@
             }
         }
     }
-
-    /** @ngInject */
-    function uiFile($parse) {
-        var directive = {
-            link: link
-        };
-
-        return directive;
-
-        function link(scope, element, attrs) {
-            var model = $parse(attrs.uiFile),
-                callback = attrs.onSelect ? $parse(attrs.onSelect)(scope) : null;
-
-            element.on('change', function(){
-                var file = element[0].files[0],
-                    name = element[0].value;
-
-                if (callback) {
-                    name = name.split(/(\\|\/)/g).pop();
-
-                    var reader = new FileReader();
-
-                    reader.onload = function() {
-                        var data = reader.result
-                        reader = null;
-                        callback(name, data);
-                        scope.$apply();
-                    };
-
-                    reader.readAsDataURL(file);
-                }
-                
-                model.assign(scope, file);
-                scope.$apply();
-            });
-        }
-    }
-
+    
     /** @ngInject */
     function uiImage($window, $parse) {
         var directive = {
@@ -303,24 +266,26 @@
             var instance = element.modal('hide').data('bs.modal'),
                 name = attrs.uiDialog;
 
-            var callback, action;
+            var defer = {
+                handler: null,
+                action: null
+            };
 
             scope.show = function(title, message, callback) {
                 scope.title = title;
                 scope.message = message;
-                callback = callback;
-
+                defer.handler = callback;
                 instance.show();
             };
 
             scope.hide = function(action) {
-                action = action;
+                defer.action = action;
                 instance.hide();
             };
 
             element.on('hide.bs.modal', function(){
-                if (callback) {
-                    callback(action);
+                if (defer.handler) {
+                    defer.handler(defer.action);
                 }
             });
 
@@ -556,6 +521,49 @@
                 text = $sanitize(markdown(element.html()));
                 element.html(text);
             }
+        }
+    }
+
+    /** @ngInject */
+    function uiFile($parse) {
+        var directive = {
+            link: link
+        };
+
+        return directive;
+
+        function link(scope, element, attrs) {
+            var model = $parse(attrs.uiFile),
+                onselect = attrs.onselect ? $parse(attrs.onselect)(scope) : null
+
+            element.on('change', function(){
+                var file = element[0].files[0],
+                    name = element[0].value;
+                
+                model.assign(scope, file);
+
+                if (onselect) {
+                    var reader = new FileReader;
+
+                    name = name.split(/(\\|\/)/g).pop();
+
+                    reader.onload = function(){
+                        var data = reader.result;
+                        reader = null;
+                        onselect({
+                            name: name,
+                            data: data
+                        });
+
+                        scope.$apply();
+                    };
+
+                    reader.readAsDataURL(file);
+                } else {
+                    scope.$apply();    
+                }
+                
+            });
         }
     }
 

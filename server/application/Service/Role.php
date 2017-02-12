@@ -16,7 +16,7 @@ class Role extends \Sys\Core\Component {
             ));
         }
 
-        $this->_permission = $app->getConfig()->permission;
+        $this->_permissions = $app->getConfig()->permissions;
         $this->_db = $app->getDefaultDatabase();
     }
 
@@ -41,7 +41,7 @@ class Role extends \Sys\Core\Component {
     public function getAvailablePermissions() {
         $perms = array();
 
-        foreach($this->_permission as $key => $spec) {
+        foreach($this->_permissions as $key => $spec) {
             $spec = $spec->toArray();
             $spec['name'] = $key;
             $perms[] = $spec;
@@ -57,7 +57,7 @@ class Role extends \Sys\Core\Component {
             return array();
         }
 
-        $perms = $session->get('CURRENT_PERMISSIONS');
+        $perms = $session->get('CURRENT_PERMISSIONsS');
         $perms = json_decode($perms);
 
         return $perms;
@@ -66,8 +66,8 @@ class Role extends \Sys\Core\Component {
     public function getPermissionWeight($name) {
         $name = trim($name);
 
-        if ($this->_permission->has($name)) {
-            return pow(2, $this->_permission->{$name}->value);
+        if ($this->_permissions->has($name)) {
+            return pow(2, $this->_permissions->{$name}->value);
         }
         return 0;
     }

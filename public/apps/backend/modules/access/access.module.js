@@ -14,7 +14,7 @@
         $scope.roleData = [];
 
         $scope.roleStore = new Store({
-            url: '/access/find-role',
+            url: '/access/roles',
             pageSize: 10
         });
 
@@ -29,7 +29,7 @@
                 .showConfirm('Konfirmasi', 'Anda yakin akan menghapus role ini?')
                 .then(function(action){
                     if (action) {
-                        api.del('/access/delete-role/' + role.id).then(function(response){
+                        api.del('/access/roles/' + role.id).then(function(response){
                             if (response.data.success) {
                                 $scope.roleStore.load();    
                             }
@@ -43,7 +43,7 @@
         $scope.permissions = [];
 
         $scope.loadPermissions = function() {
-            api.get('/access/find-perm').then(function(response){
+            api.get('/access/permissions').then(function(response){
                 $scope.permissions = response.data.data;
             });
         }
@@ -58,7 +58,7 @@
         $scope.saveRole = function() {
             if ($scope.form.$valid) {
                 var data = angular.copy($scope.add);
-                api.post('/access/save-role', data).then(function(response){
+                api.post('/access/roles', data).then(function(response){
                     if (response.data.success) {
                         theme.toast("Data berhasil ditambahkan");
                         router.go('main.access');
@@ -77,7 +77,7 @@
         $scope.loadRole = function() {
             var id = router.getParam('id');
             if (id) {
-                api.get('/access/find-role/' + id).then(function(response){
+                api.get('/access/roles/' + id).then(function(response){
                     $scope.edit = response.data.data;
                 });    
             }
@@ -90,7 +90,7 @@
                 var caps = angular.copy($scope.capabilities);
                 data.caps = caps;
 
-                api.post('/access/save-role', data).then(function(response){
+                api.put('/access/roles/' + data.id, data).then(function(response){
                     if (response.data.success) {
                         theme.toast('Data berhasil disimpan');
                     }
@@ -103,7 +103,7 @@
         $scope.capabilities = [];
 
         $scope.loadCapabilities = function() {
-            api.get('/access/find-cap', {role_id: router.getParam('id')}).then(function(response){
+            api.get('/access/capabilities', {role_id: router.getParam('id')}).then(function(response){
                 $scope.capabilities = response.data.data;
             });
         };

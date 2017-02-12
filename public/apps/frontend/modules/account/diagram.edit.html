@@ -1,0 +1,51 @@
+<div class="p-a-lg">
+    
+    <div class="pull-right">
+        <a data-ui-sref="account.diagram.view({id: diagram.id})" class="btn btn-white">Kembali ke detail...</a>
+    </div>
+
+    <h4 class="m-t-none">{{ diagram.name }}</h4>
+    <div class="clearfix"></div>
+    <div class="line line-dashed"></div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <form data-ng-submit="updateDiagram()" class="m-t" novalidate name="form">
+                <div class="form-group">
+                    <label class="control-label">Nama diagram</label>
+                    <input data-ng-model="diagram.name" type="text" class="form-control" required>
+                </div>    
+                <div class="form-group">
+                    <label class="control-label">Keterangan</label>
+                    <textarea rows="6" data-ng-model="diagram.description" class="form-control"></textarea>
+                </div> 
+                <div class="form-group">
+                    <label class="control-label">Unggah gambar sampul</label>
+                    <div class="input-group">
+                        <label class="input-group-btn">
+                            <span class="btn btn-default">
+                                Browse&hellip; <input data-ui-file="cover.file" data-onselect="onSelectCover" type="file" style="display: none;" multiple>
+                            </span>
+                        </label>
+                        <input data-ng-model="cover.name" type="text" class="form-control" readonly>
+                    </div>
+                </div>
+                <div class="m-t-large"></div> 
+                <button type="submit" data-ng-disabled="form.$invalid" class="btn btn-primary">Simpan perubahan</button>
+                <a href="javascript:;" data-ng-click="resetDiagram()" class="btn btn-link">Batalkan perubahan</a>
+            </form>
+
+            <div class="line line-dashed"></div>
+            <p>Menghapus diagram akan menghapus seluruh dokumen - dokumen yang berkaitan dengan diagram.</p>
+            <a href="javascript:;" data-ng-click="deleteDiagram()" class="btn btn-danger">Hapus diagram</a>
+        </div>
+        <div class="col-md-4">
+            
+        <div class="cover m-t-large">
+            <img alt="&nbsp;" data-ng-src="{{ diagram.cover | thumbnail:'diagrams':370:370 }}" style="width: 100%;">
+        </div>
+
+        </div>
+    </div>
+
+</div>

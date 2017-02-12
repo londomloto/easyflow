@@ -138,16 +138,18 @@ class Application implements IApplication {
 
     protected function _initService() {
         // register some services
-        $this->addService('registry', 'Sys\Service\Registry', TRUE);
-        $this->addService('response', 'Sys\Service\Response', TRUE);
-        $this->addService('request', 'Sys\Service\Request', TRUE);
-        $this->addService('session', 'Sys\Service\Session', TRUE);
-        $this->addService('dispatcher', 'Sys\Service\Dispatcher', TRUE);
-        $this->addService('security', 'Sys\Service\Security', TRUE);
-        $this->addService('url', 'Sys\Service\Url', TRUE);
-        $this->addService('uploader', 'Sys\Service\Uploader', TRUE);
-        $this->addService('template', 'Sys\Service\Template', TRUE);
-        $this->addService('mailer', 'Sys\Service\Mailer', TRUE);
+        $this->addService('registry',   'Sys\Core\Registry',    TRUE);
+        $this->addService('dispatcher', 'Sys\Core\Dispatcher',  TRUE);
+        $this->addService('response',   'Sys\Core\Response',    TRUE);
+        $this->addService('request',    'Sys\Core\Request',     TRUE);
+        $this->addService('session',    'Sys\Core\Session',     TRUE);
+        $this->addService('url',        'Sys\Core\Url',         TRUE);
+        $this->addService('router',     'Sys\Core\Router',      TRUE);
+
+        $this->addService('security',   'Sys\Service\Security', TRUE);
+        $this->addService('uploader',   'Sys\Service\Uploader', TRUE);
+        $this->addService('template',   'Sys\Service\Template', TRUE);
+        $this->addService('mailer',     'Sys\Service\Mailer',   TRUE);
 
         if ($this->_config->application->has('services')) {
             $services = $this->_config->application->services->toArray();
@@ -170,7 +172,7 @@ class Application implements IApplication {
 
     protected function _initDatabase() {
         
-        $databases = $this->_config->database->toArray();
+        $databases = $this->_config->databases->toArray();
         $eventBus = $this->getEventBus();
 
         foreach($databases as $name => $opts) {
@@ -222,19 +224,15 @@ class Application implements IApplication {
             if ($obj->isFile()) {
                 $path = $obj->getPath();
                 $file = $obj->getFilename();
-                $base = strtolower(str_replace('.php', '', $file));
+                $base = str_replace('.php', '', $file);
+                $base = strtolower(Text::uncamelize($base));
                 $defs = 'App\\'.str_replace(APPPATH, '', $path);
                 $defs = $defs.'\\'.str_replace('.php', '', $file);
                 $defs = str_replace('/', '\\', $defs);
 
                 $name = strtolower(str_replace(APPPATH.'Module'.DS, '', $path));
+                $name = 'module:'.$name.'/'.$base;
                 
-                if ($base != $name) {
-                    $name = $name.'/'.$base;
-                }
-
-                $name = 'module/'.$name;
-
                 $module = new Service($name, $defs, TRUE);
                 $module->setEventBus($eventBus);
 
@@ -311,17 +309,17 @@ class Application implements IApplication {
      * Get service resolver
      */
     public function getService($name) {
-        $name = "service/{$name}";
+        $name = "service:{$name}";
         return $this->_services[$name];
     }
 
     public function hasService($name) {
-        $name = "service/{$name}";
+        $name = "service:{$name}";
         return isset($this->_services[$name]);
     }
 
     public function addService($name, $defs, $shared = TRUE) {
-        $name = "service/{$name}";
+        $name = "service:{$name}";
         $service = new Service($name, $defs, $shared);
         $service->setEventBus($this->_eventBus);
 
@@ -341,7 +339,7 @@ class Application implements IApplication {
     }
 
     public function hasModule($name) {
-        $name = "module/{$name}";
+        $name = "module:{$name}";
         return isset($this->_modules[$name]) ? $this->_modules[$name] : FALSE;
     }
 
@@ -350,7 +348,7 @@ class Application implements IApplication {
     }
 
     public function getModule($name) {
-        $name = "module/{$name}";
+        $name = "module:{$name}";
         return isset($this->_modules[$name]) ? $this->_modules[$name] : FALSE;
     }
 
@@ -424,40 +422,20 @@ class Application implements IApplication {
      */
     public function handle() {
         $request = $this->getRequest();
-        $dispatcher = $this->getDispatcher();
         $url = $this->getUrl();
+        $router = $this->getRouter();
+        
+        $dispatcher = $this->getDispatcher();
         $config = $this->getConfig()->application;
 
+        // parse url
         $url->parse();
+
+        // parse request
         $request->parse();
 
-        $segments = $url->getSegments();
-
-        if ($url->getPath() == '/') {
-            $segments = explode('/', $config->default);
-        }
-        
-        $found = $this->locateModule($segments);
-
-        ob_start();
-
-        $dispatcher->setModule($found['module']);
-        $dispatcher->dispatch($found['action'], $found['params']);
-
-        $response = $this->getResponse();
-        
-        $buffer = NULL;
-
-        if (ob_get_length()) {
-            $buffer = ob_get_contents();
-            ob_end_clean();
-        }
-
-        if ( ! is_null($buffer)) {
-            $response->prependContent($buffer);
-        }
-        
-        return $response;
+        // parse route
+        return $router->handle();
     }
 
     public function isDebug() {

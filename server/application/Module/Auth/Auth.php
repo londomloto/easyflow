@@ -1,12 +1,22 @@
 <?php
 namespace App\Module\Auth;
 
-use App\Module\User\User,
+use App\Module\Users\Users,
     App\Module\Site\Site,
     Sys\Helper\File;
 
 class Auth extends \Sys\Core\Module {
     
+    public function testAction() {
+        $user = $this->auth->register(array(
+            'email' => 'foo@live.com',
+            'passwd' => 'foo',
+            'fullname' => 'Foo'
+        ));
+
+        print_r($user);
+    }
+
     public function verifyAction() {
         $user = $this->auth->getCurrentUser();
 
@@ -92,7 +102,7 @@ class Auth extends \Sys\Core\Module {
         );
         
         if (isset($post['email'])) {
-            $user = User::findByEmail($post['email'], FALSE);
+            $user = Users::findByEmail($post['email'], FALSE);
 
             if ( ! $user) {
                 
@@ -135,7 +145,7 @@ class Auth extends \Sys\Core\Module {
                 if ($upload = $this->uploadAvatar($post['avatar'])) {
                     // delete exs
                     if ( ! empty($result['data']->avatar)) {
-                        File::delete(User::getAssetsDir().$result['data']->avatar);
+                        File::delete(Users::getAssetsDir().$result['data']->avatar);
                     }
                     
                     $avatar = $upload['file_name'];
@@ -151,7 +161,7 @@ class Auth extends \Sys\Core\Module {
                     );
 
                     $result['data']->avatar = $avatar;
-                    $result['data']->avatar_url = User::getAvatarUrl($avatar);
+                    $result['data']->avatar_url = Users::getAvatarUrl($avatar);
 
                     $this->auth->save($result['data']);
                 }
@@ -165,7 +175,7 @@ class Auth extends \Sys\Core\Module {
     
     public function uploadAvatar($url) {
         $this->uploader->setup(array(
-            'path' => User::AVATAR_DIR
+            'path' => Users::getAssetsDir()
         ));
 
         if ($this->uploader->uploadUrl($url)) {

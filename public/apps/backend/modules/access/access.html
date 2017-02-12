@@ -58,8 +58,7 @@
                 </div>
                 <ul class="list-group no-radius no-border" style="max-height: 460px; overflow: auto; overflow-x: hidden;">
                     <li data-ng-repeat="item in permissions" class="list-group-item">
-                        <p class="text-md text-info m-b-0">{{ item.name }}</p>
-                        <p class="m-b-0">{{ item.label }}</p>
+                        <p class="m-b-0">{{item.label}} (<span class="_600 text-danger">{{item.name}}</span>)</p>
                     </li>
                 </ul>
             </div>

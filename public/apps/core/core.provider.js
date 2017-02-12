@@ -17,7 +17,8 @@
         .provider('debounce', debounceProvider)
         .provider('Store', StoreProvider)
         .provider('sse', sseProvider)
-        .provider('markdown', markdownProvider);
+        .provider('markdown', markdownProvider)
+        .provider('moment', momentProvider)
 
     function httpInterceptor() {
         var provider = this,
@@ -434,11 +435,6 @@
                 
             return service;
 
-            function fixpath(path) {
-                path = '/' + path.replace(/^\//, '');
-                return path;
-            }
-
             function get(path, data, options) {
                 if (data) {
                     var params = [];
@@ -461,97 +457,75 @@
                     }
                 }
 
-                options = angular.extend({
-                    url: BASE_URL + fixpath(path),
-                    method: 'GET'
-                }, options || {});
+                options = options || {};
+
+                options.url = BASE_URL + path;
+                options.method = 'GET';
 
                 return request(options);
             }
 
-            function del(path, data, options) {
-                options = angular.extend({
-                    url: BASE_URL + path,
-                    method: 'DELETE'
-                }, options || {});
+            function post(path, data, options) {
+                options = options || {};
 
-                if (data) {
-                    options.json = true;
-                    options.data = data;
-                }
+                options.url = BASE_URL + path;
+                options.data = data;
+                options.method = 'POST';
 
                 return request(options);
             }
 
             function put(path, data, options) {
                 options = options || {};
+                
+                options.url = BASE_URL + path;
+                options.data = data;
                 options.method = 'PUT';
-                return post(path, data, options);
+
+                return request(options);
             }
 
-            function post(path, data, options) {
-                var regularPost = false;
+            function del(path, data, options) {
+                options = options || {};
 
-                options = angular.extend({
-                    url: BASE_URL + path,
-                    data: data,
-                    method: 'POST'
-                }, options || {});
-
-                if (options.regularPost) {
-                    regularPost = options.regularPost;
-                    delete options.regularPost;
-                }
-
-                if (options.upload) {
-                    regularPost = true;
-                }
-
-                if (regularPost) {
-                    if (options.upload && options.upload.length) {
-                        var fd = new FormData();
-
-                        angular.forEach(options.upload, function(o, k){
-                            fd.append(o.key, o.file);
-                        });
-
-                        angular.forEach(data, function(v, k){
-                            if (data.hasOwnProperty(k)) {
-                                fd.append(k, v);
-                            }
-                        });
-
-                        options.data = fd;
-                        options.transformRequest = angular.identity;
-                        options.headers = options.headers || {};
-                        options.headers['Content-Type'] = undefined;  
-                    } else {
-                        options.transformRequest = function(data) {
-                            var params = [];
-                            for (var key in data) {
-                                params.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key]));
-                            }
-                            return params.join('&');
-                        };
-                        options.headers = options.headers || {};
-                        options.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-                    }
-                }
-
+                options.url = BASE_URL + path;
+                options.method = 'DELETE';
+                
                 return request(options);
             }
 
             function request(options) {
                 
-                if (options.download !== undefined) {
-                    delete options.download;
+                if (options.upload !== undefined) {
+                    if (options.upload.length) {
+                        var fd = new FormData();
 
+                        angular.forEach(options.upload, function(val){
+                            fd.append(val.key, val.file);
+                        });
+
+                        angular.forEach(options.data, function(val, key){
+                            fd.append(key, val);
+                        });
+
+                        options.data = fd;
+                        options.method = 'POST';
+                        options.transformRequest = angular.identity;
+                        options.headers = options.headers || {};
+                        options.headers['Content-Type'] = undefined;
+                    }
+
+                    delete options.upload;
+
+                    return $http(options);
+
+                } else if (options.download !== undefined) {
                     var form = document.createElement('form'),
                         def = $q.defer();
 
                     form.setAttribute('action', options.url);
                     form.setAttribute('method', options.method);
-                    // form.setAttribute('target', '_self');
+                    form.setAttribute('target', '_blank');
 
                     document.body.appendChild(form);
                     form.submit();
@@ -561,16 +535,18 @@
                         def.resolve();
                     });
 
+                    delete options.download;
+
                     return def.promise;
+
                 } else {
                     if (options.json !== undefined) {
-                        if (options.json === true) {
+                        if (options.json) {
                             options.headers = options.headers || {};
                             options.headers['Content-Type'] = 'application/json;charset=utf-8';
                         }
                         delete options.json;
                     }
-
                     return $http(options);
                 }
             }
@@ -920,7 +896,7 @@
                                 '/me', 
                                 {fields: 'name,email,picture.width(400).height(400)'},
                                 function(response){
-
+                                    console.log(response);
                                     var profile = {
                                         fullname: response.name,
                                         email: response.email,
@@ -957,6 +933,7 @@
                 init: init,
                 toast: toast,
                 registerModal: registerModal,
+                fireModal: fireModal,
                 showModal: showModal,
                 hideModal: hideModal,
                 showConfirm: showConfirm,
@@ -968,9 +945,7 @@
             return service;
 
             function init(scope) {
-                scope.$on('$viewContentLoaded', debounce(function(){
-                    $.material.init();
-                }, 0));
+                
             }
 
             function registerTemplate(name) {
@@ -1007,7 +982,7 @@
                 var found = modals[name];
                 if (found) {
                     var handler = found.listeners[eventType];
-                    if (handler && handler.then) {
+                    if (handler && handler.resolve) {
                         handler.resolve();
                     }
                 }
@@ -1266,6 +1241,38 @@
                 return markdown(text);
             }
         };
+    }
+
+    function momentProvider() {
+
+        this.$get = factory;
+
+        /** @ngInject */
+        function factory($window) {
+
+            var moment = $window.moment;
+
+            moment.updateLocale('en', {
+                relativeTime: {
+                    future: "dalam %s",
+                    past: "%s yang lalu",
+                    s:  "detik",
+                    m:  "satu menit",
+                    mm: "%d menit",
+                    h:  "satu jam",
+                    hh: "%d jam",
+                    d:  "satu hari",
+                    dd: "%d hari",
+                    M:  "satu bulan",
+                    MM: "%d bulan",
+                    y:  "satu tahun",
+                    yy: "%d tahun"
+                }
+            });
+
+            return moment;
+        }
+
     }
 
 }());

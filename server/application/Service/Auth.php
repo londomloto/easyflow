@@ -40,18 +40,18 @@ class Auth extends \Sys\Core\Component {
         $role = $this->getRole();
         $security = $this->getSecurity();
 
-        $user = $this->find($email);
+        $user = $this->findByEmail($email);
 
         if ($user) {
             // verify password
             $hash = $hashed ? $pass : $security->generateHash($pass, $user->passwd_salt);
             
             if ($hash == $user->passwd) {
-
                 $role->handle($user->role);
                 $capability = 'login_' . strtolower($this->getRegistry()->get('context'));
-                
+
                 if ($role->can($capability)) {
+
                     $token = $security->generateToken(array(
                         'user_email' => $user->email,
                         'user_role' => $user->role
@@ -109,28 +109,38 @@ class Auth extends \Sys\Core\Component {
         $this->logout();
     }
 
-    public function find($email) {
+    public function findByEmail($email) {
         $source = $this->_config->source;
         return $this->_db->fetchOne("SELECT * FROM {$source} WHERE email = ?", array($email));
     }
 
     public function register($spec) {
         $security = $this->getSecurity();
-        $user = $this->find($spec['email']);
+        $source = $this->_config->source;
+        $user = $this->findByEmail($spec['email']);
 
         if ($user) {
             $this->_error = _('This email address is not available');
             return FALSE;
         } else {
+            $username = strstr($spec['email'], '@', TRUE);
+
+            $found = $this->_db->fetchAll("SELECT username FROM {$source} WHERE username LIKE ?", array("{$username}%"));
+            
+            if (count($found) > 0) {
+                $username = $username.'.'.(count($found) + 1);
+            }
+
             // create password
             $salt = $security->generateSalt();
             $hash = $security->generateHash($spec['passwd'], $salt);
             $role = $this->getRole()->findDefault();
 
+            $spec['username'] = $username;
             $spec['passwd'] = $hash;
             $spec['passwd_salt'] = $salt;
             $spec['register_date'] = date('Y-m-d H:i:s');
-            $spec['avatar'] = 'avatar.png';
+            $spec['avatar'] = 'noavatar.png';
             $spec['role'] = $role ? $role->name : 'user';
 
             if ($this->_db->insert('user', $spec)) {
@@ -161,14 +171,8 @@ class Auth extends \Sys\Core\Component {
         $data->expired_date = $info['session_expired'];
 
         // avatar url
-        $data->avatar_url = '';
-
-        if ($user->avatar) {
-            $data->avatar_url = $url->getBaseUrl().'public/avatar/'.$user->avatar;
-        } else {
-            $data->avatar_url = $url->getBaseUrl().'public/avatar/avatar.png';
-        }
-
+        $data->avatar_url = \App\Module\Users\Users::getAvatarUrl($user->avatar);
+        
         // remove sensitive data
         foreach($user as $key => $val) {
             if ( ! in_array($key, array('passwd', 'passwd_salt'))) {

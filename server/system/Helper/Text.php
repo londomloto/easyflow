@@ -21,6 +21,10 @@ class Text {
     }
 
     public static function camelize($str, $capitalize = TRUE) {
+        if (empty($str)) {
+            return $str;
+        }
+        
         $str = preg_replace('/[^a-z0-9]+/i', ' ', $str);
         $str = trim($str);
         $str = ucwords($str);

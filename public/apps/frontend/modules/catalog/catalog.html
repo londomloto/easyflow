@@ -1,85 +1,96 @@
-<nav class="navbar navbar-default navbar-custom" data-ui-template="header.html"></nav>
+<nav class="navbar navbar-default navbar-border navbar-custom" data-ui-template="header.html"></nav>
 
-<section class="p-a-0" style="margin-bottom: 100px;">
-    <div class="b-t b-b" style="background: #f5f5f5; margin-top: -20px; margin-bottom: 30px;">
-        <div class="container">
+<div id="catalog-section" class="container">
+    <div class="panel no-radius b-t-0">
+        <div class="panel-body p-a-lg"> 
+
             <div class="row">
-                <div class="col-md-9 col-md-offset-3">
-                    <ul data-breadcrumbs class="breadcrumb no-radius" style="margin-bottom: 0; padding-left: 0px;">
-                        
-                        <li data-ng-repeat="breadcrumb in breadcrumbs" class="nav-item nav-breadcrumb">
-                            <a data-ui-sref="{{ breadcrumb.stateName }}" class="nav-link clear" data-ng-class="breadcrumb.class">
-                                {{ breadcrumb.text }}
-                            </a>
-                        </li>
-                    </ul>
+                <div class="col-md-3">
+                    
+                    <h4 class="">Pencarian</h4>
+                    <div class="line line-dashed"></div>
+                    <div>
+                        <div class="form-group">
+                            <label class="control-label">Nama diagram</label>
+                            <input data-ng-model="query.name" type="text" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Keterangan diagram</label>
+                            <input data-ng-model="query.description" type="text" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Nama pembuat</label>
+                            <input data-ng-model="query.user_fullname" type="text" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="control-label">Urutkan berdasarkan</label>
+                            <select data-ng-model="query.sort" class="form-control">
+                                <optgroup label="Ascending">
+                                    <option value="a.name ASC">Nama diagram</option>
+                                    <option value="a.created_date ASC">Tanggal pembuatan</option>
+                                    <option value="forks ASC">Jumlah kolaborator</option>
+                                    <option value="bookmarks ASC">Jumlah bookmark</option>
+                                </optgroup>
+                                <optgroup label="Descending">
+                                    <option value="a.name DESC">Nama diagram</option>
+                                    <option value="a.created_date DESC">Tanggal pembuatan</option>
+                                    <option value="forks DESC">Jumlah kolaborator</option>
+                                    <option value="bookmarks DESC">Jumlah bookmark</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <a data-ng-click="search()" href="javascript:;" class="btn btn-primary">Tampilkan</a>
+                        <a data-ng-click="clearSearch()" class="btn btn-default btn-link" href="javascript:;">Reset</a>
+                    </div>
+
                 </div>
-            </div>    
-        </div>
-        
-    </div>    
+                <div class="col-md-9">
+                    <div>
+                        <div class="panel panel-default no-shadow" ng-repeat="item in diagrams track by item.id">
+                            
+                            <div class="panel-body">
+                                
+                                <div class="row">
+                                    <div class="col-md-2">
+                                    
+                                        <div>
+                                            <img data-ng-src="{{ item.cover | thumbnail:'diagrams':120:120 }}" class="img-thumbnail" style="width: 100%;">
+                                        </div>
 
-    <div class="container">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <a data-ui-sref="account.diagram.view({email:item.user_email, slug:item.slug})" class="_600">{{ item.name }}</a>
+                                        <p class="text-sm m-b-none">Dibuat oleh <a href="">{{ item.user_fullname }}</a></p>
+                                        <p class="text-sm">( {{ item.created_date | fromnow }} )</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p class="text-sm">{{ item.short_description || 'Tidak ada deskripsi' }}</p>
+                                    </div>
+                                    <div class="col-md-2 text-right">
+                                        <a data-ng-click="bookmark(item)" data-ng-class="item.bookmarked ? 'btn btn-circle btn-primary' : 'btn btn-circle'" >
+                                            <i class="ion-heart"></i>
+                                            <small>Bookmark</small> 
+                                            <b class="badge bg-white">{{ item.bookmarks }}</b>
+                                        </a>
+                                    </div>
+                                </div>
 
-        <div class="row">
-            <div class="col-md-3">
-                <h4 class="">Pencarian</h4>
-                <div class="spacer"></div>
-                <div style="margin-bottom: 30px;">
-                    <div class="form-group">
-                        <label class="control-label">Nama diagram</label>
-                        <input data-ng-model="query.name" type="text" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Keterangan diagram</label>
-                        <input data-ng-model="query.description" type="text" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Nama pembuat</label>
-                        <input data-ng-model="query.user_fullname" type="text" class="form-control">
-                    </div>
-                    <div class="form-group">
-                        <label class="control-label">Urutkan berdasarkan</label>
-                        <select data-ng-model="query.sort" class="form-control">
-                            <optgroup label="Ascending">
-                                <option value="a.name ASC">Nama diagram</option>
-                                <option value="a.created_date ASC">Tanggal pembuatan</option>
-                                <option value="forks ASC">Jumlah kolaborator</option>
-                                <option value="bookmarks ASC">Jumlah bookmark</option>
-                            </optgroup>
-                            <optgroup label="Descending">
-                                <option value="a.name DESC">Nama diagram</option>
-                                <option value="a.created_date DESC">Tanggal pembuatan</option>
-                                <option value="forks DESC">Jumlah kolaborator</option>
-                                <option value="bookmarks DESC">Jumlah bookmark</option>
-                            </optgroup>
-                        </select>
-                    </div>
-                    <a data-ng-click="find()" href="javascript:;" class="btn btn-raised btn-primary btn-lg">Tampilkan data</a>
-                </div>
+                            </div>
 
-                <h4 class="">Top Kreator</h4>
-                <div class="spacer"></div>
-
-                <div data-ui-lightbox=".img-wrapper" data-trigger="creators" class="row" style="margin-left: -4px; margin-right: -4px">
-                    <div data-ng-repeat="item in creators">
-                        <div class="col-sm-4" style="padding-left: 4px; padding-right: 4px; padding-bottom: 8px;">
-                            <a data-ng-href="{{ item.avatar_url }}" class="img-wrapper">
-                                <img alt="." title="{{ item.fullname }}" data-ng-src="{{ item.avatar | thumbnail:'/user/':100:100 }}" style="width: 100%">
-                            </a>
                         </div>
                     </div>
+
+                    <div class="m-t" data-ng-show="diagrams.length">
+                        <div class="text-center">
+                            <div data-ui-pagination data-template="pagination.html" data-store="diagramStore" data-display="10"></div>
+                        </div>
+                    </div>
+
                 </div>
+            </div>
 
-                <a href="" class="btn btn-primary btn-raised btn-lg">Lihat selengkapnya</a>
-                
-            </div>
-            <div class="col-md-9" data-ui-view>
-                
-            </div>
         </div>
-
     </div>
-</section>
+</div>
 
 <footer class="text-center" data-ui-template="footer.html"></footer>

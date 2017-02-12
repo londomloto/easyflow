@@ -8,7 +8,7 @@
                 <div class="col-sm-7">
                     <a href="" class="pull-left m-r-md">
                         <span class="avatar w-96">
-                            <img data-ng-src="{{ diagram.user_avatar | thumbnail:'/user/':96:96 }}">
+                            <img data-ng-src="{{ diagram.user_avatar | thumbnail:'users':96:96 }}">
                         </span>
                     </a>
                     <div class="clear m-b">
@@ -118,7 +118,7 @@
                             <div class="col-xs-6 col-sm-4 col-md-3" data-ng-repeat="item in forkers track by item.id">
                                 <div class="box p-a-xs">
                                     <a data-ui-sref="main.user.edit({id: item.id})">
-                                        <img data-ng-src="{{ item.avatar | thumbnail:'/user/':200:200 }}" alt="" class="img-responsive">   
+                                        <img data-ng-src="{{ item.avatar | thumbnail:'users':200:200 }}" alt="" class="img-responsive">   
                                     </a>
                                     <div class="p-a-sm">
                                         <a data-ui-sref="main.user.edit({id: item.id})" class="_700 link">{{ item.fullname }}</a><br>
@@ -141,7 +141,7 @@
                                 <div class="streamline m-b m-l">
                                     <div data-ng-repeat="item in comments track by item.id" class="sl-item">
                                         <div class="sl-left">
-                                            <img data-ng-src="{{ item.user_avatar | thumbnail:'/user/':40:40 }}" class="img-circle">
+                                            <img data-ng-src="{{ item.user_avatar | thumbnail:'users':40:40 }}" class="img-circle">
                                         </div>
                                         <div class="sl-content">
                                             <div class="sl-date text-muted">{{ item.post_date | dateformat:'dd MMMM yyyy HH:mm' }}</div>

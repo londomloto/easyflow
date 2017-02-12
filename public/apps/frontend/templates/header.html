@@ -14,12 +14,12 @@
         <ul class="nav navbar-nav navbar-right">
             <li data-ui-sref-active="active"><a data-ui-sref="home" >Beranda</a></li>
             <li data-ui-sref-active="active"><a data-ui-sref="tutorial">Tutorial</a></li>
-            <li data-ui-sref-active="active"><a data-ui-sref="catalog.index" >Katalog</a></li>
+            <li data-ui-sref-active="active"><a data-ui-sref="catalog" >Katalog</a></li>
             <li data-ng-if=" ! user"><a ui-sref="register" >Daftar</a></li>
             <li data-ng-if=" ! user"><a ui-sref="login" >Masuk</a></li>
             <li data-ng-if="user">
                 <div class="avatar">
-                    <img alt="." ng-src="{{ user.avatar | thumbnail:'/user/':50:50 }}">    
+                    <img alt="." ng-src="{{ user.avatar | thumbnail:'users':50:50 }}">    
                 </div>
             </li>
             <li ng-if="user" class="dropdown">
@@ -29,11 +29,11 @@
                     <div class="ripple-container"></div>
                 </a>
                 <ul class="dropdown-menu">
-                    <li><a ui-sref="profile.home({email: user.email})"><i class="ion-home"></i>&nbsp;&nbsp;Beranda Saya</a></li>
-                    <li><a ui-sref="profile.edit"><i class="ion-person"></i>&nbsp;&nbsp;Sunting Profil</a></li>
-                    <li><a ui-sref="profile.notification"><i class="ion-android-notifications"></i>&nbsp;&nbsp;Pesan Notifikasi</a></li>
+                    <li><a ui-sref="account.home({email: user.email})"><i class="ion-home"></i>&nbsp;&nbsp;Beranda</a></li>
+                    <li><a ui-sref="account.edit"><i class="ion-person"></i>&nbsp;&nbsp;Sunting Akun</a></li>
+                    <li><a ui-sref="account.notification"><i class="ion-android-notifications"></i>&nbsp;&nbsp;Notifikasi</a></li>
                     <li class="divider"></li>
-                    <li><a href="javascript:void(0)" data-ng-click="logout()" ><i class="ion-power"></i>&nbsp;&nbsp;Keluar Profil</a></li>
+                    <li><a href="javascript:void(0)" data-ng-click="logout()" ><i class="ion-power"></i>&nbsp;&nbsp;Keluar dari Akun</a></li>
                 </ul>
               </li>
         </ul>

@@ -1,0 +1,56 @@
+<div class="gallery p-a-lg">
+    
+    <div class="row">
+        
+        <div class="col-md-3">
+            <h4>Pencarian</h4>
+            <div class="line line-dashed"></div>
+            <div class="form-group">
+                <label>Nama diagram</label>
+                <input type="text" class="form-control">
+            </div>
+            <button class="btn btn-primary">Cari diagram</button> 
+            <button class="btn btn-link">Reset form</button> 
+        </div>
+        
+        <div class="col-md-9">
+
+            <div class="row">
+                <div data-ng-repeat="item in diagrams track by item.id">
+                    <div data-ng-if="$index % 3 == 0" class="clearfix"></div>
+                    <div class="col-md-4">
+
+                        <div class="panel no-radius">
+                            <div class="item">
+                                <a data-ui-sref="account.diagram.view({slug: item.slug})" class="item-media">
+                                    <img alt="." data-ng-src="{{ item.cover | thumbnail:'diagrams':300:300 }}" style="width: 100%;">
+                                </a>
+                                <div class="desc"> 
+                                    <a data-ui-sref="account.diagram.view({slug: item.slug})" class="h4">{{ item.name }}</a>
+                                    <div class="text-muted">
+                                        <small class="m-r-mini"><i class="ion-heart text-danger"></i> {{ item.bookmarks }}</small>
+                                        <small><i class="ion-android-time"></i> {{ item.created_date | fromnow }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="row m-t" data-ng-show="diagrams.length">
+                <div class="col-sm-12  text-center">
+                    <div data-ui-pagination data-template="pagination.html" data-store="diagramStore" data-display="10"></div>
+                </div>
+            </div>
+
+        </div>
+
+        
+
+    </div>
+
+</div>

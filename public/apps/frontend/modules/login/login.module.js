@@ -17,7 +17,7 @@
             if ($scope.form.$valid) {
                 auth.login($scope.email, $scope.passwd).then(function(result){
                     if (result.success) {
-                        router.go('profile.home');
+                        router.go('account.home', {email: $scope.email});
                     } else {
                         $scope.message = result.message;
                     }
@@ -25,11 +25,11 @@
             }
         };
 
-        $scope.socialLogin = function(profile) {
-            if (profile) {
-                auth.social(profile).then(function(result){
+        $scope.socialLogin = function(account) {
+            if (account) {
+                auth.social(account).then(function(result){
                     if (result.success) {
-                        router.go('profile.home');
+                        router.go('account.home', {email: account.email});
                     } else {
                         $scope.message = result.message;
                     }

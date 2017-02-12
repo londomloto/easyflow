@@ -1,0 +1,56 @@
+<div data-ng-if="diagram.id" class="p-a-lg">
+    
+    <div class="row">
+        <div class="col-md-6">
+            
+            <div class="cover" style="background: #EEEEEE;  min-height: 524px;">
+                <img alt="&nbsp;" data-ng-src="{{ diagram.cover | thumbnail:'diagrams':500:500 }}" style="width: 100%;">
+            </div>
+
+        </div>
+        <div class="col-md-6">
+            <h4 class="m-t-none m-b-none">{{ diagram.name }}</h4>
+            
+            <div>
+                <span class="text-muted">Dibuat oleh:</span> 
+                <a href="">{{ diagram.user_fullname }}</a> ( {{ diagram.created_date | fromnow }} )
+            </div>
+            
+            <div>
+                <span class="label bg-primary">Bookmark: {{ diagram.bookmarks }}</span> 
+                <span class="label bg-primary">Download: {{ diagram.downloads }}</span>     
+            </div>
+            <div class="line line-dashed"></div>
+            <div class="m-t">
+                <p>{{ diagram.description }}</p>
+            </div>
+            <div class="m-t panel no-shadow">
+                <div class="panel-body text-center">
+                    <a href="#" class="btn btn-danger btn-circle"><i class="ion-ios-heart-outline"></i><small>Bookmark</small></a>
+                    <a href="#" class="btn btn-circle"><i class="ion-ios-email-outline"></i><small>Email</small></a>
+                    <a href="#" class="btn btn-circle"><i class="ion-ios-download-outline"></i><small>Unduh</small></a>
+                    <a data-ng-click="gotoAnchor('form-comment')" class="btn btn-circle"><i class="ion-ios-chatboxes-outline"></i><small>Komentar</small></a>
+                </div>
+            </div>
+            <div class="m-t">
+                <div class="btn-group"> 
+                    <button class="btn btn-white dropdown-toggle" data-toggle="dropdown">Sunting Diagram <span class="caret"></span></button> 
+                    <ul class="dropdown-menu"> 
+                        <li><a data-ui-sref="account.diagram.edit({id: diagram.id})">Sunting Informasi</a></li> 
+                        <li><a href="#">Sunting Diagram</a></li>
+                        <li class="divider"></li> 
+                        <li><a href="#">Hapus Diagram</a></li> 
+                    </ul> 
+                </div>
+                <a data-ui-sref="account.diagram" class="btn btn-link">Lihat diagram lainnya...</a>
+            </div>
+        </div>
+    </div>
+
+    <h4 class="m-t-large m-b-large">Komentar</h4>
+
+    <div data-ui-template="diagram-comment.html"></div>
+
+</div>
+
+<div data-ng-if="!diagram.id" class="p-a-lg" data-ui-template="notfound.html"></div>

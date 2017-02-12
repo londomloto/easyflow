@@ -2,7 +2,8 @@
 namespace App\Service;
 
 use Sys\Core\Application,
-    Sys\Core\Config;
+    Sys\Core\Config,
+    Sys\Helper\Text;
 
 class Notification {
 
@@ -21,42 +22,45 @@ class Notification {
         return $this->_config->source;
     }
 
-    public function forkRequest($diagram, $from, $to) {
+    public function notify() {
+        $args = func_get_args();
+        $type = array_shift($args);
+        $func = Text::camelize($type, FALSE);
+
+        if (method_exists($this, $func)) {
+            call_user_func_array(array($this, $func), $args);
+        }
+    }
+
+    public function follow($sender, $receiver) {
         $source = $this->getSource();
-
-        $verb = _('<a data-ui-sref="user.view({email: \'%s\'})">%s</a> has sent you request to forking diagram <a data-ui-sref="profile.diagram.edit({id:\'%d\'})">%s</a>');
-        
+        $verb = _('<a data-ui-sref="account.home({email: \'%s\'})">%s</a> start following you');
         $data = array(
-            $from->email,
-            $from->fullname,
-            $diagram->id,
-            $diagram->name
+            $sender->email,
+            $sender->fullname
         );
-
         $this->_db->insert(
             $source,
             array(
-                'type' => 'request',
+                'type' => 'notification',
                 'verb' => $verb,
                 'data' => json_encode($data),
-                'from' => $from->id,
-                'to' => $to->id,
-                'object_type' => 'diagram',
-                'object_id' => $diagram->id,
+                'sender_id' => $sender->id,
+                'receiver_id' => $receiver->id,
                 'notify_date' => date('Y-m-d H:i:s')
             )
         );
     }
-
+    
     public function load($user) {
         $result = array(
             'success' => TRUE,
             'data' => array(),
             'total' => 0
         );
-
+        
         if ($user) {
-            $sql = "SELECT * FROM notification WHERE `to` = ? ORDER BY notify_date DESC";
+            $sql = "SELECT * FROM notification WHERE `receiver_id` = ? ORDER BY notify_date DESC";
             $params = array($user->id);
 
             $result['data'] = $this->_db->fetchAll($sql, $params);

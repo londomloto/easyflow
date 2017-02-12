@@ -1,42 +1,42 @@
 <div>
-    <ul class="list-group m-t">
-        <li data-ng-repeat="item in comments track by item.id" class="list-group-item" style="padding-left: 0; padding-right: 0;">
-            <div class="row-picture" style="float: left; margin-top: 15px;">
-                <img class="circle" data-ng-src="{{ item.user_avatar | thumbnail:'/user/':56:56 }}" alt="icon">
-            </div>
-            <div style="position: absolute; top: 0; right: 0;">
-                <a data-ng-if="item.editable" data-ng-click="deleteComment(item)" href="javascript:;" class="_300 m-r">hapus</a> 
-                <a data-ng-if="item.removable" data-ng-click="toggleCommentEditor(item)" href="javascript:;" class="_300">sunting</a>
-            </div>
-            <div class="row-content">
-                <h4 class="m-b-0"><a data-ui-sref="user.view({email: item.user_email})">{{ item.user_fullname }}</a></h4>
-                <span class="text-muted _300">{{ item.post_date | dateformat:'dd MMMM yyyy HH:mm' }}</span>
+    <section class="comment-list block" style="padding: 0;">
+        <article data-ng-repeat="item in comments track by item.id" class="comment-item media">
+            <a href="" class="pull-left thumb-small">
+                <img alt="." data-ng-src="{{ item.user_avatar | thumbnail:'users':56:56 }}">
+            </a>
+            <section class="media-body panel"  style="padding: 0;">
+                <div class="panel-heading bg-white clearfix" style="border-bottom: none;"> 
+                    <a data-ui-sref="account.home({email: item.user_email})">{{ item.user_fullname }}</a> 
+                    <span class="text-muted m-l-small pull-right">{{ item.post_date | fromnow }} </span> 
+                </div>
+                <div class="panel-body">
+                    <div data-ui-markdown="item.message" data-ng-if="!item.editing"></div>
 
-                <div data-ui-markdown="item.message" data-ng-if="!item.editing" style="font-size: 18px;" class="_400 list-group-item-heading m-t"></div>
-                
-                <div class="m-t" data-ng-if="item.editable && item.editing" style="padding: 15px; background-color: #f5f5f5;">
-                    <div class="form-group">
-                        <textarea data-ng-model="item.message" class="form-control" required></textarea>
+                    <div class="m-t m-b" data-ng-if="item.editable && item.editing">
+                        <div class="form-group">
+                            <textarea data-ng-model="item.message" class="form-control" required></textarea>
+                        </div>
+                        <button data-ng-click="updateComment(item)" class="btn btn-primary">Simpan perubahan</button>
+                        <a data-ng-click="toggleCommentEditor(item)"  href="javascript:;" class="btn btn-link">Tutup editor</a>
                     </div>
-                    <button data-ng-click="updateComment(item)" class="btn btn-sm btn-raised btn-primary">Simpan perubahan</button>
-                </div>
-                
-                
-            </div>
-            <div data-ng-if="$index < comments.length - 1" style="clear: both; min-height: 1px; margin: 15px 0; border-top: solid 1px #dfdfdf;"></div>
-        </li>
-    </ul>
 
-    <form name="formComment" data-ng-submit="addComment()" novalidate>
-        <div data-ng-if="user.id" style="border: solid 1px #dfdfdf;">
-            <div class="form-group" style="padding: 10px;">
-                <textarea data-ng-model="comment.message" data-ng-minlength="1" rows="3" class="form-control" required></textarea>
-            </div>    
-            <div style="background-color: #f4f4f4; padding: 0 15px;">
-                <div class="text-right">
-                    <button data-ng-disabled="formComment.$invalid" type="submit" class="btn btn-raised btn-primary">Kirim Komentar</button>
+                    <div data-ng-if="!item.editing" class="comment-action m-t-small text-right"> 
+                        <a class="btn btn-white" data-ng-if="item.editable" data-ng-click="toggleCommentEditor(item)"> 
+                            <i class="ion-ios-compose-outline"></i> Sunting 
+                        </a> 
+                        <a class="btn btn-white" data-ng-if="item.removable" data-ng-click="deleteComment(item)"> 
+                            <i class="ion-ios-trash-outline"></i> Remove 
+                        </a> 
+                    </div>
                 </div>
-            </div>
+            </section>
+        </article>
+    </section>
+    
+    <form id="form-comment" name="formComment" data-ng-submit="addComment()" novalidate>
+        <div class="form-group">
+            <textarea data-ng-model="comment.message" data-ng-minlength="1" rows="3" class="form-control" required></textarea>
         </div>
+        <button data-ng-disabled="formComment.$invalid" type="submit" class="btn btn-primary">Kirim Komentar</button>
     </form>
 </div>

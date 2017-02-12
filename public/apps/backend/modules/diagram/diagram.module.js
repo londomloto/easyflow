@@ -23,7 +23,7 @@
         };
 
         $scope.diagramStore = new Store({
-            url: '/diagram/find',
+            url: '/diagrams',
             pageSize: 10
         });
 
@@ -69,7 +69,7 @@
 
         if (id) {
 
-            api.get('/diagram/find/' + id).then(function(response){
+            api.get('/diagrams/' + id).then(function(response){
                 $scope.diagram = response.data.data;
                 $scope.reset = angular.copy($scope.diagram);
             });
@@ -87,7 +87,7 @@
                     ];
                 }
 
-                api.post('/diagram/update/' + data.id, data, opts).then(function(response){
+                api.put('/diagrams/' + data.id, data, opts).then(function(response){
                     if (response.data.success) {
                         theme.toast('Data berhasil disimpan');
 
@@ -116,7 +116,7 @@
         $scope.loadComments = function() {
             var id = router.getParam('id');
             if (id) {
-                api.get('/diagram/comment/find/' + id).then(function(response){
+                api.get('/diagrams/' + id + '/comments').then(function(response){
                     $scope.comments = response.data.data;
                 });
             }
@@ -130,14 +130,11 @@
                     'Anda yakin akan menghapus komentar ini?'
                 ).then(function(action){
                     if (action) {
-                        var data = {
-                            id: comment.id
-                        };
-                        api.post('/diagram/comment/delete/' + id + '/' + comment.id, data).then(function(response){
+                        api.del('/diagrams/' + id + '/comments/' + comment.id).then(function(response){
                             if (response.data.success) {
                                 $scope.loadComments();
                             }
-                        });        
+                        });
                     }
                 });
                 
@@ -147,7 +144,7 @@
         $scope.loadForkers = function() {
             var id = router.getParam('id');
             if (id) {
-                api.get('/diagram/forker/find/' + id).then(function(response){
+                api.get('/diagrams/' + id + '/forkers').then(function(response){
                     $scope.forkers = response.data.data;
                 });
             }

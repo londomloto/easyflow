@@ -1,0 +1,15 @@
+<div class="p-a-lg">
+    
+    <div data-ng-repeat="item in notifications" class="alert">
+        <button type="button" ng-click="remove(item)" class="close"><i class="ion-close-round"></i></button>
+        <small class="text-muted"><i class="ion-android-time"></i> {{ item.notify_date | fromnow }}</small>
+        <div data-ui-html="item.verb"></div>
+    </div>
+
+    <div class="row m-t" data-ng-show="notifications.length">
+        <div class="col-sm-12  text-center">
+            <div data-ui-pagination data-template="pagination.html" data-store="notifyStore" data-display="10"></div>
+        </div>
+    </div>
+
+</div>

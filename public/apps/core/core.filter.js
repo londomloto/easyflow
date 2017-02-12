@@ -4,12 +4,13 @@
 
     angular
         .module('core')
-        .filter('url', urlFilter)
-        .filter('boolean', booleanFilter)
-        .filter('thumbnail', thumbnailFilter)
-        .filter('decodehtml', decodehtmlFilter)
-        .filter('dateformat', dateformatFilter)
-        .filter('trust', trustFilter);
+        .filter('url', url)
+        .filter('boolean', boolean)
+        .filter('thumbnail', thumbnail)
+        .filter('decodehtml', decodehtml)
+        .filter('dateformat', dateformat)
+        .filter('trust', trustFilter)
+        .filter('fromnow', fromnow);
 
     /** @ngInject */
     function trustFilter($sce) {
@@ -18,7 +19,7 @@
         };
     }
 
-    function booleanFilter() {
+    function boolean() {
         return function(input, truly, falsy) {
             truly = angular.isUndefined(truly) ? 'Ya' : truly;
             falsy = angular.isUndefined(falsy) ? 'Tidak' : falsy;
@@ -27,7 +28,7 @@
     }
 
     /** @ngInject */
-    function urlFilter(api) {
+    function url(api) {
         var BASE_URL = api.getBaseUrl();
         return function(file, path) {
             return BASE_URL + path + file;
@@ -35,15 +36,15 @@
     }
 
     /** @ngInject */
-    function thumbnailFilter(api) {
+    function thumbnail(api) {
         var BASE_URL = api.getBaseUrl();
         
         return function(image, path, width, height) {
-            return BASE_URL + path + 'thumbnail/' + image + '/' + width + '/' + height;
+            return BASE_URL + '/' + path + '/thumbnail/' + image + '/' + width + '/' + height;
         }
     }
 
-    function decodehtmlFilter() {
+    function decodehtml() {
         return function(input) {
             var map = {
                 'lt': '<',
@@ -62,7 +63,7 @@
     }
 
     /** @ngInject */
-    function dateformatFilter($filter) {
+    function dateformat($filter) {
         return function(input, format) {
             if (input) {
                 input = input.replace(/\s/, 'T');
@@ -71,6 +72,12 @@
                 return input;
             }
         };
+    }
+
+    function fromnow(moment) {
+        return function(input) {
+            return moment(input, 'YYYY-MM-DD HH:mm:ss').fromNow();
+        }
     }
 
 }());

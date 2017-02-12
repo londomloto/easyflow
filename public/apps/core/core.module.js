@@ -12,7 +12,7 @@
 
     /** @ngInject */
     function config($compileProvider, $httpProvider) {
-        $compileProvider.aHrefSanitizationWhitelist(/\s*(https?|ftp|mailto|data|blob):/);
+        $compileProvider.aHrefSanitizationWhitelist(/\s*(https?|ftp|mailto|data|blob|javascript):/);
         $httpProvider.interceptors.push('httpInterceptor');
     }
 

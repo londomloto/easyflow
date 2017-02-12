@@ -15,7 +15,7 @@ class Setting extends \Sys\Core\Module {
     }
 
     /**
-     * @Authenticate
+     * @authentication
      */
     public function saveAction() {
 

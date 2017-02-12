@@ -1,55 +1,44 @@
 
-<nav class="navbar navbar-default navbar-custom navbar-simple" data-ui-template="header-simple.html"></nav>
+<nav class="navbar navbar-default navbar-custom navbar-border navbar-simple" data-ui-template="header-simple.html"></nav>
 
 <section id="register-section">
     <div class="container">
         <div class="row">
-            <div class="col-lg-12 text-center">
-                <h2>Daftar</h2>
-                <hr class="star-primary">
-                <br>
-            </div>
-        </div>
-        <div class="row">
             <div class="col-lg-8 col-lg-offset-2">
+                <p style="display: block; padding: 15px; border: solid 2px #666;">
+                Dengan mendaftar di website ini, berarti Anda telah setuju untuk mempublikasikan alamat email 
+                Anda sebagai identitas karya Anda.
+                </p>
+
+                <div class="spacer"></div>
 
                 <form name="form" data-ng-submit="createAccount()" novalidate>
-                    <div class="row control-group">
-                        <div class="form-group">
-                            <label class="control-label">Nama lengkap</label>
-                            <input class="form-control" data-ng-model="account.fullname" type="text" required>
-                        </div>
+                    <div class="form-group">
+                        <label class="control-label">Nama lengkap</label>
+                        <input class="form-control" data-ng-model="account.fullname" type="text" required>
                     </div>
 
-                    <div class="row control-group">
-                        <div class="form-group">
-                            <label class="control-label">Alamat email</label>
-                            <input class="form-control" data-ng-model="account.email" type="email" required>
-                        </div>
+                    <div class="form-group">
+                        <label class="control-label">Alamat email</label>
+                        <input class="form-control" data-ng-model="account.email" type="email" required>
                     </div>
 
-                    <div class="row control-group">
-                        <div class="form-group" data-ng-class="{ 'invalid' : form._passwd1.$invalid && !form._passwd1.$pristine }">
-                            <label class="control-label">Kata sandi</label>
-                            <input class="form-control" data-ng-model="account.passwd1" data-ng-minlength="8" name="_passwd1" type="password" required>
-                            <p class="help-block">Gunakan kata sandi yang unik minimal 8 karakter</p>
-                        </div>
+                    <div class="form-group" data-ng-class="{ 'invalid' : form._passwd1.$invalid && !form._passwd1.$pristine }">
+                        <label class="control-label">Kata sandi</label>
+                        <input class="form-control" data-ng-model="account.passwd1" data-ng-minlength="8" name="_passwd1" type="password" required>
+                        <p class="help-block">Gunakan kata sandi yang unik minimal 8 karakter</p>
                     </div>
 
-                    <div class="row control-group">
-                        <div class="form-group" data-ng-class="{ 'invalid' : form._passwd2.$invalid && !form._passwd2.$pristine }">
-                            <label class="control-label">Konfirmasi kata sandi</label>
-                            <input class="form-control" data-ng-model="account.passwd2" name="_passwd2" data-ui-match="form._passwd1" type="password" required>
-                            <p data-ng-show="form._passwd2.$error.match" class="help-block">Kata sandi yang Anda masukan tidak cocok</p>
-                        </div>
+                    <div class="form-group" data-ng-class="{ 'invalid' : form._passwd2.$invalid && !form._passwd2.$pristine }">
+                        <label class="control-label">Konfirmasi kata sandi</label>
+                        <input class="form-control" data-ng-model="account.passwd2" name="_passwd2" data-ui-match="form._passwd1" type="password" required>
+                        <p data-ng-show="form._passwd2.$error.match" class="help-block">Kata sandi yang Anda masukan tidak cocok</p>
                     </div>
 
                     <br>
-                    <div class="row">
-                        <div class="form-group">
-                            <button type="submit" data-ng-disabled="form.$invalid" class="btn btn-raised btn-primary btn-lg">Daftar sekarang</button>
-                            <a ui-sref="login" class="btn btn-link btn-lg">Sudah punya akun ? <strong>masuk sekarang</strong></a>
-                        </div>
+                    <div class="form-group">
+                        <button type="submit" data-ng-disabled="form.$invalid" class="btn btn-primary">Daftar sekarang</button>
+                        <a ui-sref="login" class="btn btn-link">Sudah punya akun ? <strong>masuk sekarang</strong></a>
                     </div>
                 </form>
             </div>

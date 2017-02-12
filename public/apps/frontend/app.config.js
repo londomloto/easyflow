@@ -9,7 +9,7 @@
     function config(
         httpInterceptorProvider,
         routerProvider, 
-        loaderProvider, 
+        loaderProvider,
         siteProvider, 
         authProvider,
         apiProvider,
@@ -44,8 +44,6 @@
                 files: [
                     'assets/vendor/montserrat/fonts.css',
                     'assets/vendor/bootstrap/v3/css/bootstrap.css',
-                    'assets/vendor/bootstrap/v3/css/ripples.css',
-                    'assets/vendor/bootstrap/v3/css/material.css',
                     'assets/vendor/bootstrap/v3/css/snackbar.css',
                     'assets/vendor/bootstrap/v3/css/bootstrap-social.css',
                     'assets/css/frontend.css'
@@ -64,7 +62,7 @@
                 insertBefore: '#head-files'
             },
             {
-                name: 'profile.styles',
+                name: 'account.styles',
                 files: [
                     'assets/vendor/simplelightbox/simplelightbox.css'
                 ],
@@ -89,9 +87,7 @@
             {
                 name: 'frontend.scripts',
                 files: [
-                    'assets/vendor/bootstrap/v3/js/bootstrap.js',
-                    'assets/vendor/bootstrap/v3/js/ripples.js',
-                    'assets/vendor/bootstrap/v3/js/material.js',
+                    'assets/vendor/bootstrap/v3/js/bootstrap.min.js',
                     'assets/vendor/bootstrap/v3/js/snackbar.js'
                 ],
                 insertBefore: '#body-files'
@@ -122,11 +118,14 @@
                 insertBefore: '#body-files'
             },
             {
-                name: 'profile.scripts',
+                name: 'account.scripts',
                 files: [
                     'assets/vendor/simplelightbox/simple-lightbox.js',
                     'assets/vendor/showdown/showdown.min.js',
-                    'apps/frontend/modules/profile/profile.module.js'
+                    'apps/frontend/modules/account/account.module.js',
+                    'apps/frontend/modules/account/account.controller.js',
+                    'apps/frontend/modules/account/diagram.controller.js',
+                    'apps/frontend/modules/account/bookmark.controller.js'
                 ],
                 insertBefore: '#body-files'
             },
@@ -150,99 +149,7 @@
                     'assets/vendor/graph/vendor/interact/interact.js',
                     
                     'apps/frontend/modules/editor/editor.config.js',
-                    // 'assets/vendor/graph/dist/graph.min.js',
-                    
-                    'assets/vendor/graph/src/poly.js',
-                    'assets/vendor/graph/src/core.js',
-                    'assets/vendor/graph/src/util.js',
-
-                    'assets/vendor/graph/src/lang/class.js',
-                    'assets/vendor/graph/src/lang/error.js',
-                    'assets/vendor/graph/src/lang/event.js',
-                    'assets/vendor/graph/src/lang/point.js',
-                    'assets/vendor/graph/src/lang/line.js',
-                    'assets/vendor/graph/src/lang/curve.js',
-                    'assets/vendor/graph/src/lang/bbox.js',
-                    'assets/vendor/graph/src/lang/path.js',
-                    'assets/vendor/graph/src/lang/matrix.js',
-
-                    'assets/vendor/graph/src/collection/point.js',
-                    'assets/vendor/graph/src/collection/vector.js',
-                    'assets/vendor/graph/src/collection/shape.js',
-                    'assets/vendor/graph/src/collection/tree.js',
-
-                    'assets/vendor/graph/src/dom/element.js',
-
-                    'assets/vendor/graph/src/svg/vector.js',
-                    'assets/vendor/graph/src/svg/ellipse.js',
-                    'assets/vendor/graph/src/svg/circle.js',
-                    'assets/vendor/graph/src/svg/rect.js',
-                    'assets/vendor/graph/src/svg/path.js',
-                    'assets/vendor/graph/src/svg/polyline.js',
-                    'assets/vendor/graph/src/svg/polygon.js',
-                    'assets/vendor/graph/src/svg/group.js',
-                    'assets/vendor/graph/src/svg/text.js',
-                    'assets/vendor/graph/src/svg/image.js',
-                    'assets/vendor/graph/src/svg/line.js',
-                    'assets/vendor/graph/src/svg/paper.js',
-
-                    'assets/vendor/graph/src/registry/vector.js',
-                    'assets/vendor/graph/src/registry/link.js',
-                    'assets/vendor/graph/src/registry/shape.js',
-                    'assets/vendor/graph/src/registry/pallet.js',
-
-                    'assets/vendor/graph/src/layout/layout.js',
-                    
-                    'assets/vendor/graph/src/router/router.js',
-                    'assets/vendor/graph/src/router/directed.js',
-                    'assets/vendor/graph/src/router/orthogonal.js',
-
-                    'assets/vendor/graph/src/link/link.js',
-                    'assets/vendor/graph/src/link/directed.js',
-                    'assets/vendor/graph/src/link/orthogonal.js',
-                    
-                    'assets/vendor/graph/src/util/sweeplink.js',
-
-                    'assets/vendor/graph/src/plugin/plugin.js',
-                    'assets/vendor/graph/src/plugin/definer.js',
-                    'assets/vendor/graph/src/plugin/reactor.js',
-                    'assets/vendor/graph/src/plugin/transformer.js',
-                    'assets/vendor/graph/src/plugin/animator.js',
-                    'assets/vendor/graph/src/plugin/resizer.js',
-                    'assets/vendor/graph/src/plugin/collector.js',
-                    'assets/vendor/graph/src/plugin/dragger.js',
-                    'assets/vendor/graph/src/plugin/dropper.js',
-                    'assets/vendor/graph/src/plugin/sorter.js',
-                    'assets/vendor/graph/src/plugin/network.js',
-                    'assets/vendor/graph/src/plugin/history.js',
-                    'assets/vendor/graph/src/plugin/panzoom.js',
-                    'assets/vendor/graph/src/plugin/linker.js',
-                    'assets/vendor/graph/src/plugin/toolmanager.js',
-                    'assets/vendor/graph/src/plugin/pencil.js',
-                    'assets/vendor/graph/src/plugin/editor.js',
-                    'assets/vendor/graph/src/plugin/snapper.js',
-                    'assets/vendor/graph/src/plugin/toolpad.js',
-                    
-                    'assets/vendor/graph/src/shape/shape.js',
-                    'assets/vendor/graph/src/shape/activity/start.js',
-                    'assets/vendor/graph/src/shape/activity/final.js',
-                    'assets/vendor/graph/src/shape/activity/action.js',
-                    'assets/vendor/graph/src/shape/activity/router.js',
-                    'assets/vendor/graph/src/shape/activity/fork.js',
-                    'assets/vendor/graph/src/shape/activity/join.js',
-                    'assets/vendor/graph/src/shape/activity/lane.js',
-                    'assets/vendor/graph/src/shape/activity/pool.js',
-
-                    'assets/vendor/graph/src/data/exporter.js',
-                    'assets/vendor/graph/src/data/importer.js',
-
-                    'assets/vendor/graph/src/pallet/activity.js',
-
-                    'assets/vendor/graph/src/diagram/diagram.js',
-                    'assets/vendor/graph/src/diagram/activity.js',
-                    
-                    'assets/vendor/graph/src/popup/dialog.js',
-
+                    'assets/vendor/graph/dist/graph.min.js',
                     'apps/frontend/modules/editor/editor.module.js',
                     'apps/frontend/modules/editor/editor.service.js',
                     'apps/frontend/modules/editor/editor.directive.js'
@@ -362,158 +269,168 @@
                     }
                 }
             },
-            'user': {
-                url: '/u',
-                abstract: true,
-                templateUrl: 'apps/frontend/modules/user/user.html',
-                controller: 'UserController as userCtl',
-                resolve: {
-                    /** @ngInject */
-                    dependencies: function(loader) {
-                        return loader.load([
-                            'frontend.styles',
-                            'frontend.scripts',
-                            'user.scripts'
-                        ]);
-                    }
-                }
-            },
-            'user.view': {
-                url: '/:email',
-                templateUrl: 'apps/frontend/modules/user/user.view.html'
-            },
-            'profile': {
-                url: '/p/:email',
+            'account': {
+                url: '/account/:email',
                 abstract: true,
                 authenticate: true,
-                templateUrl: 'apps/frontend/modules/profile/profile.html',
-                controller: 'ProfileController as profileCtl',
+                templateUrl: 'apps/frontend/modules/account/account.html',
+                controller: 'AccountController as accountCtl',
                 resolve: {
                     /** @ngInject */
                     dependencies: function(loader) {
                         return loader.load([
                             'frontend.styles',
                             'frontend.scripts',
-                            'profile.styles',
-                            'profile.scripts'
+                            'account.styles',
+                            'account.scripts'
                         ]);
                     }
                 }
             },
-            'profile.home': {
+            'account.home': {
                 url: '',
                 icon: 'ion-home',
-                title: 'Beranda Saya',
-                style: 'profile',
-                breadcrumb: 'Beranda Saya',
+                title: 'Beranda',
+                style: 'account',
+                breadcrumb: 'Beranda',
                 authenticate: true,
-                templateUrl: 'apps/frontend/modules/profile/profile.home.html'
+                templateUrl: 'apps/frontend/modules/account/account.home.html',
+                controller: 'HomeAccountController as homeAccountCtl'
             },
-            'profile.edit': {
+            'account.edit': {
                 url: '/edit',
                 icon: 'ion-person',
-                title: 'Sunting Profil',
-                style: 'profile',
+                title: 'Sunting',
+                style: 'account',
                 authenticate: true,
-                breadcrumb: 'Sunting Profil',
-                templateUrl: 'apps/frontend/modules/profile/profile.edit.html',
-                controller: 'EditProfileController as editProfileCtl'
+                breadcrumb: 'Sunting',
+                templateUrl: 'apps/frontend/modules/account/account.edit.html',
+                controller: 'EditAccountController as editAccountCtl'
             },
-            'profile.notification': {
+            'account.notification': {
                 url: '/notifications',
                 icon: 'ion-android-notifications',
-                title: 'Pesan Notifikasi',
-                breadcrumb: 'Pesan Notifikasi',
+                title: 'Notifikasi',
+                breadcrumb: 'Notifikasi',
                 authenticate: true,
-                templateUrl: 'apps/frontend/modules/profile/notification.html',
+                templateUrl: 'apps/frontend/modules/account/notification.html',
                 controller: 'NotificationController as notificationCtl'
             },
-            'profile.diagram': {
+            'account.diagram': {
                 url: '/diagrams',
                 icon: 'ion-erlenmeyer-flask',
-                title: 'Diagram Saya',
-                style: 'profile',
+                title: 'Diagram',
+                style: 'account',
                 authenticate: true,
-                breadcrumb: 'Diagram Saya',
-                templateUrl: 'apps/frontend/modules/profile/diagram.html',
+                breadcrumb: 'Diagram',
+                templateUrl: 'apps/frontend/modules/account/diagram.html',
                 controller: 'DiagramController as diagramCtl'
             },
-            'profile.diagram.edit': {
-                url: '/edit/:id',
+            'account.diagram.view': {
+                url: '/:slug',
+                title: 'Detail Diagram',
+                style: 'account',
+                breadcrumb: 'Detail',
+                authenticate: true,
+                views: {
+                    '@account': {
+                        templateUrl: 'apps/frontend/modules/account/diagram.view.html',
+                        controller: 'ViewDiagramController as viewDiagramCtl'        
+                    }
+                }
+            },
+            'account.diagram.edit': {
+                url: '/:id/edit',
                 title: 'Sunting Diagram',
-                style: 'profile',
+                style: 'account',
                 breadcrumb: 'Sunting Diagram',
                 authenticate: true,
                 views: {
-                    '@profile': {
-                        templateUrl: 'apps/frontend/modules/profile/diagram.edit.html',
+                    '@account': {
+                        templateUrl: 'apps/frontend/modules/account/diagram.edit.html',
                         controller: 'EditDiagramController as editDiagramCtl'        
                     }
                 }
             },
-            
-            'profile.bookmark': {
-                url: '/bookmarks',
-                icon: 'ion-heart',
-                title: 'Data Boorkmark',
-                breadcrumb: 'Data Boorkmark',
+
+            'account.message': {
+                url: '/message',
+                icon: 'ion-chatboxes',
+                title: 'Perpesanan',
+                breadcrumb: 'Perpesanan',
                 authenticate: true,
                 views: {
-                    '@profile': {
-                        templateUrl: 'apps/frontend/modules/profile/bookmark.html',
-                        controller: 'BookmarkController as bookmarkCtl'        
+                    '@account': {
+                        templateUrl: 'apps/frontend/modules/account/account.message.html',
+                        controller: 'MessageController as messageCtl'        
                     }
                 }
             },
-            'profile.bookmark.detail': {
+            
+            'account.bookmark': {
+                url: '/bookmarks',
+                icon: 'ion-heart',
+                title: 'Boorkmark',
+                breadcrumb: 'Boorkmark',
+                authenticate: true,
+                templateUrl: 'apps/frontend/modules/account/bookmark.html',
+                controller: 'BookmarkController as bookmarkCtl'
+                // views: {
+                //     '@account': {
+                //         templateUrl: 'apps/frontend/modules/account/bookmark.html',
+                //         controller: 'BookmarkController as bookmarkCtl'
+                //     }
+                // }
+            },
+            'account.bookmark.detail': {
                 url: '/:id',
                 title: 'Detail Bookmark',
                 breadcrumb: 'Detail',
                 authenticate: true,
                 views: {
-                    '@profile': {
-                        templateUrl: 'apps/frontend/modules/profile/bookmark.detail.html',
+                    '@account': {
+                        templateUrl: 'apps/frontend/modules/account/bookmark.detail.html',
                         controller: 'BookmarkDetailController as bookmarkDetailCtl'   
                     }
                 }
             },
-            'profile.forking': {
-                url: '/forking',
+            'account.fork': {
+                url: '/forks',
                 icon: 'ion-network',
-                title: 'Data Kontribusi',
-                breadcrumb: 'Data Kontribusi',
+                title: 'Kontribusi',
+                breadcrumb: 'Kontribusi',
                 authenticate: true,
                 views: {
-                    '@profile': {
-                        templateUrl: 'apps/frontend/modules/profile/forking.html',
-                        controller: 'ForkingController as forkingCtl'        
+                    '@account': {
+                        templateUrl: 'apps/frontend/modules/account/fork.html',
+                        controller: 'ForkController as forkCtl'        
                     }
                 }
             },
-            'profile.forking.detail': {
+            'account.fork.detail': {
                 url: '/:id',
                 title: 'Detail Kontribusi',
                 breadcrumb: 'Detail',
                 authenticate: true,
                 views: {
-                    '@profile': {
-                        templateUrl: 'apps/frontend/modules/profile/forking.detail.html',
-                        controller: 'ForkingDetailController as forkingDetailCtl'   
+                    '@account': {
+                        templateUrl: 'apps/frontend/modules/account/fork.detail.html',
+                        controller: 'ForkDetailController as forkDetailCtl'   
                     }
                 }
             },
-            'profile.friend': {
+            'account.friend': {
                 url: '/friends',
                 icon: 'ion-android-contacts',
-                title: 'Data Teman',
-                breadcrumb: 'Data Teman',
+                title: 'Teman',
+                breadcrumb: 'Teman',
                 authenticate: true
             },
-            'profile.insight': {
+            'account.insight': {
                 url: '/insight',
                 icon: 'ion-stats-bars',
-                title: 'Data Statistik',
-                breadcrumb: 'Data Statistik',
+                title: 'Statistik',
+                breadcrumb: 'Statistik',
                 authenticate: true
             },
             'editor': {
@@ -534,12 +451,6 @@
             },
             'catalog': {
                 url: '/catalog',
-                abstract: true,
-                breadcrumb: {
-                    stateName: 'catalog.index',
-                    text: 'Katalog',
-                    url: '/catalog'
-                },
                 templateUrl: 'apps/frontend/modules/catalog/catalog.html',
                 controller: 'CatalogController as catalogCtl',
                 resolve: {
@@ -553,21 +464,6 @@
                         ]);
                     }
                 }  
-            },
-            'catalog.index': {
-                url: '',
-                title: 'Katalog',
-                style: 'catalog',
-                templateUrl: 'apps/frontend/modules/catalog/catalog.index.html',
-                controller: 'CatalogIndexController as catalogIndexCtl'
-            },
-            'catalog.detail': {
-                url: '/:slug',
-                title: 'Detail Katalog',
-                style: 'catalog',
-                breadcrumb: 'Detail Katalog',
-                templateUrl: 'apps/frontend/modules/catalog/catalog.detail.html',
-                controller: 'CatalogDetailController as catalogDetailCtl'
             },
             'tutorial': {
                 url: '/tutorial',
@@ -588,6 +484,7 @@
                 }
             }
         });
+
     }
 
 }());

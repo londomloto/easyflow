@@ -4,7 +4,7 @@ namespace App\Module\Theme;
 class Theme extends \Sys\Core\Module {
     
     /**
-     * @Authenticate
+     * @authentication
      */
     public function testAction() {
 
@@ -12,6 +12,7 @@ class Theme extends \Sys\Core\Module {
 
     public function templateAction($template) {
         $template = str_replace(array('.html'), '', $template);
+
         $result = array(
             'success' => TRUE,
             'status' => 200,
@@ -25,7 +26,7 @@ class Theme extends \Sys\Core\Module {
             $result['status'] = 401;
 
         } else {
-            $result['data'] = $this->template->load($template);    
+            $result['data'] = $this->template->load($template);
         }
         
         $this->response->setJsonContent($result);

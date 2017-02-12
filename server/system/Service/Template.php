@@ -10,8 +10,11 @@ class Template extends \Sys\Core\Component {
         parent::__construct($app);
 
         $this->_loader = new \Twig_Loader_Filesystem(BASEPATH.'template');
+
+        $cache = BASEPATH.'cache'.DS.'template';
+
         $this->_engine = new \Twig_Environment($this->_loader, array(
-            'cache' => BASEPATH.'cache'.DS.'template',
+            'cache' => $cache,
             'auto_reload' => TRUE
         ));
 
@@ -30,7 +33,7 @@ class Template extends \Sys\Core\Component {
         if (strripos($path, '.html') === FALSE) {
             $path .= '.html';
         }
-
+        
         $content = '';
 
         try {

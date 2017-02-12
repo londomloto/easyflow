@@ -127,6 +127,16 @@ class Security extends \Sys\Core\Component {
         return $str;
     }
 
+    protected function _filter_attributes($str) {
+        $out = '';
+        if (preg_match_all('#\s*[a-z\-]+\s*=\s*(\042|\047)([^\\1]*?)\\1#is', $str, $matches)) {
+            foreach ($matches[0] as $match) {
+                $out .= preg_replace('#/\*.*?\*/#s', '', $match);
+            }
+        }
+        return $out;
+    }
+
     public function xssHash() {
         if ($this->_xsshash === NULL) {
             $rand = $this->generateBytes(16);
@@ -330,11 +340,13 @@ class Security extends \Sys\Core\Component {
         $payload['enabled_date'] = date('Y-m-d H:i:s', $enabledDate);
         $payload['expired_date'] = date('Y-m-d H:i:s', $expiredDate);
 
+        $tokenId = base64_encode(mcrypt_create_iv(32, MCRYPT_DEV_URANDOM));
+        
         $data = array(
             // issued time
             'iat' => $issudedDate,
             // token id
-            'jti' => base64_encode(mcrypt_create_iv(32)),
+            'jti' => $tokenId,
             // issuer
             'iss' => $issudedName,
             // not before

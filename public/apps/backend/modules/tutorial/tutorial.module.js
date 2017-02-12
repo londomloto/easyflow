@@ -11,7 +11,7 @@
         $scope.tutorials = [];
 
         $scope.loadTutorials = function() {
-            api.get('/tutorial/find').then(function(response){
+            api.get('/tutorials').then(function(response){
                 $scope.tutorials = response.data.data;
             });
         };
@@ -20,7 +20,7 @@
             theme.showConfirm('Konfirmasi', 'Anda yakin akan menghapus tutorial ini? ?').then(function(action){
                 if (action) {
                     var data = angular.copy(tutorial);
-                    api.del('/tutorial/' + tutorial.id, data).then(function(response){
+                    api.del('/tutorials/' + tutorial.id, data).then(function(response){
                         if (response.data.success) {
                             var index = $scope.tutorials.indexOf(tutorial);
                             if (index > -1) {
@@ -42,7 +42,7 @@
         $scope.saveTutorial = function() {
             var data = angular.copy($scope.add);
 
-            api.post('/tutorial/create', data).then(function(response){
+            api.post('/tutorials', data).then(function(response){
                 if (response.data.success) {
                     theme.toast('Data berhasil ditambahkan');
                 }
@@ -58,7 +58,7 @@
         $scope.videoName = null;
 
         if (id) {
-            api.get('/tutorial/find/' + id).then(function(response){
+            api.get('/tutorials/' + id).then(function(response){
                 $scope.edit = response.data.data;
             });
         }
@@ -77,7 +77,7 @@
                 ];
             }
 
-            api.post('/tutorial/update', data, opts).then(function(response){
+            api.put('/tutorials/' + data.id, data, opts).then(function(response){
                 if (response.data.success) {
                     theme.toast('Data berhasil disimpan');    
                 }

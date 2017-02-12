@@ -9,19 +9,28 @@ class Module {
         $method = $data['method'];
         $action = $data['action'];
 
-        $authenticate = FALSE;
         $comment = $method->getDocComment();
+
+        $authentication = FALSE;
+        $authorization = '*';
         
         if ($comment) {
-            // $pattern = '#(@[a-zA-Z]+\s*[a-zA-Z0-9, ()_].*)#';
-            $pattern = '#(@Authenticate)#';
+            $lines = explode('*', $comment);
+            $rules = array();
 
-            if (preg_match($pattern, $comment, $matches)) {
-                $authenticate = TRUE;
+            foreach($lines as $line) {
+                if (preg_match('/@(\w+)\s?(.*)/', $line, $match)) {
+                    if ($match[1] == 'authentication') {
+                        $authentication = TRUE;
+                    } else if ($match[1] == 'authorization') {
+                        $authorization = str_replace(' ', '', $match[2]);
+                    }
+                }
             }
         }
 
-        $action->authenticate = $authenticate;
+        $action->authentication = $authentication;
+        $action->authorization = $authorization;
     }
 
 }

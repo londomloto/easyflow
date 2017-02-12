@@ -1,0 +1,95 @@
+
+<div class="p-a-lg">
+    <div class="row">
+        <div class="col-md-6 col-sm-12">
+            <h4>Data Pribadi</h4>
+            <div class="line line-dashed m-t-large"></div>
+            <form name="form1" novalidate>
+                <div class="form-group">
+                    <label class="control-label">Nama lengkap</label>
+                    <input data-ng-model="account.fullname" name="user_fullname" class="form-control" type="text" required>
+                    <p data-ng-show="form1.user_fullname.$error.required" class="help-block text-danger">Nama lengkap wajib diisi</p>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label">Jenis Kelamin</label>
+                    <select class="form-control">
+                        <option value="pria">Pria</option>
+                        <option value="wanite">Wanita</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label">Pekerjaan</label>
+                    <input data-ng-model="account.job_title" class="form-control" type="text">
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label" for="cf-input-4">Keterangan</label>
+                    <textarea data-ng-model="account.bio" class="form-control"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label">Facebook</label>
+                    <input data-ng-model="account.facebook" class="form-control" type="text">
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label">Twitter</label>
+                    <input data-ng-model="account.twitter" class="form-control" type="text">
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label">Google+</label>
+                    <input data-ng-model="account.google" class="form-control" type="text">
+                </div>
+
+                <div class="form-group">
+                    <label class="control-label">Unggah Foto</label>
+                    <div class="input-group">
+                        <label class="input-group-btn">
+                            <span class="btn btn-default">
+                                Browse&hellip; <input data-ui-file="avatar" data-onselect="onSelectAvatar" type="file" style="display: none;" multiple>
+                            </span>
+                        </label>
+                        <input data-ng-model="avatar_name" type="text" class="form-control" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group label-floating">
+                    <button data-ng-disabled="form1.$invalid" type="submit" data-ng-click="updateAccount()" class="btn btn-primary">
+                        Simpan perubahan
+                    </button>
+                </div>
+            </form> 
+        </div>
+        <div class="col-md-6 col-sm-12">
+            <h4>Data Akun</h4>
+            <div class="line line-dashed m-t-large"></div>
+            <form name="form2" novalidate>
+                <div class="form-group">
+                    <label class="control-label">Email yang aktif</label>
+                    <input class="form-control" value="{{ account.email }}" readonly></input>
+                </div>
+
+                <div class="form-group" data-ng-class="{ 'invalid' : form2._pass1.$invalid && !form2._pass1.$pristine }">
+                    <label class="control-label">Kata sandi</label>
+                    <input class="form-control" type="password" name="_pass1" data-ng-minlength="8" data-ng-model="account.passwd1" required>
+                    <p class="help-block">Gunakan kata sandi yang unik minimal 8 karakter</p>
+                </div>
+
+                <div class="form-group" data-ng-class="{ 'invalid' : form2._pass2.$invalid && !form2._pass2.$pristine }">
+                    <label class="control-label">Konfirmasi kata sandi</label>
+                    <input class="form-control" type="password" name="_pass2" data-ui-match="form2._pass1" data-ng-model="account.passwd2" required>
+                    <p data-ng-show="form2._pass2.$error.match && !form2._pass2.$pristine" class="help-block text-danger">Sandi yang Anda masukan tidak cocok</p>
+                </div>
+
+                <div class="form-group label-floating">
+                    <button type="submit" data-ng-disabled="form2.$invalid" data-ng-click="updateAccount()" class="btn btn-primary">Simpan perubahan</button>
+                    <a href="javascript:;" data-ng-click="removeAccount()" class="btn btn-link text-danger">Hapus akun saya</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+</div>

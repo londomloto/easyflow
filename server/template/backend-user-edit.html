@@ -3,7 +3,7 @@
     {% verbatim %}
     <div data-ui-lightbox=".profile-photo">
         <a class="profile-photo" data-ng-href="{{ photo.data }}">
-            <img data-ui-image="photo.file" class="img-responsive" data-ng-src="{{ edit.avatar | thumbnail:'/user/':200:200 }}">    
+            <img data-ui-image="photo.file" class="img-responsive" data-ng-src="{{ edit.avatar | thumbnail:'users':200:200 }}">    
         </a>
     </div>    
     {% endverbatim %}

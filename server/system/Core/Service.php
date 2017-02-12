@@ -33,7 +33,11 @@ class Service {
     }
 
     public function getName() {
-        return $this->_name;
+        $name = $this->_name;
+        if (strpos($name, ':') !== FALSE) {
+            $name = substr($name, strpos($name, ':') + 1);
+        }
+        return $name;
     }
 
     public function isResolved() {

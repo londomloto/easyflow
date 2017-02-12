@@ -78,7 +78,7 @@ class Uploader extends \Sys\Core\Component {
         }
 
         $size = $file['size'];
-        $name = sprintf('%s.%s', sha1_file($file['tmp_name']).'-'.date('YmdHis'), $exts);
+        $name = sprintf('%s.%s', sha1($file['tmp_name'].date('YmdHis')), $exts);
         
         if ( ! move_uploaded_file($file['tmp_name'], $this->_path.$name)) {
             $this->_error = 'Upload file gagal';
@@ -101,7 +101,7 @@ class Uploader extends \Sys\Core\Component {
         $orig = substr($url, 0, strpos($url, '?'));
         $orig = basename($orig);
         $exts = substr($orig, strrpos($orig, '.') + 1);
-        $name = sprintf('%s.%s', sha1($url).'-'.date('YmdHis'), $exts);
+        $name = sprintf('%s.%s', sha1($url.date('YmdHis')), $exts);
         $file = $this->_path.$name;
 
         if (file_put_contents($file, $data)) {

@@ -1,0 +1,20 @@
+<div>
+    <div class="row">
+        <div class="col-sm-12">
+            <h4>Daftar Kontribusi</h4>
+            <p data-ng-if="account.editable">Berikut adalah daftar diagram dimana Anda ikut berkontribusi.</p>
+            <p data-ng-if="!account.editable">Berikut adalah daftar diagram dimana {{account.fullname}} ikut berkontribusi.</p>
+        </div>
+    </div>
+
+    <hr>
+    <div class="text-center m-b">
+        <div data-ui-pagination data-template="pagination.html" data-store="diagramStore" data-display="10"></div>
+    </div>
+    
+    <div data-ui-template="diagram-list.html"></div>
+
+    <div class="text-center m-b">
+        <div data-ui-pagination data-template="pagination.html" data-store="diagramStore" data-display="10"></div>
+    </div>
+</div>

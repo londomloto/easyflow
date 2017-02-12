@@ -35,10 +35,17 @@ abstract class Component implements IComponent {
                 }
             }
 
+            if ( ! $result) {
+                throw new \Exception(sprintf(_("Call to undefined method or service '%s'"), $method));        
+            }
+
             return $result;
+        } else {
+            if ( ! method_exists($this, $method)) {
+                throw new \Exception(sprintf(_("Call to undefined method '%s->%s()'"), get_called_class(), $method));  
+            }
         }
 
-        throw new \Exception(sprintf(_("Call to undefined method or service '%s'"), $method));
     }
 
     public final function __get($key) {

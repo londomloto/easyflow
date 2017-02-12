@@ -33,14 +33,14 @@
                                     <a href="" class="pull-left text-u-c label label-md" data-ng-class="item.published == 1 ? 'primary' : 'info'">{{ item.published ? 'PUBLIK' : 'PRIVAT' }}</a>
                                 </div>
                                 <a class="lightbox" href="{{ item.cover_url }}">
-                                    <img title="{{ item.name }}" data-ng-src="{{ item.cover | thumbnail:'/diagram/':400:200 }}" class="w-full">
+                                    <img title="{{ item.name }}" data-ng-src="{{ item.cover | thumbnail:'diagrams':400:200 }}" class="w-full">
                                 </a>
                                 <div class="bottom p-a-xs">
                                     <a href="" class="text-md block p-x-sm">{{ item.user_fullname }}</a>
                                 </div>
                             </div>
                             <div class="m-r pos-rlt pull-right" style="margin-top: -30px; margin-bottom: -30px;">
-                                <img data-ng-src="{{ item.user_avatar | thumbnail:'/user/':56:56 }}" class="img-circle w-56 white">
+                                <img data-ng-src="{{ item.user_avatar | thumbnail:'users':56:56 }}" class="img-circle w-56 white">
                             </div>
                             <div class="p-a">
                                 <div class="text-muted m-b-xs">

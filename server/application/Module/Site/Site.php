@@ -3,15 +3,8 @@ namespace App\Module\Site;
 
 class Site extends \Sys\Core\Module {
     
-    public function testAction() {
-        
-
-        $this->notification->forkRequest(
-            \App\Module\Diagram\Diagram::findById(4),
-            \App\Module\User\User::findByEmail('londomloto.io@gmail.com'),
-            \App\Module\User\User::findByEmail('roso.sasongko@gmail.com')
-        );
-
+    public function indexAction() {
+        exit();
     }
 
     public function getSessionKey() {

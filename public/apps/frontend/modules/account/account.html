@@ -1,0 +1,64 @@
+
+<nav class="navbar navbar-default navbar-custom navbar-border" data-ui-template="header.html"></nav>
+
+<div id="account-section" class="container">
+    
+    <div class="panel no-radius b-t-0">
+        <div class="panel-body p-a-lg"> 
+            
+            <article class="media"> 
+                <div class="pull-right">
+                    <p  class="doc-buttons m-b-none"> 
+                        <a href="{{ account.twitter_url }}" class="btn btn-twitter btn-circle">
+                            <i class="ion-social-twitter"></i>
+                        </a> 
+                        <a href="{{ account.facebook_url }}" class="btn btn-facebook btn-circle">
+                            <i class="ion-social-facebook"></i>
+                        </a> 
+                        <a href="{{ account.google_url }}" class="btn btn-gplus btn-circle">
+                            <i class="ion-social-googleplus"></i>
+                        </a>
+                    </p> 
+                </div>
+                <span class="pull-left">
+                    <img alt="." data-ng-src="{{ account.avatar | thumbnail:'users':96:96 }}">
+                </span> 
+                <div class="media-body"> 
+                    <h3 class="text-normal m-b-none m-t-none">{{ account.fullname }}</h3>
+                    <a href="javascript:;" class="block m-b-none">{{ account.email }}</a> 
+                    <p data-ng-if="account.bio">
+                        {{ account.bio }} 
+                    </p>
+                    <div class="m-t-small">
+                        <button data-ng-click="follow()" data-ng-if="account.following == 'N'" class="btn btn-primary btn-sm"> 
+                            <span class="text"> Menjadi pengikut </span> 
+                        </button>
+
+                        <button data-ng-click="unfollow()" data-ng-if="account.following == 'Y'" class="btn btn-danger btn-sm"> 
+                            <span class="text"> Berhenti mengikuti </span> 
+                        </button>
+                    </div>
+                    
+                </div> 
+            </article>
+
+            
+        </div> 
+        <ul class="nav nav-tabs m-b-none">
+            <li data-ng-repeat="item in menus track by item.state" data-ui-sref-active="active">
+                <a data-ui-sref="{{ item.state }}">
+                    {{ item.text }}
+                </a>
+            </li>
+        </ul>
+
+        
+
+        <div class="main" data-ui-view>
+            
+        </div>
+
+    </div>
+</div>
+
+<footer class="text-center" data-ui-template="footer.html"></footer>

@@ -9,13 +9,14 @@
     /////////
     
     /** @ngInject */
-    function EditorController($scope, theme) {
+    function EditorController($scope, theme, api) {
         $scope.diagrams = [];
+        $scope.diagram = null;
         $scope.paper = null;
         $scope.pallet = null;
 
         $scope.loadDiagrams = function() {
-            $http.get('../server/load').then(function(response){
+            api.get('/user/diagram/find').then(function(response){
                 $scope.diagrams = response.data.data;
             });
         };
@@ -24,6 +25,11 @@
             theme.showModal('open-diagram').then(function(){
                 $scope.loadDiagrams();
             });
+        };
+
+        $scope.openDiagram = function(diagram) {
+            $scope.diagram = diagram;
+            theme.hideModal('open-diagram');
         };
 
         $scope.create = function() {

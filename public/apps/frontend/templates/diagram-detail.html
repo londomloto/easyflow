@@ -8,55 +8,67 @@
                 <span title="Kontribusi orang lain"><i class="ion-person"></i> {{ diagram.forks }}</span>
             </div>
             <p>{{ diagram.description }}</p>
+            <div class="cover m-t" style="border: solid 1px #dfdfdf; padding: 15px; position: relative; overflow: hidden;">
+                <img data-ui-nocontext data-ng-src="{{ diagram.cover_url }}" style="width: 100%">
+                <div class="cover-overlay"></div>
+            </div>
         </div>
     </div>
 
     <div class="m-t" data-ui-tabs>
-        <div data-ui-pane data-title="Diagram" class="">
-            <div data-ng-if="diagram.owned">
-                <h4 class="m-t">Sunting dan unduh</h4>
-                <a data-ui-sref="editor" target="_blank" class="btn btn-primary btn-raised btn-lg">
-                    <i class="ion-edit"></i> Sunting dengan editor
-                </a>
-                <a data-ng-click="download('svg')" href="javascript:;" class="btn btn-link btn-default btn-lg">Unduh SVG</a>
-                <a data-ng-click="download('jpg')" href="javascript:;" class="btn btn-link btn-default btn-lg">Unduh JPG</a>    
-            </div>
+        <div data-ui-pane data-title="Peralatan" class="">
+
             
+
+            <div data-ng-if="diagram.owned">
+                <h4 class="m-t">Sunting</h4>
+                <p>Anda dapat menyunting diagram ini.</p>
+                <a data-ui-sref="editor" target="_blank" class="btn btn-primary btn-raised btn-lg">
+                    Sunting dengan editor
+                </a>
+            </div>
+
             <div data-ng-if="!diagram.owned">
                 <div data-ng-if="diagram.forked">
-                    <h4 class="m-t">Kontribusi dan bookmark</h4>
-
-                    <a data-ng-if="!diagram.owned" data-ng-click="fork()" href="javascript:;" class="btn btn-danger btn-raised btn-lg">
-                        <i class="ion-person"></i> 
-                        <span>Hapus kontribusi</span>
+                    <h4 class="m-t">Kontribusi</h4>
+                    <p>Anda dapat menyunting diagram ini dengan berkontribusi.</p>
+                    <a data-ng-click="fork()" href="javascript:;" class="btn btn-danger btn-raised btn-lg">
+                        Hapus kontribusi
                     </a>
-                    <h4 class="m-t">Sunting dan unduh</h4>
-
                     <a data-ui-sref="editor" target="_blank" class="btn btn-primary btn-raised btn-lg">
-                        <i class="ion-edit"></i> Sunting dengan editor
+                        Sunting dengan editor
                     </a>
-                    <a data-ng-click="download('svg')" href="javascript:;" class="btn btn-link btn-default btn-lg">Unduh SVG</a>
-                    <a data-ng-click="download('jpg')" href="javascript:;" class="btn btn-link btn-default btn-lg">Unduh JPG</a>    
                 </div>
 
                 <div data-ng-if="!diagram.forked">
-                    <h4 class="m-t">Kontribusi dan bookmark</h4>
-
+                    <h4 class="m-t">Kontribusi</h4>
+                    <p>Anda dapat menyunting diagram ini dengan berkontribusi.</p>
                     <a data-ng-click="fork()" href="javascript:;" class="btn btn-primary btn-raised btn-lg">
-                        <i class="ion-person"></i> Minta kontribusi
+                        Minta akses kontribusi
                     </a>
+                </div>
 
-                    <a data-ng-click="bookmark()" href="javascript:;" class="btn btn-raised btn-lg" data-ng-class="diagram.bookmarked ? 'btn-danger' : 'btn-primary'">
-                        <i class="ion-heart"></i> Bookmark
+                <div data-ng-if="diagram.bookmarked">
+                    <h4 class="m-t">Bookmark</h4>
+                    <p>Tandai (bookmark) diagram ini agar mudah diakses kembali.</p>
+                    <a data-ng-click="bookmark()" href="javascript:;" class="btn btn-raised btn-lg btn-danger">
+                        Hapus bookmark
+                    </a>
+                </div>
+
+                <div data-ng-if="!diagram.bookmarked">
+                    <h4 class="m-t">Bookmark</h4>
+                    <p>Tandai (bookmark) diagram ini agar mudah diakses kembali.</p>
+                    <a data-ng-click="bookmark()" href="javascript:;" class="btn btn-raised btn-lg btn-primary">
+                        Bookmark diagram
                     </a>
                 </div>
             </div>
-            
-            <h4 class="m-t">Gambar pratinjau</h4>
 
-            <div class="cover m-t" style="background: #EEEEEE; position: relative; overflow: hidden;">
-                <img data-ui-nocontext data-ng-src="{{ diagram.cover_url }}" style="width: 100%">
-                <div class="cover-overlay"></div>
+            <div>
+                <h4 class="m-t">Unduh Diagram</h4>
+                <p>Unduh diagram ini dalam format gambar</p>
+                <a data-ng-click="download('jpg')" href="javascript:;" class="btn btn-primary btn-raised btn-lg">Unduh format JPG</a>    
             </div>
         </div>
         

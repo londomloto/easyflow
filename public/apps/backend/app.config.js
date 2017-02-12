@@ -306,7 +306,7 @@
                 }
             },
             'main.user.edit': {
-                url: '/edit/:id',
+                url: '/:id',
                 breadcrumb: 'Sunting',
                 authenticate: true,
                 views: {
@@ -332,7 +332,7 @@
                 }
             },
             'main.diagram.edit': {
-                url: '/edit/:id',
+                url: '/:id',
                 breadcrumb: 'Sunting',
                 authenticate: true,
                 views: {
@@ -369,7 +369,7 @@
                 }
             },
             'main.tutorial.edit': {
-                url: '/edit/:id',
+                url: '/:id',
                 breadcrumb: 'Sunting',
                 authenticate: true,
                 views: {

@@ -30,18 +30,7 @@ abstract class Module extends Component {
                 $action->name = substr($fname, 0, strpos($fname, 'Action'));
                 $action->numberOfParams = $func->getNumberOfParameters();
                 $action->numberOfRequiredParams = $func->getNumberOfRequiredParameters();
-                $action->params = new \stdClass();
-
-                foreach($func->getParameters() as $param) {
-                    $pname = $param->name;
-                    $paramItem = new \stdClass();
-                    $paramItem->position = $param->getPosition();
-                    $paramItem->required = $param->isOptional() === FALSE;
-                    $paramItem->defaultValue = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : NULL;
-
-                    $action->params->{$pname} = $paramItem;
-                }
-
+                
                 $actions[$fname] = $action;
 
                 if ($eventBus) {
@@ -59,7 +48,6 @@ abstract class Module extends Component {
         }
 
         self::$_actions[$class->name] = $actions;
-
         $this->initialize();
     }
 
@@ -91,8 +79,6 @@ abstract class Module extends Component {
         $modules = array_values($modules);
         
         $name = $modules[0]->getName();
-        $name = substr($name, 7);
-
         return $app->getModuleInstance($name);
     }
 

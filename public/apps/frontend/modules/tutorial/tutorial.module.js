@@ -9,7 +9,7 @@
     function TutorialController($scope, api) {
         $scope.tutorials = [];
 
-        api.get('/tutorial/find').then(function(response){
+        api.get('/tutorials').then(function(response){
             $scope.tutorials = response.data.data;
         });
     }

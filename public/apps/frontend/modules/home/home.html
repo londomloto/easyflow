@@ -19,7 +19,7 @@
 <section id="signup-bar">
     <p ng-if="user">
         Selamat datang, <strong>{{ user.fullname }}</strong> 
-        <a ui-sref="profile.home" class="btn btn-raised btn-info btn-lg">Lihat profile</a> atau 
+        <a ui-sref="account.home({email:user.email})" class="btn btn-raised btn-info btn-lg">Lihat profile</a> atau 
         <a ng-click="logout()" class="btn btn-raised btn-danger btn-lg">Keluar</a>
     </p> 
     <p ng-if="!user">
@@ -83,34 +83,26 @@
                 
                 <form data-ng-submit="sendMessage()" name="form" id="contact-form" novalidate>
 
-                    <div class="row control-group">
-                        <div class="form-group" data-ng-class="{ 'invalid' : form.contact_fullname.$invalid && !form.contact_fullname.$pristine }">
-                            <label class="control-label">Nama lengkap</label>
-                            <input class="form-control" data-ng-model="contact.fullname" name="contact_fullname" type="text" required>
-                            <p data-ng-show="form.contact_fullname.$error.required && !form.contact_fullname.$pristine" class="help-block text-sm text-danger">Nama lengkap wajib diisi</p>
-                        </div>
+                    <div class="form-group" data-ng-class="{ 'invalid' : form.contact_fullname.$invalid && !form.contact_fullname.$pristine }">
+                        <label class="control-label">Nama lengkap</label>
+                        <input class="form-control" data-ng-model="contact.fullname" name="contact_fullname" type="text" required>
+                        <p data-ng-show="form.contact_fullname.$error.required && !form.contact_fullname.$pristine" class="help-block text-sm text-danger">Nama lengkap wajib diisi</p>
                     </div>
 
-                    <div class="row control-group">
-                        <div class="form-group" data-ng-class="{ 'invalid' : form.contact_email.$invalid && !form.contact_email.$pristine }">
-                            <label class="control-label" >Alamat email</label>
-                            <input class="form-control" data-ng-model="contact.email" name="contact_email" type="text" required>
-                            <p data-ng-show="form.contact_email.$error.required && !form.contact_email.$pristine" class="help-block text-sm text-danger">Alamat email wajib diisi</p>
-                        </div>
+                    <div class="form-group" data-ng-class="{ 'invalid' : form.contact_email.$invalid && !form.contact_email.$pristine }">
+                        <label class="control-label" >Alamat email</label>
+                        <input class="form-control" data-ng-model="contact.email" name="contact_email" type="text" required>
+                        <p data-ng-show="form.contact_email.$error.required && !form.contact_email.$pristine" class="help-block text-sm text-danger">Alamat email wajib diisi</p>
                     </div>
 
-                    <div class="row control-group">
-                        <div class="form-group" data-ng-class="{ 'invalid' : form.contact_message.$invalid && !form.contact_message.$pristine }">
-                            <label class="control-label">Tulis saran dan kritik Anda (min: 40 karakter)</label>
-                            <textarea rows="5" class="form-control" data-ng-model="contact.message" data-ng-minlength="40" name="contact_message" required></textarea>
-                            <p data-ng-show="form.contact_message.$error.required && !form.contact_message.$pristine" class="help-block text-sm text-danger">Isi pesan wajib diisi</p>
-                        </div>
+                    <div class="form-group" data-ng-class="{ 'invalid' : form.contact_message.$invalid && !form.contact_message.$pristine }">
+                        <label class="control-label">Tulis saran dan kritik Anda (min: 40 karakter)</label>
+                        <textarea rows="5" class="form-control" data-ng-model="contact.message" data-ng-minlength="40" name="contact_message" required></textarea>
+                        <p data-ng-show="form.contact_message.$error.required && !form.contact_message.$pristine" class="help-block text-sm text-danger">Isi pesan wajib diisi</p>
                     </div>
 
-                    <div class="row">
-                        <div class="form-group">
-                            <button data-ng-disabled="form.$invalid" type="submit" class="btn btn-raised btn-primary btn-lg">Kirim Pesan</button>
-                        </div>
+                    <div class="form-group">
+                        <button data-ng-disabled="form.$invalid" type="submit" class="btn btn-primary">Kirim Pesan</button>
                     </div>
                 </form>
             </div>

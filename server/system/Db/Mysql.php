@@ -92,7 +92,7 @@ class Mysql implements IDatabase {
         $sql = Text::compact($sql);
 
         if ($stmt->prepare($sql)) {
-            if (is_array($params)) {
+            if (is_array($params) && ! empty($params)) {
                 $values = array();
                 $types = '';
 
@@ -226,7 +226,7 @@ class Mysql implements IDatabase {
                 }
             }
         }
-
+        
         if (count($update) > 0) {
             $sql = "UPDATE `$table` SET ";
             $sql = $sql . implode(', ', $update);
@@ -241,7 +241,8 @@ class Mysql implements IDatabase {
                 }
 
                 $sql = $sql . implode(' AND ', $where);
-            }    
+            }
+
             return $this->query($sql, $params);
         }
         return FALSE;

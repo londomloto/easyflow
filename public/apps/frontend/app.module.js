@@ -12,12 +12,17 @@
     /////////
     
     /** @ngInject */
-    function AppController($scope, router, auth) {
+    function AppController($scope, $anchorScroll, $location, router, auth) {
         
         $scope.logout = function() {
             auth.logout().then(function(result){
                 router.go('home');
             });
+        };
+
+        $scope.gotoAnchor = function(anchor) {
+            $location.hash(anchor);
+            $anchorScroll();
         };
 
     }

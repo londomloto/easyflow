@@ -17,7 +17,7 @@
         };
 
         $scope.userStore = new Store({
-            url: '/user/find',
+            url: '/users',
             params: {
 
             },
@@ -42,14 +42,6 @@
 
         $scope.userStore.load();
 
-        /*$scope.loadUsers = function() {
-            api.get('/user/find').then(function(response){
-                $scope.users = response.data.data;
-            });
-        };
-
-        $scope.loadUsers();*/
-
     }   
 
     /** @ngInject */
@@ -70,7 +62,7 @@
         $scope.roles = [];
 
         if (id) {
-            api.get('/user/find/' + id).then(function(response){
+            api.get('/users/' + id).then(function(response){
                 $scope.edit = response.data.data;
                 $scope.edit.passwd1 = '';
                 $scope.edit.passwd2 = '';
@@ -78,14 +70,14 @@
                 $scope.photo.data = $scope.edit.avatar_url;
             });
             
-            api.get('/access/find-role').then(function(response){
+            api.get('/access/roles').then(function(response){
                 $scope.roles = response.data.data;
             });
         }
 
-        $scope.onSelectPhoto = function(name, data) {
-            $scope.photo.name = name;
-            $scope.photo.data = data;
+        $scope.onSelectPhoto = function(e) {
+            $scope.photo.name = e.name;
+            $scope.photo.data = e.data;
         };
 
         $scope.saveUser = function(form) {
@@ -99,11 +91,11 @@
 
             if ($scope.photo.file) {
                 opts.upload = [
-                    {key: 'userfile', file: $scope.photo.file}
+                    { key: 'userfile', file: $scope.photo.file }
                 ];
             }
-
-            api.post('/user/update', data, opts).then(function(response){
+            
+            api.put('/users/' + data.id, data, opts).then(function(response){
                 if (response.data.success) {
                     theme.toast('Data berhasil disimpan');
                 }
@@ -113,7 +105,7 @@
         $scope.deleteUser = function() {
             theme.showConfirm('Konfirmasi', 'Hapus pengguna yang bersangkutan?').then(function(action){
                 if (action) {
-                    api.del('/user/delete/' + $scope.edit.id).then(function(response){
+                    api.del('/users/' + $scope.edit.id).then(function(response){
                         if (response.data.success) {
                             theme.toast("Data berhasil dihapus");
                             router.go('main.user');    
@@ -137,7 +129,7 @@
 
         $scope.roles = [];
 
-        api.get('/access/find-role').then(function(response){
+        api.get('/access/roles').then(function(response){
             var roles = response.data.data,
                 defaultRole = roles.filter(function(role){
                     return role.is_default == '1';
@@ -163,7 +155,7 @@
                 ];
             }
 
-            api.post('/user/create', data, opts).then(function(response){
+            api.post('/users', data, opts).then(function(response){
                 if (response.data.success) {
                     theme.toast("Data berhasil ditambahkan");
                     router.go('main.user');

@@ -1,19 +1,14 @@
-<div class="row" data-ui-lightbox=".lightbox-item" data-trigger="diagrams">
+<div class="row">
     <div ng-repeat="item in diagrams track by item.id">
         <div data-ng-if="$index % 2 == 0" class="clearfix"></div>
         <div class="col-md-6 col-sm-12 col-xs-12">
             <div class="thumbnail">
                 <div class="cover">
-                    <img  alt="." data-ng-src="{{ item.cover | thumbnail:'/diagram/':400:200 }}" style="width: 100%;">
-                    <a class="zoom lightbox-item" href="{{ item.cover_url }}">
-                        <img title="{{ item.name }}" class="hidden">
-                        <span><i class="ion-android-search"></i></span>
-                    </a>
-                    
+                    <img  alt="." data-ng-src="{{ item.cover | thumbnail:'diagrams':400:200 }}" style="width: 100%;">
                 </div>
 
                 <div style="background: #009D8E; padding: 8px 15px;">
-                    <a data-ui-sref="user.view({email: item.user_email})" class="_700" style="color: #fff;">
+                    <a data-ui-sref="account({email: item.user_email})" class="_700" style="color: #fff;">
                         <span class="">{{ item.user_fullname }}</span>
                     </a>
                 </div>
@@ -27,8 +22,8 @@
                             <i class="fab-icon" data-ng-class="{ 'ion-person text-danger' : item.forked == 1, 'ion-person-add text-primary' : item.forked == 0}"></i>
                         </a>    
                     </div>
-                    <a data-ui-sref="profile.view({email: item.user_email})" class="btn btn-fab">
-                        <img data-ng-src="{{ item.user_avatar | thumbnail:'/user/':56:56 }}">
+                    <a data-ui-sref="account.home({email: item.user_email})" class="btn btn-fab">
+                        <img data-ng-src="{{ item.user_avatar | thumbnail:'users':56:56 }}">
                     </a>
                 </div>
                 

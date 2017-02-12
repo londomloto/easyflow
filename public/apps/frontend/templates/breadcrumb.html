@@ -1,0 +1,12 @@
+<div class="col-lg-12">
+    <ul data-breadcrumbs class="breadcrumb">
+        <li class="nav-item nav-breadcrumb">
+            <a href="javascript:;">Beranda</a>
+        </li>
+        <li data-ng-repeat="breadcrumb in breadcrumbs" class="nav-item nav-breadcrumb">
+            <a data-ui-sref="{{ breadcrumb.stateName }}" class="nav-link" data-ng-class="breadcrumb.class">
+                {{ breadcrumb.text }}
+            </a>
+        </li>
+    </ul>
+</div>
